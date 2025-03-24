@@ -5,6 +5,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
@@ -20,6 +21,8 @@ public class homeUI extends Application {
     @Override
     public void start(Stage primaryStage) {
         primaryStage.setTitle("Rome Navigator");
+
+        StackPane stackPane = new StackPane();
         BorderPane root = new BorderPane();
 
         WebView webView = new WebView();
@@ -36,9 +39,9 @@ public class homeUI extends Application {
 
         Rectangle leftBar = new Rectangle();
         leftBar.widthProperty().set(350);
-        leftBar.heightProperty().set(760);
+        leftBar.heightProperty().set(720);
         leftBar.setX(33);
-        leftBar.setY(33);
+        leftBar.setY(73);
         leftBar.setArcHeight(35);
         leftBar.setArcWidth(35);
         leftBar.setFill(Color.web("#5D5D5D"));
@@ -48,21 +51,21 @@ public class homeUI extends Application {
         Text title = new Text("Navigator");
         title.setFill(Color.WHITE);
         title.setStyle("-fx-font: 25 Ubuntu;");
-        title.setX(58);
-        title.setY(85);
+        title.setX(48);
+        title.setY(105);
         leftPane.getChildren().add(title);
 
         TextField startPlace = new TextField();
         startPlace.setPromptText("Starting Point");
         startPlace.setLayoutX(55);
-        startPlace.setLayoutY(114);
+        startPlace.setLayoutY(134);
         startPlace.setPrefSize(307, 41.74);
         leftPane.getChildren().add(startPlace);
 
         TextField endPlace = new TextField();
         endPlace.setPromptText("Destination");
         endPlace.setLayoutX(55);
-        endPlace.setLayoutY(172.55);
+        endPlace.setLayoutY(192.55);
         endPlace.setPrefSize(307, 41.74);
         leftPane.getChildren().add(endPlace);
 
@@ -114,8 +117,9 @@ public class homeUI extends Application {
         settings.setOnAction(_ -> System.out.println("Settings"));
         leftPane.getChildren().add(settings);
 
+        stackPane.getChildren().addAll(webView, root);
 
-        Scene scene = new Scene(root, 1280, 832);
+        Scene scene = new Scene(stackPane, 1280, 832);
         primaryStage.setScene(scene);
         primaryStage.show();
     }
