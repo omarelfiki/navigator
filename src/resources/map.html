@@ -1,26 +1,29 @@
 <!doctype html>
-<!--
- @license
- Copyright 2019 Google LLC. All Rights Reserved.
- SPDX-License-Identifier: Apache-2.0
--->
-<html>
+<html lang="en">
 <head>
-  <title>Add a Map with Markers using HTML</title>
-
-  <!-- jsFiddle will insert css and js -->
+    <meta http-equiv="Content-Security-Policy" content="default-src *; script-src 'self' 'unsafe-inline' 'unsafe-eval' *; style-src 'self' 'unsafe-inline' *; img-src * data:'unsafe-inline'">
+    <title></title>
 </head>
 <body>
-<gmp-map
-        center="43.4142989,-124.2301242"
-        zoom="4"
-        map-id="DEMO_MAP_ID"
-        style="width:1280px ;height: 832px"
->
-</gmp-map>
-<script
-        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDWUFIdOzWZeq2BsFfTMMif-VdY2YSqmKg&libraries=maps,marker&v=beta"
-        defer
-></script>
+    <div id="map" style="width:1265px; height:800px;"></div>
+    <script
+            src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDWUFIdOzWZeq2BsFfTMMif-VdY2YSqmKg&libraries=maps,marker&v=beta"
+            defer
+    ></script>
+    <script>
+        console.log("Initializing map...");
+        function initMap() {
+            const map = new google.maps.Map(document.getElementById('map'), {
+                center: { lat: 41.896064, lng: 12.479111 },
+                zoom: 13,
+                mapId: 'DEMO_MAP_ID',
+                disableDefaultUI: true
+            });
+        }
+        console.log("Map initialized:", map);
+
+        window.initMap = initMap;
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDWUFIdOzWZeq2BsFfTMMif-VdY2YSqmKg&callback=initMap" defer></script>
 </body>
 </html>
