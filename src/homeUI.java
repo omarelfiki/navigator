@@ -146,7 +146,7 @@ public class homeUI extends Application {
             double[] coords = GeoUtil.getCoordinatesFromAddress(start);
             if (coords != null) {
                 System.out.println("Coordinates: " + coords[0] + ", " + coords[1]);
-                GTFSaccess gtfs = new GTFSaccess("jdbc:postgresql://localhost:5432/postgres", "postgres", "6262");
+                GTFSaccess gtfs = new GTFSaccess("rome-gtfs.database.windows.net", "rome-gtfs", "gtfsaccess", "Gtfs-142025");
                 gtfs.connect();
                 Stop closestStop = gtfs.getClosestStops(coords[0], coords[1]);
                 System.out.println("Closest Stop: " + closestStop);
