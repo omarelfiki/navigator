@@ -31,6 +31,37 @@ public class Stop {
         this.stopLon = stopLon;
     }
 
+    public String getStopID() {
+        return stopID;
+    }
+    public String getStopName() {
+        return stopName;
+    }
+    public double getStopLat() {
+        return stopLat;
+    }
+    public double getStopLon() {
+        return stopLon;
+    }
+    public String getStopDesc() {
+        return stopDesc;
+    }
+    public String getStopURl() {
+        return stopURl;
+    }
+    public int getLocationType() {
+        return locationType;
+    }
+    public String getParentStation() {
+        return parentStation;
+    }
+    public String getStopTimezone() {
+        return stopTimezone;
+    }
+    public int getWheelchairBoarding() {
+        return wheelchairBoarding;
+    }
+
     @Override
     public String toString() {
         return "Stop ID: " + stopID + '\n' + "Stop Name: " + stopName + '\n' + "Stop Latitude: " + stopLat + '\n' + "Stop Longitude: " + stopLon;
