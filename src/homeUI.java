@@ -2,7 +2,6 @@ import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
-import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
@@ -16,8 +15,16 @@ import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebErrorEvent;
 import javafx.scene.web.WebView;
 import javafx.stage.Stage;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.animation.TranslateTransition;
+import javafx.scene.shape.Circle;
+import javafx.util.Duration;
+
 
 public class homeUI extends Application {
+
+    private boolean isOn = false; // State of the switch
 
     @Override
     public void start(Stage primaryStage) {
@@ -107,22 +114,31 @@ public class homeUI extends Application {
         line.setStroke(Color.WHITE);
         leftPane.getChildren().add(line);
 
-        ToggleButton toggleSwitch = new ToggleButton();
-        toggleSwitch.setText("Off");
-        toggleSwitch.setLayoutX(50);
-        toggleSwitch.setLayoutY(723);
-        toggleSwitch.setPrefSize(50, 30);
-        toggleSwitch.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
-        toggleSwitch.setOnAction(_ -> {
-            if (toggleSwitch.isSelected()) {
-                toggleSwitch.setText("On");
-                toggleSwitch.setStyle("-fx-background-color: green; -fx-text-fill: white;");
-            } else {
-                toggleSwitch.setText("Off");
-                toggleSwitch.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
-            }
-        });
-        leftPane.getChildren().add(toggleSwitch);
+        // Background rectangle (toggle track)
+        Rectangle background = new Rectangle(60, 30);
+        background.setArcWidth(30);
+        background.setArcHeight(30);
+        background.setFill(Color.LIGHTGRAY);
+
+        // Toggle circle (switch knob)
+        Circle knob = new Circle(15);
+        knob.setFill(Color.WHITE);
+        knob.setLayoutX(30);
+        knob.setTranslateX(-15); // Start on the left
+        knob.setTranslateY(15);
+
+        // Pane to hold the switch
+        Pane togglePane = new Pane(background, knob);
+        togglePane.setPrefSize(60, 30);
+        togglePane.setLayoutX(40);
+        togglePane.setLayoutY(723);
+
+        // Handle click event
+        togglePane.setOnMouseClicked(event -> toggleSwitch(knob, background));
+
+        leftPane.getChildren().add(togglePane);
+
+
 
         Text toggleText = new Text("Hotmap Mode");
         toggleText.setFill(Color.WHITE);
@@ -131,7 +147,12 @@ public class homeUI extends Application {
         toggleText.setY(742);
         leftPane.getChildren().add(toggleText);
 
-        Button settings = new Button("Settings");
+        Image image = new Image("settingsIcon.png");
+        ImageView imageView = new ImageView(image);
+        imageView.setFitWidth(25);
+        imageView.setFitHeight(25);
+
+        Button settings = new Button("", imageView);
         settings.setLayoutX(313);
         settings.setLayoutY(723);
         settings.setPrefSize(50, 30);
@@ -158,6 +179,21 @@ public class homeUI extends Application {
         Scene scene = new Scene(stackPane, 1280, 832);
         primaryStage.setScene(scene);
         primaryStage.show();
+    }
+
+    private void toggleSwitch(Circle knob, Rectangle background) {
+        TranslateTransition transition = new TranslateTransition(Duration.millis(200), knob);
+
+        if (isOn) {
+            transition.setToX(-15); // Move knob to left
+            background.setFill(Color.LIGHTGRAY); // Gray color for off state
+        } else {
+            transition.setToX(15); // Move knob to right
+            background.setFill(Color.LIMEGREEN); // Green color for on state
+        }
+
+        isOn = !isOn; // Toggle the state
+        transition.play();
     }
 
     public static void main(String[] args) {
