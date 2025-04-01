@@ -9,9 +9,9 @@ import com.leastfixedpoint.json.JSONSyntaxError;
 import com.leastfixedpoint.json.JSONWriter;
 
 public class RoutingEngine {
-    private JSONReader requestReader =
+    private final JSONReader requestReader =
         new JSONReader(new InputStreamReader(System.in));
-    private JSONWriter<OutputStreamWriter> responseWriter =
+    private final JSONWriter<OutputStreamWriter> responseWriter =
         new JSONWriter<>(new OutputStreamWriter(System.out));
 
     public static void main(String[] args) throws IOException {
@@ -32,8 +32,7 @@ public class RoutingEngine {
                 break;
             }
 
-            if (json instanceof Map<?,?>) {
-                Map<?,?> request = (Map<?,?>) json;
+            if (json instanceof Map<?, ?> request) {
                 if (request.containsKey("ping")) {
                     sendOk(Map.of("pong", request.get("ping")));
                     continue;
