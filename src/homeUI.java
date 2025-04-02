@@ -155,12 +155,12 @@ public class homeUI extends Application {
         leftPane.getChildren().add(toggleText);
 
 
-//        Image image = new Image("settingsIcon.png");
-//        ImageView imageView = new ImageView(image);
-//        imageView.setFitWidth(25);
-//        imageView.setFitHeight(25);
+        Image image = new Image("settingsIcon.png");
+        ImageView imageView = new ImageView(image);
+        imageView.setFitWidth(25);
+        imageView.setFitHeight(25);
 
-        Button settings = new Button("");
+        Button settings = new Button("", imageView);
         settings.setLayoutX(313);
         settings.setLayoutY(723);
         settings.setPrefSize(50, 30);
