@@ -21,6 +21,8 @@ import javafx.animation.TranslateTransition;
 import javafx.scene.shape.Circle;
 import javafx.util.Duration;
 
+import java.net.URL;
+
 
 public class homeUI extends Application {
 
@@ -37,27 +39,32 @@ public class homeUI extends Application {
         WebEngine webEngine = webView.getEngine();
         webEngine.setJavaScriptEnabled(true);
 
-        String url = getClass().getResource("map.html").toExternalForm();
-        System.out.println("Loading URL: " + url);
-        webEngine.load(url);
+        URL url = getClass().getResource("map.html");
+        if (url == null) {
+            System.err.println("URL is null. Check the path to map.html.");
+        } else {
+            System.out.println("Loading URL: " + url);
+            String urlString = url.toExternalForm();
+            webEngine.load(urlString);
 
-        // Add a listener to log console messages
-        webEngine.setOnAlert(event -> System.out.println("Alert: " + event.getData()));
-        webEngine.setOnError(event -> System.out.println("Error: " + event.getMessage()));
-        webEngine.setOnStatusChanged(event -> System.out.println("Status: " + event.getData()));
-        webEngine.getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
-            System.out.println("Load state changed: " + newState);
-            if (newState == javafx.concurrent.Worker.State.SUCCEEDED) {
-                System.out.println("Page loaded successfully");
-            } else if (newState == javafx.concurrent.Worker.State.FAILED) {
-                System.out.println("Page failed to load");
-            }
-        });
+            // Add a listener to log console messages
+            webEngine.setOnAlert(event -> System.out.println("Alert: " + event.getData()));
+            webEngine.setOnError(event -> System.out.println("Error: " + event.getMessage()));
+            webEngine.setOnStatusChanged(event -> System.out.println("Status: " + event.getData()));
+            webEngine.getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
+                System.out.println("Load state changed: " + newState);
+                if (newState == javafx.concurrent.Worker.State.SUCCEEDED) {
+                    System.out.println("Page loaded successfully");
+                } else if (newState == javafx.concurrent.Worker.State.FAILED) {
+                    System.out.println("Page failed to load");
+                }
+            });
 
-        // Add a listener to capture and print console messages
-        webEngine.setOnError((WebErrorEvent event) -> {
-            System.out.println("Web Error: " + event.getMessage());
-        });
+            // Add a listener to capture and print console messages
+            webEngine.setOnError((WebErrorEvent event) -> {
+                System.out.println("Web Error: " + event.getMessage());
+            });
+        }
 
         root.setCenter(webView);
 
@@ -147,12 +154,13 @@ public class homeUI extends Application {
         toggleText.setY(742);
         leftPane.getChildren().add(toggleText);
 
-        Image image = new Image("settingsIcon.png");
-        ImageView imageView = new ImageView(image);
-        imageView.setFitWidth(25);
-        imageView.setFitHeight(25);
 
-        Button settings = new Button("", imageView);
+//        Image image = new Image("settingsIcon.png");
+//        ImageView imageView = new ImageView(image);
+//        imageView.setFitWidth(25);
+//        imageView.setFitHeight(25);
+
+        Button settings = new Button("");
         settings.setLayoutX(313);
         settings.setLayoutY(723);
         settings.setPrefSize(50, 30);
