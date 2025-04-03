@@ -1,7 +1,6 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
@@ -14,6 +13,7 @@
         <maven.compiler.source>23</maven.compiler.source>
         <maven.compiler.target>23</maven.compiler.target>
         <javafx.version>21.0.1</javafx.version>
+        <jxbrowser.version>8.5.1</jxbrowser.version>
     </properties>
 
     <dependencyManagement>
@@ -27,6 +27,13 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <repositories>
+        <repository>
+            <id>com.teamdev</id>
+            <url>https://europe-maven.pkg.dev/jxbrowser/releases</url>
+        </repository>
+    </repositories>
 
     <dependencies>
         <!-- PostgreSQL JDBC -->
@@ -71,6 +78,18 @@
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
+        </dependency>
+        <!-- JxBrowser dependencies -->
+        <dependency>
+            <groupId>com.teamdev.jxbrowser</groupId>
+            <artifactId>jxbrowser-cross-platform</artifactId>
+            <version>${jxbrowser.version}</version>
+            <type>pom</type>
+        </dependency>
+        <dependency>
+            <groupId>com.teamdev.jxbrowser</groupId>
+            <artifactId>jxbrowser-javafx</artifactId>
+            <version>${jxbrowser.version}</version>
         </dependency>
     </dependencies>
 

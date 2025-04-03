@@ -1,19 +1,19 @@
+import com.teamdev.jxbrowser.engine.Engine;
+import com.teamdev.jxbrowser.engine.EngineOptions;
+import com.teamdev.jxbrowser.view.javafx.BrowserView;
+import com.teamdev.jxbrowser.engine.RenderingMode;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
-import javafx.scene.web.WebEngine;
-import javafx.scene.web.WebErrorEvent;
-import javafx.scene.web.WebView;
 import javafx.stage.Stage;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -21,52 +21,25 @@ import javafx.animation.TranslateTransition;
 import javafx.scene.shape.Circle;
 import javafx.util.Duration;
 
-import java.net.URL;
-
-
 public class homeUI extends Application {
-
     private boolean isOn = false; // State of the switch
+    String licenseKey = "4UNGPZMYCRBBVOVZ0AWF82M7IHNDBS2EYN2C0FAYRVYOTVRTSSTZHLK2LVGNN0A6QRV6COK5SBS26" +
+            "MOT46BELCJEJ1946IKC2CIZCU6CWEYUNGBLVUW1XGETH5MZ7UIRPV2ZNXW8FCK4DN99GBX";
 
     @Override
     public void start(Stage primaryStage) {
         primaryStage.setTitle("Rome Navigator");
 
-        StackPane stackPane = new StackPane();
         BorderPane root = new BorderPane();
 
-        WebView webView = new WebView();
-        WebEngine webEngine = webView.getEngine();
-        webEngine.setJavaScriptEnabled(true);
-
-        URL url = getClass().getResource("map.html");
-        if (url == null) {
-            System.err.println("URL is null. Check the path to map.html.");
-        } else {
-            System.out.println("Loading URL: " + url);
-            String urlString = url.toExternalForm();
-            webEngine.load(urlString);
-
-            // Add a listener to log console messages
-            webEngine.setOnAlert(event -> System.out.println("Alert: " + event.getData()));
-            webEngine.setOnError(event -> System.out.println("Error: " + event.getMessage()));
-            webEngine.setOnStatusChanged(event -> System.out.println("Status: " + event.getData()));
-            webEngine.getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
-                System.out.println("Load state changed: " + newState);
-                if (newState == javafx.concurrent.Worker.State.SUCCEEDED) {
-                    System.out.println("Page loaded successfully");
-                } else if (newState == javafx.concurrent.Worker.State.FAILED) {
-                    System.out.println("Page failed to load");
-                }
-            });
-
-            // Add a listener to capture and print console messages
-            webEngine.setOnError((WebErrorEvent event) -> {
-                System.out.println("Web Error: " + event.getMessage());
-            });
-        }
-
-        root.setCenter(webView);
+        EngineOptions options = EngineOptions.newBuilder(RenderingMode.HARDWARE_ACCELERATED)
+                .licenseKey(licenseKey)
+                .build();
+        var engine = Engine.newInstance(options);
+        var browser = engine.newBrowser();
+        browser.navigation().loadUrl("/Users/omarelfiki/IdeaProjects/group14/src/resources/map.html");
+        var view = BrowserView.newInstance(browser);
+        root.setCenter(view);
 
         Pane leftPane = new Pane();
         VBox vbox_left = new VBox();
@@ -141,11 +114,8 @@ public class homeUI extends Application {
         togglePane.setLayoutY(723);
 
         // Handle click event
-        togglePane.setOnMouseClicked(event -> toggleSwitch(knob, background));
-
+        togglePane.setOnMouseClicked(_ -> toggleSwitch(knob, background));
         leftPane.getChildren().add(togglePane);
-
-
 
         Text toggleText = new Text("Hotmap Mode");
         toggleText.setFill(Color.WHITE);
@@ -153,7 +123,6 @@ public class homeUI extends Application {
         toggleText.setX(110);
         toggleText.setY(742);
         leftPane.getChildren().add(toggleText);
-
 
         Image image = new Image("settingsIcon.png");
         ImageView imageView = new ImageView(image);
@@ -167,8 +136,6 @@ public class homeUI extends Application {
         settings.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
         settings.setOnAction(_ -> System.out.println("Settings"));
         leftPane.getChildren().add(settings);
-
-        stackPane.getChildren().addAll(webView, root);
 
         startPlace.setOnAction(_ -> {
             String start = startPlace.getText();
@@ -184,7 +151,7 @@ public class homeUI extends Application {
             }
         });
 
-        Scene scene = new Scene(stackPane, 1280, 832);
+        Scene scene = new Scene(root, 1280, 832);
         primaryStage.setScene(scene);
         primaryStage.show();
     }
