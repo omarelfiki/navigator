@@ -21,6 +21,8 @@ import javafx.animation.TranslateTransition;
 import javafx.scene.shape.Circle;
 import javafx.util.Duration;
 
+import java.net.URL;
+
 public class homeUI extends Application {
     private boolean isOn = false; // State of the switch
     String licenseKey = "4UNGPZMYCRBBVOVZ0AWF82M7IHNDBS2EYN2C0FAYRVYOTVRTSSTZHLK2LVGNN0A6QRV6COK5SBS26" +
@@ -31,14 +33,19 @@ public class homeUI extends Application {
         primaryStage.setTitle("Rome Navigator");
 
         BorderPane root = new BorderPane();
-
         EngineOptions options = EngineOptions.newBuilder(RenderingMode.HARDWARE_ACCELERATED)
                 .licenseKey(licenseKey)
                 .build();
         var engine = Engine.newInstance(options);
         var browser = engine.newBrowser();
-        browser.navigation().loadUrl("/Users/omarelfiki/IdeaProjects/group14/src/resources/map.html");
-        var view = BrowserView.newInstance(browser);
+        URL mapUrl = getClass().getResource("/resources/map.html");
+        if (mapUrl != null) {
+            browser.navigation().loadUrl(mapUrl.toString());
+            System.out.println("Map loaded");
+        } else {
+            System.out.println("Map file not found");
+        }
+        BrowserView view = BrowserView.newInstance(browser);
         root.setCenter(view);
 
         Pane leftPane = new Pane();

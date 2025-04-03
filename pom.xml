@@ -108,5 +108,13 @@
                 <version>3.5.1</version>
             </plugin>
         </plugins>
+            <resources>
+                <resource>
+                    <directory>src/main/resources</directory>
+                    <includes>
+                        <include>**/*.html</include>
+                    </includes>
+                </resource>
+            </resources>
     </build>
 </project>
