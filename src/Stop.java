@@ -1,14 +1,14 @@
 public class Stop {
-    String stopId;
-    String stopName;
-    double stopLat;
-    double stopLon;
-    String stopDesc;
-    String stopURl;
-    int locationType;
-    String parentStation;
-    String stopTimezone;
-    int wheelchairBoarding;
+   private String stopId;
+   private String stopName;
+   private double stopLat;
+   private double stopLon;
+   private String stopDesc;
+   private String stopURl;
+   private int locationType;
+   private String parentStation;
+   private String stopTimezone;
+   private int wheelchairBoarding;
 
     public Stop(String stopId, String stopName, double stopLat, double stopLon, String stopDesc, String stopURl, int locationType, String parentStation, String stopTimezone, int wheelchairBoarding) {
         this.stopId = stopId;
