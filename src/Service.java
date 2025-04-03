@@ -1,13 +1,13 @@
 public class Service {
-    private String serviceID;
+    private String serviceId;
 
     public Service(String serviceID) {
-        this.serviceID = serviceID;
+        this.serviceId = serviceID;
     }
-    public String getServiceID() {
-        return serviceID;
+    public String getServiceId() {
+        return serviceId;
     }
     public String toString() {
-        return "ServiceID:" + serviceID;
+        return "ServiceID:" + serviceId;
     }
 }

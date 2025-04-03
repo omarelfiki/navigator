@@ -1,15 +1,15 @@
 public class StopTimes {
     private Stop stop;
     private String tripID;
-    private String departureTime;     // Format: "HH:mm:ss"
-    private String arrivalTime;       // Format: "HH:mm:ss"
+    private String departureTime;
+    private String arrivalTime;
     private int stopSequence;
     private double shapeDistTravelled;
     private int dropOffType;
     private int pickupType;
-    private String stopHeadsign;
+    private String stopHeadSign;
 
-    public StopTimes(Stop stop, String tripID , String departureTime, String arrivalTime, int  stopSequence, double shapeDisTravelled, int dropOffType, int pickupType, String stopHeadsign  ) {
+    public StopTimes(Stop stop, String tripID , String departureTime, String arrivalTime, int  stopSequence, double shapeDisTravelled, int dropOffType, int pickupType, String stopHeadSign  ) {
     this.stop = stop;
     this.tripID = tripID;
     this.departureTime = departureTime;
@@ -18,12 +18,12 @@ public class StopTimes {
     this.shapeDistTravelled = shapeDisTravelled;
     this.dropOffType = dropOffType;
     this.pickupType = pickupType;
-    this.stopHeadsign = stopHeadsign;
+    this.stopHeadSign = stopHeadSign;
     }
-    public StopTimes(int dropOffType , int pickupType , String stopHeadsign) {
+    public StopTimes(int dropOffType , int pickupType , String stopHeadSign) {
     this.dropOffType = dropOffType;
     this.pickupType = pickupType;
-    this.stopHeadsign = stopHeadsign;
+    this.stopHeadSign = stopHeadSign;
     }
 
     public Stop getStop() {
@@ -51,12 +51,12 @@ public class StopTimes {
     public int getPickupType() {
         return pickupType;
     }
-    public String getStopHeadsign() {
-        return stopHeadsign;
+    public String getStopHeadSign() {
+        return stopHeadSign;
     }
     @Override
     public String toString() {
-        return "stopID=" + (stop != null ? stop.getStopID() : "null") +
+        return "stopID=" + (stop != null ? stop.getStopId() : "null") +
                 ", tripID='" + tripID + '\'' +
                 ", departureTime='" + departureTime + '\'' +
                 ", arrivalTime='" + arrivalTime + '\'' +
@@ -64,7 +64,7 @@ public class StopTimes {
                 ", shapeDistTravelled=" + shapeDistTravelled +
                 ", dropOffType=" + dropOffType +
                 ", pickupType=" + pickupType +
-                ", stopHeadsign='" + stopHeadsign + '\'' +
+                ", stopHeadSign='" + stopHeadSign + '\'' +
                 '}';
     }
 

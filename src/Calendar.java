@@ -55,7 +55,7 @@ public class Calendar {
     }
     @Override
     public String toString() {
-        return "serviceID=" + (service != null ? service.getServiceID() : "null") +
+        return "serviceID=" + (service != null ? service.getServiceId() : "null") +
                 ", monday=" + monday +
                 ", tuesday=" + tuesday +
                 ", wednesday=" + wednesday +

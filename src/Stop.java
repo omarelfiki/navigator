@@ -1,5 +1,5 @@
 public class Stop {
-    String stopID;
+    String stopId;
     String stopName;
     double stopLat;
     double stopLon;
@@ -10,8 +10,8 @@ public class Stop {
     String stopTimezone;
     int wheelchairBoarding;
 
-    public Stop(String stopID, String stopName, double stopLat, double stopLon, String stopDesc, String stopURl, int locationType, String parentStation, String stopTimezone, int wheelchairBoarding) {
-        this.stopID = stopID;
+    public Stop(String stopId, String stopName, double stopLat, double stopLon, String stopDesc, String stopURl, int locationType, String parentStation, String stopTimezone, int wheelchairBoarding) {
+        this.stopId = stopId;
         this.stopName = stopName;
         this.stopLat = stopLat;
         this.stopLon = stopLon;
@@ -24,15 +24,15 @@ public class Stop {
 
     }
 
-    public Stop(String stopID, String stopName, double stopLat, double stopLon) {
-        this.stopID = stopID;
+    public Stop(String stopId, String stopName, double stopLat, double stopLon) {
+        this.stopId = stopId;
         this.stopName = stopName;
         this.stopLat = stopLat;
         this.stopLon = stopLon;
     }
 
-    public String getStopID() {
-        return stopID;
+    public String getStopId() {
+        return stopId;
     }
     public String getStopName() {
         return stopName;
@@ -64,6 +64,6 @@ public class Stop {
 
     @Override
     public String toString() {
-        return "Stop ID: " + stopID + '\n' + "Stop Name: " + stopName + '\n' + "Stop Latitude: " + stopLat + '\n' + "Stop Longitude: " + stopLon;
+        return "Stop ID: " + stopId + '\n' + "Stop Name: " + stopName + '\n' + "Stop Latitude: " + stopLat + '\n' + "Stop Longitude: " + stopLon;
     }
 }
