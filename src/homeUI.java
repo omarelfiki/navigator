@@ -1,8 +1,12 @@
+import com.teamdev.jxbrowser.browser.Browser;
 import com.teamdev.jxbrowser.engine.Engine;
 import com.teamdev.jxbrowser.engine.EngineOptions;
 import com.teamdev.jxbrowser.view.javafx.BrowserView;
 import com.teamdev.jxbrowser.engine.RenderingMode;
 import javafx.application.Application;
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
@@ -24,7 +28,9 @@ import javafx.util.Duration;
 import java.net.URL;
 
 public class homeUI extends Application {
-    private boolean isOn = false; // State of the switch
+
+    double[] romeCoords = {41.6558, 42.1233, 12.2453, 12.8558}; // {minLat, maxLat, minLng, maxLng}
+    private BooleanProperty isOn = new SimpleBooleanProperty(false); // State of the switch
     String licenseKey = "4UNGPZMYCRBBVOVZ0AWF82M7IHNDBS2EYN2C0FAYRVYOTVRTSSTZHLK2LVGNN0A6QRV6COK5SBS26" +
             "MOT46BELCJEJ1946IKC2CIZCU6CWEYUNGBLVUW1XGETH5MZ7UIRPV2ZNXW8FCK4DN99GBX";
 
@@ -54,12 +60,10 @@ public class homeUI extends Application {
         root.setLeft(vbox_left);
 
         Rectangle leftBar = new Rectangle();
-        leftBar.widthProperty().set(350);
-        leftBar.heightProperty().set(720);
-        leftBar.setX(33);
-        leftBar.setY(50);
-        leftBar.setArcHeight(35);
-        leftBar.setArcWidth(35);
+        leftBar.widthProperty().bind(root.widthProperty().multiply(0.273)); // 350/1280
+        leftBar.heightProperty().bind(root.heightProperty()); // Full height
+        leftBar.setX(0);
+        leftBar.setY(0);
         leftBar.setFill(Color.web("#5D5D5D"));
         leftBar.setOpacity(0.95);
         leftPane.getChildren().add(leftBar);
@@ -67,88 +71,111 @@ public class homeUI extends Application {
         Text title = new Text("Navigator");
         title.setFill(Color.WHITE);
         title.setStyle("-fx-font: 25 Ubuntu;");
-        title.setX(50);
-        title.setY(100);
+        title.xProperty().bind(root.widthProperty().multiply(0.015)); // 20/1280
+        title.yProperty().bind(root.heightProperty().multiply(0.06)); // 50/832
         leftPane.getChildren().add(title);
 
         TextField startPlace = new TextField();
         startPlace.setPromptText("Starting Point");
-        startPlace.setLayoutX(55);
-        startPlace.setLayoutY(130);
-        startPlace.setPrefSize(307, 41.74);
+        startPlace.layoutXProperty().bind(root.widthProperty().multiply(0.017)); // 22/1280
+        startPlace.layoutYProperty().bind(root.heightProperty().multiply(0.12)); // 100/832
+        startPlace.prefWidthProperty().bind(root.widthProperty().multiply(0.24)); // 307/1280
+        startPlace.prefHeightProperty().bind(root.heightProperty().multiply(0.05)); // 41.74/832
         leftPane.getChildren().add(startPlace);
 
         TextField endPlace = new TextField();
         endPlace.setPromptText("Destination");
-        endPlace.setLayoutX(55);
-        endPlace.setLayoutY(190);
-        endPlace.setPrefSize(307, 41.74);
+        endPlace.layoutXProperty().bind(root.widthProperty().multiply(0.017)); // 22/1280
+        endPlace.layoutYProperty().bind(root.heightProperty().multiply(0.192)); // 160/832
+        endPlace.prefWidthProperty().bind(root.widthProperty().multiply(0.24)); // 307/1280
+        endPlace.prefHeightProperty().bind(root.heightProperty().multiply(0.05)); // 41.74/832
         leftPane.getChildren().add(endPlace);
 
         Text label = new Text("Navigate to see public transport \n options");
         label.setTextAlignment(TextAlignment.CENTER);
         label.setFill(Color.WHITE);
         label.setStyle("-fx-font: 15 Ubuntu;");
-        label.setX(110);
-        label.setY(400);
+        label.xProperty().bind(root.widthProperty().multiply(0.061)); // 78/1280
+        label.yProperty().bind(root.heightProperty().multiply(0.48)); // 400/832
         leftPane.getChildren().add(label);
 
         Line line = new Line();
-        line.setStartX(33);
-        line.setStartY(709);
-        line.setEndX(383);
-        line.setEndY(709);
+        line.startXProperty().bind(root.widthProperty().multiply(0)); // 0/1280
+        line.startYProperty().bind(root.heightProperty().multiply(0.89).add(20)); // 740/832 + 20
+        line.endXProperty().bind(root.widthProperty().multiply(0.273)); // 350/1280
+        line.endYProperty().bind(root.heightProperty().multiply(0.89).add(20)); // 740/832 + 20
         line.setStroke(Color.WHITE);
         leftPane.getChildren().add(line);
 
         // Background rectangle (toggle track)
-        Rectangle background = new Rectangle(60, 30);
+        Rectangle background = new Rectangle();
+        background.widthProperty().bind(root.widthProperty().multiply(0.047)); // 60/1280
+        background.heightProperty().bind(root.heightProperty().multiply(0.036)); // 30/832
         background.setArcWidth(30);
         background.setArcHeight(30);
         background.setFill(Color.LIGHTGRAY);
 
         // Toggle circle (switch knob)
-        Circle knob = new Circle(15);
+        Circle knob = new Circle();
+        knob.radiusProperty().bind(root.widthProperty().multiply(0.012)); // 15/1280
         knob.setFill(Color.WHITE);
-        knob.setLayoutX(30);
-        knob.setTranslateX(-15); // Start on the left
-        knob.setTranslateY(15);
+        knob.layoutXProperty().bind(root.widthProperty().multiply(0.023)); // 30/1280
+        knob.translateXProperty().bind(Bindings.when(isOn).then(root.widthProperty().multiply(0.012)).otherwise(root.widthProperty().multiply(-0.012))); // 15/1280 or -15/1280
+        knob.translateYProperty().bind(root.heightProperty().multiply(0.018)); // 15/832
 
         // Pane to hold the switch
         Pane togglePane = new Pane(background, knob);
-        togglePane.setPrefSize(60, 30);
-        togglePane.setLayoutX(40);
-        togglePane.setLayoutY(723);
+        togglePane.prefWidthProperty().bind(root.widthProperty().multiply(0.047)); // 60/1280
+        togglePane.prefHeightProperty().bind(root.heightProperty().multiply(0.036)); // 30/832
+        togglePane.layoutXProperty().bind(root.widthProperty().multiply(0.015)); // 20/1280
+        togglePane.layoutYProperty().bind(root.heightProperty().multiply(0.913).add(20)); // 760/832 + 20
 
         // Handle click event
         togglePane.setOnMouseClicked(_ -> toggleSwitch(knob, background));
         leftPane.getChildren().add(togglePane);
 
-        Text toggleText = new Text("Hotmap Mode");
+        Text toggleText = new Text("Heatmap Mode");
         toggleText.setFill(Color.WHITE);
         toggleText.setStyle("-fx-font: 10 Ubuntu;");
-        toggleText.setX(110);
-        toggleText.setY(742);
+        toggleText.xProperty().bind(root.widthProperty().multiply(0.07)); // 90/1280
+        toggleText.yProperty().bind(root.heightProperty().multiply(0.935).add(20)); // 778/832 + 20
         leftPane.getChildren().add(toggleText);
 
         Image image = new Image("settingsIcon.png");
         ImageView imageView = new ImageView(image);
-        imageView.setFitWidth(25);
-        imageView.setFitHeight(25);
+        imageView.fitWidthProperty().bind(root.widthProperty().multiply(0.02)); // 25/1280
+        imageView.fitHeightProperty().bind(root.heightProperty().multiply(0.03)); // 25/832
 
         Button settings = new Button("", imageView);
-        settings.setLayoutX(313);
-        settings.setLayoutY(723);
-        settings.setPrefSize(50, 30);
+        settings.layoutXProperty().bind(root.widthProperty().multiply(0.219)); // 280/1280
+        settings.layoutYProperty().bind(root.heightProperty().multiply(0.913).add(20)); // 760/832 + 20
+        settings.prefWidthProperty().bind(root.widthProperty().multiply(0.039)); // 50/1280
+        settings.prefHeightProperty().bind(root.heightProperty().multiply(0.036)); // 30/832
         settings.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
         settings.setOnAction(_ -> System.out.println("Settings"));
         leftPane.getChildren().add(settings);
 
-        startPlace.setOnAction(_ -> {
-            String start = startPlace.getText();
-            double[] coords = GeoUtil.getCoordinatesFromAddress(start);
+        parsePoint(browser, startPlace);
+        parsePoint(browser, endPlace);
+
+        Scene scene = new Scene(root, 1280, 832);
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
+
+    private void parsePoint(Browser browser, TextField field) {
+        field.setOnAction(_ -> {
+            String address = field.getText();
+            double[] coords = GeoUtil.getCoordinatesFromAddress(address);
             if (coords != null) {
+                if (coords[0] < romeCoords[0] || coords[0] > romeCoords[1] || coords[1] < romeCoords[2] || coords[1] > romeCoords[3]) {
+                    System.out.println("coordinates out of bounds");
+                    return;
+                }
                 System.out.println("Coordinates: " + coords[0] + ", " + coords[1]);
+                browser.mainFrame().ifPresent(frame -> frame.executeJavaScript(
+                        "updateMap(" + coords[0] + ", " + coords[1] + ");"
+                ));
                 GTFSaccess gtfs = new GTFSaccess("rome-gtfs.database.windows.net", "rome-gtfs", "gtfsaccess", "Gtfs-142025");
                 gtfs.connect();
                 Stop closestStop = gtfs.getClosestStops(coords[0], coords[1]);
@@ -157,16 +184,12 @@ public class homeUI extends Application {
                 System.out.println("Address not found");
             }
         });
-
-        Scene scene = new Scene(root, 1280, 832);
-        primaryStage.setScene(scene);
-        primaryStage.show();
     }
 
     private void toggleSwitch(Circle knob, Rectangle background) {
         TranslateTransition transition = new TranslateTransition(Duration.millis(200), knob);
 
-        if (isOn) {
+        if (isOn.get()) {
             transition.setToX(-15); // Move knob to left
             background.setFill(Color.LIGHTGRAY); // Gray color for off state
         } else {
@@ -174,7 +197,7 @@ public class homeUI extends Application {
             background.setFill(Color.LIMEGREEN); // Green color for on state
         }
 
-        isOn = !isOn; // Toggle the state
+        isOn.set(!isOn.get()); // Toggle the state
         transition.play();
     }
 

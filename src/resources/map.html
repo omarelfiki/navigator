@@ -2,25 +2,46 @@
 <html lang="en">
 <head>
     <meta http-equiv="Content-Security-Policy" content="default-src *; script-src 'self' 'unsafe-inline' 'unsafe-eval' *; style-src 'self' 'unsafe-inline' *; img-src * data:'unsafe-inline'">
-    <title></title>
+    <title>Map</title>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
 </head>
 <body>
-    <div id="map" style="width:1265px; height:800px;"></div>
+    <div id="map"></div>
     <script
             src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDWUFIdOzWZeq2BsFfTMMif-VdY2YSqmKg&libraries=maps,marker&v=beta"
             defer
     ></script>
     <script>
-        console.log("Initializing map...");
+        let map;
         function initMap() {
-            const map = new google.maps.Map(document.getElementById('map'), {
+            map = new google.maps.Map(document.getElementById('map'), {
                 center: { lat: 41.896064, lng: 12.479111 },
                 zoom: 13,
                 mapId: 'DEMO_MAP_ID',
                 disableDefaultUI: true
             });
         }
-        console.log("Map initialized:", map);
+
+        function updateMap(lat, lng) {
+            console.log("Updating map with coordinates: " + lat + ", " + lng);
+            const newCenter = new google.maps.LatLng(lat, lng);
+            map.setCenter(newCenter);
+            new google.maps.Marker({
+                position: newCenter,
+                map: map,
+                title: 'Coordinates: ' + lat + ', ' + lng
+            });
+        }
 
         window.initMap = initMap;
     </script>
