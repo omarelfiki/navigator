@@ -25,25 +25,25 @@ public class Calendar {
     public Service getService() {
         return service;
     }
-    public boolean getMonday() {
+    public boolean isMonday() {
         return monday;
     }
-    public boolean getTuesday() {
+    public boolean isTuesday() {
         return tuesday;
     }
-    public boolean getWednesday() {
+    public boolean isWednesday() {
         return wednesday;
     }
-    public boolean getThursday() {
+    public boolean isThursday() {
         return thursday;
     }
-    public boolean getFriday() {
+    public boolean isFriday() {
         return friday;
     }
-    public boolean getSaturday() {
+    public boolean isSaturday() {
         return saturday;
     }
-    public boolean getSunday() {
+    public boolean isSunday() {
         return sunday;
     }
     public String getStartDate() {

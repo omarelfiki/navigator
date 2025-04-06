@@ -3,6 +3,7 @@ public class Stop {
    private String stopName;
    private double stopLat;
    private double stopLon;
+   // Optional fields
    private String stopDesc;
    private String stopURl;
    private int locationType;
@@ -10,6 +11,7 @@ public class Stop {
    private String stopTimezone;
    private int wheelchairBoarding;
 
+    // Constructor with required + optional fields
     public Stop(String stopId, String stopName, double stopLat, double stopLon, String stopDesc, String stopURl, int locationType, String parentStation, String stopTimezone, int wheelchairBoarding) {
         this.stopId = stopId;
         this.stopName = stopName;
@@ -23,7 +25,7 @@ public class Stop {
         this.wheelchairBoarding = wheelchairBoarding;
 
     }
-
+    // Constructor with required fields
     public Stop(String stopId, String stopName, double stopLat, double stopLon) {
         this.stopId = stopId;
         this.stopName = stopName;
