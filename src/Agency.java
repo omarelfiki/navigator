@@ -1,4 +1,5 @@
 public class Agency {
+    private String agencyId;
     private String agencyName;
     private String agencyUrl;
     private String agencyLang;
@@ -19,6 +20,10 @@ public class Agency {
     public Agency(String agencyName, String agencyUrl, String agencyLang, String agencyTimeZone, String agencyFareUrl) {
         this(agencyName, agencyUrl, agencyLang, agencyTimeZone);
         this.agencyFareUrl = agencyFareUrl;
+    }
+
+    public String getAgencyId() {
+        return agencyId;
     }
 
     public String getAgencyName() {

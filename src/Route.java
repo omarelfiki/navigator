@@ -68,7 +68,7 @@ public class Route {
     public String toString() {
         return "Route{" +
                 "routeId='" + routeId + '\'' +
-                ", agencyName='" + (agency != null ? agency.getAgencyName() : "null") + '\'' +
+                ", agencyName='" + (agency != null ? agency.getAgencyId() : "null") + '\'' +
                 ", routeShortName='" + routeShortName + '\'' +
                 ", routeUrl='" + routeUrl + '\'' +
                 ", routeType='" + routeType + '\'' +
