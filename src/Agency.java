@@ -49,6 +49,7 @@ public class Agency {
     @Override
     public String toString() {
         return "Agency{" +
+                "agencyId='" + agencyId + '\'' +
                 "agencyName='" + agencyName + '\'' +
                 ", agencyUrl='" + agencyUrl + '\'' +
                 ", agencyLang='" + agencyLang + '\'' +
