@@ -219,19 +219,15 @@ public class homeUI extends Application {
     }
 
     private void toggleSwitch(Circle knob, Rectangle background) {
-        TranslateTransition transition = new TranslateTransition(Duration.millis(200), knob);
-
         if (isOn.get()) {
-            transition.setToX(-15); // Move knob to left
-            background.setFill(Color.LIGHTGRAY); // Gray color for off state
+            background.setFill(Color.LIGHTGRAY); // Off state
         } else {
-            transition.setToX(15); // Move knob to right
-            background.setFill(Color.LIMEGREEN); // Green color for on state
+            background.setFill(Color.LIMEGREEN); // On state
         }
 
         isOn.set(!isOn.get()); // Toggle the state
-        transition.play();
     }
+
 
     private StackPane createTextFieldWithIcon(String icon, String prompt) {
         StackPane container = new StackPane();
