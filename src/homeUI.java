@@ -29,6 +29,9 @@ import java.util.Objects;
 
 public class homeUI extends Application {
 
+
+    StackPane settingMenu;
+    boolean isMenuOpen = false;
     double[] romeCoords = {41.6558, 42.1233, 12.2453, 12.8558}; // {minLat, maxLat, minLng, maxLng}
 
     Browser browser;
@@ -141,20 +144,56 @@ public class homeUI extends Application {
         imageView.fitWidthProperty().bind(root.widthProperty().multiply(0.02)); // 25/1280
         imageView.fitHeightProperty().bind(root.heightProperty().multiply(0.03)); // 25/832
 
+
         Button settings = new Button("", imageView);
         settings.layoutXProperty().bind(root.widthProperty().multiply(0.219)); // 280/1280
         settings.layoutYProperty().bind(root.heightProperty().multiply(0.913).add(20)); // 760/832 + 20
         settings.prefWidthProperty().bind(root.widthProperty().multiply(0.039)); // 50/1280
         settings.prefHeightProperty().bind(root.heightProperty().multiply(0.036)); // 30/832
         settings.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
-        settings.setOnAction(_ -> System.out.println("Settings"));
+        settings.setOnAction(event -> {
+            if (!isMenuOpen) {
+                createAndShowSettingMenu(leftPane);
+                isMenuOpen = true;
+            } else {
+                leftPane.getChildren().remove(settingMenu);
+                settingMenu = null;
+                leftPane.setOnMouseClicked(null);
+                isMenuOpen = false;
+            }
+        });
         leftPane.getChildren().add(settings);
-
         Scene scene = new Scene(root, 1280, 832);
         scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/resources/styles.css")).toExternalForm());
         primaryStage.setScene(scene);
         primaryStage.show();
     }
+
+    private void createAndShowSettingMenu(Pane leftPane) {
+        settingMenu = new StackPane();
+        settingMenu.setStyle("-fx-background-color: rgba(0, 0, 0, 0.85); -fx-background-radius: 10;");
+        settingMenu.setPrefSize(200, 150);
+        settingMenu.layoutXProperty().bind(leftPane.widthProperty().subtract(settingMenu.widthProperty()).divide(2));
+        settingMenu.layoutYProperty().bind(leftPane.heightProperty().subtract(settingMenu.heightProperty()).divide(2));
+        leftPane.getChildren().add(settingMenu);
+        leftPane.setOnMouseClicked(e -> {
+            if (settingMenu != null && !isClickInsideSettingMenu(e)) {
+                leftPane.getChildren().remove(settingMenu);
+                settingMenu = null;
+                leftPane.setOnMouseClicked(null);
+                isMenuOpen = false;
+            }
+        });
+    }
+    private boolean isClickInsideSettingMenu(javafx.scene.input.MouseEvent e) {
+        if (settingMenu == null) {
+            return false;
+        }
+        javafx.geometry.Bounds bounds = settingMenu.localToScene(settingMenu.getBoundsInLocal());
+        return bounds.contains(e.getSceneX(), e.getSceneY());
+    }
+
+
 
     private void parsePoint(Browser browser, TextField field) {
         field.setOnAction(_ -> {
