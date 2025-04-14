@@ -9,10 +9,9 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
@@ -26,11 +25,14 @@ import javafx.scene.shape.Circle;
 import javafx.util.Duration;
 
 import java.net.URL;
+import java.util.Objects;
 
 public class homeUI extends Application {
 
     double[] romeCoords = {41.6558, 42.1233, 12.2453, 12.8558}; // {minLat, maxLat, minLng, maxLng}
-    private BooleanProperty isOn = new SimpleBooleanProperty(false); // State of the switch
+
+    Browser browser;
+    private final BooleanProperty isOn = new SimpleBooleanProperty(false); // State of the switch
     String licenseKey = "4UNGPZMYCRBBVOVZ0AWF82M7IHNDBS2EYN2C0FAYRVYOTVRTSSTZHLK2LVGNN0A6QRV6COK5SBS26" +
             "MOT46BELCJEJ1946IKC2CIZCU6CWEYUNGBLVUW1XGETH5MZ7UIRPV2ZNXW8FCK4DN99GBX";
 
@@ -43,7 +45,7 @@ public class homeUI extends Application {
                 .licenseKey(licenseKey)
                 .build();
         var engine = Engine.newInstance(options);
-        var browser = engine.newBrowser();
+        browser = engine.newBrowser();
         URL mapUrl = getClass().getResource("/resources/map.html");
         if (mapUrl != null) {
             browser.navigation().loadUrl(mapUrl.toString());
@@ -70,26 +72,18 @@ public class homeUI extends Application {
 
         Text title = new Text("Navigator");
         title.setFill(Color.WHITE);
-        title.setStyle("-fx-font: 25 Ubuntu;");
+        title.setStyle("-fx-font: 28 Ubuntu;");
         title.xProperty().bind(root.widthProperty().multiply(0.015)); // 20/1280
         title.yProperty().bind(root.heightProperty().multiply(0.06)); // 50/832
         leftPane.getChildren().add(title);
 
-        TextField startPlace = new TextField();
-        startPlace.setPromptText("Starting Point");
-        startPlace.layoutXProperty().bind(root.widthProperty().multiply(0.017)); // 22/1280
-        startPlace.layoutYProperty().bind(root.heightProperty().multiply(0.12)); // 100/832
-        startPlace.prefWidthProperty().bind(root.widthProperty().multiply(0.24)); // 307/1280
-        startPlace.prefHeightProperty().bind(root.heightProperty().multiply(0.05)); // 41.74/832
-        leftPane.getChildren().add(startPlace);
+        StackPane startGroup = createTextFieldWithIcon("↗", "Starting Point");
+        bindPosition(startGroup, root, 0.017, 0.09, 0.24, 0.035);
+        leftPane.getChildren().add(startGroup);
 
-        TextField endPlace = new TextField();
-        endPlace.setPromptText("Destination");
-        endPlace.layoutXProperty().bind(root.widthProperty().multiply(0.017)); // 22/1280
-        endPlace.layoutYProperty().bind(root.heightProperty().multiply(0.192)); // 160/832
-        endPlace.prefWidthProperty().bind(root.widthProperty().multiply(0.24)); // 307/1280
-        endPlace.prefHeightProperty().bind(root.heightProperty().multiply(0.05)); // 41.74/832
-        leftPane.getChildren().add(endPlace);
+        StackPane endGroup = createTextFieldWithIcon("↙", "Destination");
+        bindPosition(endGroup, root, 0.017, 0.18, 0.24, 0.035);
+        leftPane.getChildren().add(endGroup);
 
         Text label = new Text("Navigate to see public transport \n options");
         label.setTextAlignment(TextAlignment.CENTER);
@@ -116,6 +110,7 @@ public class homeUI extends Application {
         background.setFill(Color.LIGHTGRAY);
 
         // Toggle circle (switch knob)
+        //TODO: fix button
         Circle knob = new Circle();
         knob.radiusProperty().bind(root.widthProperty().multiply(0.012)); // 15/1280
         knob.setFill(Color.WHITE);
@@ -155,10 +150,8 @@ public class homeUI extends Application {
         settings.setOnAction(_ -> System.out.println("Settings"));
         leftPane.getChildren().add(settings);
 
-        parsePoint(browser, startPlace);
-        parsePoint(browser, endPlace);
-
         Scene scene = new Scene(root, 1280, 832);
+        scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/resources/styles.css")).toExternalForm());
         primaryStage.setScene(scene);
         primaryStage.show();
     }
@@ -200,6 +193,40 @@ public class homeUI extends Application {
         isOn.set(!isOn.get()); // Toggle the state
         transition.play();
     }
+
+    private StackPane createTextFieldWithIcon(String icon, String prompt) {
+        StackPane container = new StackPane();
+        container.getStyleClass().add("input-container");
+
+        HBox inner = new HBox(10);
+        inner.setStyle("-fx-padding: 10;");
+
+        StackPane iconCircle = new StackPane();
+        iconCircle.getStyleClass().add("circle-icon");
+
+        Label iconLabel = new Label(icon);
+        iconLabel.getStyleClass().add("icon-label");
+        iconCircle.getChildren().add(iconLabel);
+
+        TextField textField = new TextField();
+        textField.setPromptText(prompt);
+        textField.getStyleClass().add("rounded-textfield");
+        parsePoint(browser, textField);
+
+        HBox.setHgrow(textField, Priority.ALWAYS);
+        inner.getChildren().addAll(iconCircle, textField);
+
+        container.getChildren().add(inner);
+        return container;
+    }
+
+    private void bindPosition(Region node, Pane root, double xRatio, double yRatio, double wRatio, double hRatio) {
+        node.layoutXProperty().bind(root.widthProperty().multiply(xRatio));
+        node.layoutYProperty().bind(root.heightProperty().multiply(yRatio));
+        node.prefWidthProperty().bind(root.widthProperty().multiply(wRatio));
+        node.prefHeightProperty().bind(root.heightProperty().multiply(hRatio));
+    }
+
 
     public static void main(String[] args) {
         launch(args);
