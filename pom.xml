@@ -28,21 +28,12 @@
         </dependencies>
     </dependencyManagement>
 
-    <repositories>
-        <repository>
-            <id>com.teamdev</id>
-            <url>https://europe-maven.pkg.dev/jxbrowser/releases</url>
-        </repository>
-    </repositories>
-
     <dependencies>
-        <!-- PostgreSQL JDBC -->
         <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>42.7.2</version>
+            <groupId>com.gluonhq</groupId>
+            <artifactId>maps</artifactId>
+            <version>2.0.0-ea+6</version>
         </dependency>
-
         <!-- JavaFX modules -->
         <dependency>
             <groupId>org.openjfx</groupId>
@@ -78,18 +69,6 @@
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
-        </dependency>
-        <!-- JxBrowser dependencies -->
-        <dependency>
-            <groupId>com.teamdev.jxbrowser</groupId>
-            <artifactId>jxbrowser-cross-platform</artifactId>
-            <version>${jxbrowser.version}</version>
-            <type>pom</type>
-        </dependency>
-        <dependency>
-            <groupId>com.teamdev.jxbrowser</groupId>
-            <artifactId>jxbrowser-javafx</artifactId>
-            <version>${jxbrowser.version}</version>
         </dependency>
     </dependencies>
 
