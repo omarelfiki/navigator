@@ -22,7 +22,6 @@ import javafx.animation.TranslateTransition;
 import javafx.scene.shape.Circle;
 import javafx.util.Duration;
 
-import java.net.URL;
 import java.util.Objects;
 
 public class homeUI extends Application {
