@@ -28,21 +28,8 @@
         </dependencies>
     </dependencyManagement>
 
-    <repositories>
-        <repository>
-            <id>com.teamdev</id>
-            <url>https://europe-maven.pkg.dev/jxbrowser/releases</url>
-        </repository>
-    </repositories>
 
     <dependencies>
-        <!-- PostgreSQL JDBC -->
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>42.7.2</version>
-        </dependency>
-
         <!-- JavaFX modules -->
         <dependency>
             <groupId>org.openjfx</groupId>
@@ -65,11 +52,6 @@
             <version>20231013</version>
         </dependency>
         <dependency>
-            <groupId>com.microsoft.sqlserver</groupId>
-            <artifactId>mssql-jdbc</artifactId>
-            <version>12.6.1.jre11</version>
-        </dependency>
-        <dependency>
             <groupId>com.leastfixedpoint</groupId>
             <artifactId>leastfixedpoint-json</artifactId>
             <version>1.2</version>
@@ -79,17 +61,16 @@
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
-        <!-- JxBrowser dependencies -->
+
         <dependency>
-            <groupId>com.teamdev.jxbrowser</groupId>
-            <artifactId>jxbrowser-cross-platform</artifactId>
-            <version>${jxbrowser.version}</version>
-            <type>pom</type>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-csv</artifactId>
+            <version>1.10.0</version>
         </dependency>
         <dependency>
-            <groupId>com.teamdev.jxbrowser</groupId>
-            <artifactId>jxbrowser-javafx</artifactId>
-            <version>${jxbrowser.version}</version>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.33</version>
         </dependency>
     </dependencies>
 
