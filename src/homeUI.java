@@ -209,6 +209,31 @@ public class homeUI extends Application {
         return bounds.contains(e.getSceneX(), e.getSceneY());
     }
 
+
+
+//    private void parsePoint(Browser browser, TextField field) {
+//        field.setOnAction(_ -> {
+//            String address = field.getText();
+//            double[] coords = GeoUtil.getCoordinatesFromAddress(address);
+//            if (coords != null) {
+//                if (coords[0] < romeCoords[0] || coords[0] > romeCoords[1] || coords[1] < romeCoords[2] || coords[1] > romeCoords[3]) {
+//                    System.out.println("coordinates out of bounds");
+//                    return;
+//                }
+//                System.out.println("Coordinates: " + coords[0] + ", " + coords[1]);
+//                browser.mainFrame().ifPresent(frame -> frame.executeJavaScript(
+//                        "updateMap(" + coords[0] + ", " + coords[1] + ");"
+//                ));
+//                GTFSaccess gtfs = new GTFSaccess("rome-gtfs.database.windows.net", "rome-gtfs", "gtfsaccess", "Gtfs-142025");
+//                gtfs.connect();
+//                Stop closestStop = gtfs.getClosestStops(coords[0], coords[1]);
+//                System.out.println("Closest Stop: " + closestStop);
+//            } else {
+//                System.out.println("Address not found");
+//            }
+//        });
+//    }
+
     private void toggleSwitch(Circle knob, Rectangle background) {
         if (isOn.get()) {
             background.setFill(Color.LIGHTGRAY); // Off state
@@ -237,7 +262,7 @@ public class homeUI extends Application {
         TextField textField = new TextField();
         textField.setPromptText(prompt);
         textField.getStyleClass().add("rounded-textfield");
-        //parsePoint(browser, textField);
+//        parsePoint(browser, textField);
 
         HBox.setHgrow(textField, Priority.ALWAYS);
         inner.getChildren().addAll(iconCircle, textField);
