@@ -1,8 +1,3 @@
-import com.teamdev.jxbrowser.browser.Browser;
-import com.teamdev.jxbrowser.engine.Engine;
-import com.teamdev.jxbrowser.engine.EngineOptions;
-import com.teamdev.jxbrowser.view.javafx.BrowserView;
-import com.teamdev.jxbrowser.engine.RenderingMode;
 import javafx.application.Application;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
@@ -20,11 +15,7 @@ import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.animation.TranslateTransition;
 import javafx.scene.shape.Circle;
-import javafx.util.Duration;
-
-import java.net.URL;
 import java.util.Objects;
 
 public class homeUI extends Application {
@@ -34,30 +25,13 @@ public class homeUI extends Application {
     boolean isMenuOpen = false;
     double[] romeCoords = {41.6558, 42.1233, 12.2453, 12.8558}; // {minLat, maxLat, minLng, maxLng}
 
-    Browser browser;
     private final BooleanProperty isOn = new SimpleBooleanProperty(false); // State of the switch
-    String licenseKey = "4UNGPZMYCRBBVOVZ0AWF82M7IHNDBS2EYN2C0FAYRVYOTVRTSSTZHLK2LVGNN0A6QRV6COK5SBS26" +
-            "MOT46BELCJEJ1946IKC2CIZCU6CWEYUNGBLVUW1XGETH5MZ7UIRPV2ZNXW8FCK4DN99GBX";
 
     @Override
     public void start(Stage primaryStage) {
         primaryStage.setTitle("Rome Navigator");
 
         BorderPane root = new BorderPane();
-        EngineOptions options = EngineOptions.newBuilder(RenderingMode.HARDWARE_ACCELERATED)
-                .licenseKey(licenseKey)
-                .build();
-        var engine = Engine.newInstance(options);
-        browser = engine.newBrowser();
-        URL mapUrl = getClass().getResource("/resources/map.html");
-        if (mapUrl != null) {
-            browser.navigation().loadUrl(mapUrl.toString());
-            System.out.println("Map loaded");
-        } else {
-            System.out.println("Map file not found");
-        }
-        BrowserView view = BrowserView.newInstance(browser);
-        root.setCenter(view);
 
         Pane leftPane = new Pane();
         VBox vbox_left = new VBox();
@@ -193,31 +167,6 @@ public class homeUI extends Application {
         return bounds.contains(e.getSceneX(), e.getSceneY());
     }
 
-
-
-    private void parsePoint(Browser browser, TextField field) {
-        field.setOnAction(_ -> {
-            String address = field.getText();
-            double[] coords = GeoUtil.getCoordinatesFromAddress(address);
-            if (coords != null) {
-                if (coords[0] < romeCoords[0] || coords[0] > romeCoords[1] || coords[1] < romeCoords[2] || coords[1] > romeCoords[3]) {
-                    System.out.println("coordinates out of bounds");
-                    return;
-                }
-                System.out.println("Coordinates: " + coords[0] + ", " + coords[1]);
-                browser.mainFrame().ifPresent(frame -> frame.executeJavaScript(
-                        "updateMap(" + coords[0] + ", " + coords[1] + ");"
-                ));
-                GTFSaccess gtfs = new GTFSaccess("rome-gtfs.database.windows.net", "rome-gtfs", "gtfsaccess", "Gtfs-142025");
-                gtfs.connect();
-                Stop closestStop = gtfs.getClosestStops(coords[0], coords[1]);
-                System.out.println("Closest Stop: " + closestStop);
-            } else {
-                System.out.println("Address not found");
-            }
-        });
-    }
-
     private void toggleSwitch(Circle knob, Rectangle background) {
         if (isOn.get()) {
             background.setFill(Color.LIGHTGRAY); // Off state
@@ -246,7 +195,7 @@ public class homeUI extends Application {
         TextField textField = new TextField();
         textField.setPromptText(prompt);
         textField.getStyleClass().add("rounded-textfield");
-        parsePoint(browser, textField);
+//        parsePoint(browser, textField);
 
         HBox.setHgrow(textField, Priority.ALWAYS);
         inner.getChildren().addAll(iconCircle, textField);
