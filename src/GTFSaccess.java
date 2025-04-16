@@ -1,11 +1,21 @@
 import java.sql.*;
 
 public class GTFSaccess {
-    private final String server;
-    private final String database;
-    private final String user;
-    private final String password;
-    private Connection conn;
+
+    //mssql server connection
+    private String server;
+    private String database;
+    private String user;
+    private String password;
+
+    //mysql server connection
+    private String host;
+    private String port;
+    private String dbName;
+    private String dbUser;
+    private String dbPassword;
+
+    public Connection conn;
 
     public GTFSaccess(String server, String database, String user, String password) {
         this.server = server;
@@ -14,19 +24,38 @@ public class GTFSaccess {
         this.password = password;
     }
 
-    public void connect() {
-        try {
-            String connectionUrl = "jdbc:sqlserver://" + server + ":1433;"
-                    + "database=" + database + ";"
-                    + "user=" + user + ";"
-                    + "password=" + password + ";"
-                    + "encrypt=true;"
-                    + "trustServerCertificate=false;"
-                    + "loginTimeout=30;";
-            conn = DriverManager.getConnection(connectionUrl);
-            System.out.println("✅ Connected to Azure SQL GTFS Database");
-        } catch (SQLException e) {
-            System.out.println("SQL Error: " + e.getMessage());
+    public GTFSaccess(String host, String port, String database, String user, String password) {
+        this.host = host;
+        this.port = port;
+        this.dbName = database;
+        this.dbUser = user;
+        this.dbPassword = password;
+    }
+
+    public void connect(int type) {
+        switch (type) {
+            case 1:
+                try {
+                    String connectionUrl = "jdbc:sqlserver://" + server + ":1433;"
+                            + "database=" + database + ";"
+                            + "user=" + user + ";"
+                            + "password=" + password + ";"
+                            + "encrypt=true;"
+                            + "trustServerCertificate=false;"
+                            + "loginTimeout=30;";
+                    conn = DriverManager.getConnection(connectionUrl);
+                    System.out.println("✅ Connected to Azure SQL GTFS Database");
+                } catch (SQLException e) {
+                    System.out.println("SQL Error: " + e.getMessage());
+                }
+            case 2:
+                try {
+                    String connectionUrl = "jdbc:mysql://" + host + ":" + port + "/" + dbName;
+                    conn = DriverManager.getConnection(connectionUrl, dbUser, dbPassword);
+                    System.out.println("✅ Connected to MySQL GTFS Database");
+                } catch (SQLException e) {
+                    System.out.println("SQL Error: " + e.getMessage());
+                }
         }
     }
 

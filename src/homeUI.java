@@ -18,10 +18,7 @@ import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.animation.TranslateTransition;
 import javafx.scene.shape.Circle;
-import javafx.util.Duration;
-
 import java.util.Objects;
 
 public class homeUI extends Application {
@@ -145,94 +142,37 @@ public class homeUI extends Application {
         settings.prefHeightProperty().bind(root.heightProperty().multiply(0.036)); // 30/832
         settings.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
         settings.setOnAction(event -> {
-            if (!isMenuOpen) {
-                createAndShowSettingMenu(leftPane);
-                isMenuOpen = true;
-            } else {
-                leftPane.getChildren().remove(settingMenu);
-                settingMenu = null;
-                leftPane.setOnMouseClicked(null);
-                isMenuOpen = false;
-            }
+            toggleLeftBar(leftPane);
+            Pane settingsPane = setSettingMenu(root, leftPane);
+            vbox_left.getChildren().add(settingsPane);
         });
         leftPane.getChildren().add(settings);
+
         Scene scene = new Scene(root, 1280, 832);
         scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/resources/styles.css")).toExternalForm());
         primaryStage.setScene(scene);
         primaryStage.show();
     }
 
-//    private void parsePoint(Browser browser, TextField field) {
-//        field.setOnAction(_ -> {
-//            String address = field.getText();
-//            double[] coords = GeoUtil.getCoordinatesFromAddress(address);
-//            if (coords != null) {
-//                if (coords[0] < romeCoords[0] || coords[0] > romeCoords[1] || coords[1] < romeCoords[2] || coords[1] > romeCoords[3]) {
-//                    System.out.println("coordinates out of bounds");
-//                    return;
-//                }
-//                System.out.println("Coordinates: " + coords[0] + ", " + coords[1]);
-//                browser.mainFrame().ifPresent(frame -> frame.executeJavaScript(
-//                        "updateMap(" + coords[0] + ", " + coords[1] + ");"
-//                ));
-//                GTFSaccess gtfs = new GTFSaccess("rome-gtfs.database.windows.net", "rome-gtfs", "gtfsaccess", "Gtfs-142025");
-//                gtfs.connect();
-//                Stop closestStop = gtfs.getClosestStops(coords[0], coords[1]);
-//                System.out.println("Closest Stop: " + closestStop);
-//            } else {
-//                System.out.println("Address not found");
-//            }
-//        });
-//    }
-
-    private void createAndShowSettingMenu(Pane leftPane) {
-        settingMenu = new StackPane();
-        settingMenu.setStyle("-fx-background-color: rgba(0, 0, 0, 0.85); -fx-background-radius: 10;");
-        settingMenu.setPrefSize(200, 150);
-        settingMenu.layoutXProperty().bind(leftPane.widthProperty().subtract(settingMenu.widthProperty()).divide(2));
-        settingMenu.layoutYProperty().bind(leftPane.heightProperty().subtract(settingMenu.heightProperty()).divide(2));
-        leftPane.getChildren().add(settingMenu);
-        leftPane.setOnMouseClicked(e -> {
-            if (settingMenu != null && !isClickInsideSettingMenu(e)) {
-                leftPane.getChildren().remove(settingMenu);
-                settingMenu = null;
-                leftPane.setOnMouseClicked(null);
-                isMenuOpen = false;
+    private void parsePoint(TextField field) {
+        field.setOnAction(_ -> {
+            String address = field.getText();
+            double[] coords = GeoUtil.getCoordinatesFromAddress(address);
+            if (coords != null) {
+                if (coords[0] < romeCoords[0] || coords[0] > romeCoords[1] || coords[1] < romeCoords[2] || coords[1] > romeCoords[3]) {
+                    System.out.println("coordinates out of bounds");
+                    return;
+                }
+                System.out.println("Coordinates: " + coords[0] + ", " + coords[1]);
+                GTFSaccess gtfs = new GTFSaccess("rome-gtfs.database.windows.net", "rome-gtfs", "gtfsaccess", "Gtfs-142025");
+                gtfs.connect(1);
+                Stop closestStop = gtfs.getClosestStops(coords[0], coords[1]);
+                System.out.println("Closest Stop: " + closestStop);
+            } else {
+                System.out.println("Address not found");
             }
         });
     }
-    private boolean isClickInsideSettingMenu(javafx.scene.input.MouseEvent e) {
-        if (settingMenu == null) {
-            return false;
-        }
-        javafx.geometry.Bounds bounds = settingMenu.localToScene(settingMenu.getBoundsInLocal());
-        return bounds.contains(e.getSceneX(), e.getSceneY());
-    }
-
-
-
-//    private void parsePoint(Browser browser, TextField field) {
-//        field.setOnAction(_ -> {
-//            String address = field.getText();
-//            double[] coords = GeoUtil.getCoordinatesFromAddress(address);
-//            if (coords != null) {
-//                if (coords[0] < romeCoords[0] || coords[0] > romeCoords[1] || coords[1] < romeCoords[2] || coords[1] > romeCoords[3]) {
-//                    System.out.println("coordinates out of bounds");
-//                    return;
-//                }
-//                System.out.println("Coordinates: " + coords[0] + ", " + coords[1]);
-//                browser.mainFrame().ifPresent(frame -> frame.executeJavaScript(
-//                        "updateMap(" + coords[0] + ", " + coords[1] + ");"
-//                ));
-//                GTFSaccess gtfs = new GTFSaccess("rome-gtfs.database.windows.net", "rome-gtfs", "gtfsaccess", "Gtfs-142025");
-//                gtfs.connect();
-//                Stop closestStop = gtfs.getClosestStops(coords[0], coords[1]);
-//                System.out.println("Closest Stop: " + closestStop);
-//            } else {
-//                System.out.println("Address not found");
-//            }
-//        });
-//    }
 
     private void toggleSwitch(Circle knob, Rectangle background) {
         if (isOn.get()) {
@@ -243,7 +183,6 @@ public class homeUI extends Application {
 
         isOn.set(!isOn.get()); // Toggle the state
     }
-
 
     private StackPane createTextFieldWithIcon(String icon, String prompt) {
         StackPane container = new StackPane();
@@ -262,7 +201,7 @@ public class homeUI extends Application {
         TextField textField = new TextField();
         textField.setPromptText(prompt);
         textField.getStyleClass().add("rounded-textfield");
-//        parsePoint(browser, textField);
+        parsePoint(textField);
 
         HBox.setHgrow(textField, Priority.ALWAYS);
         inner.getChildren().addAll(iconCircle, textField);
@@ -271,11 +210,217 @@ public class homeUI extends Application {
         return container;
     }
 
+    private void toggleLeftBar(Pane leftPane) {
+        boolean isVisible = leftPane.isVisible();
+        leftPane.setVisible(!isVisible);
+        leftPane.setManaged(!isVisible);
+    }
+
     private void bindPosition(Region node, Pane root, double xRatio, double yRatio, double wRatio, double hRatio) {
         node.layoutXProperty().bind(root.widthProperty().multiply(xRatio));
         node.layoutYProperty().bind(root.heightProperty().multiply(yRatio));
         node.prefWidthProperty().bind(root.widthProperty().multiply(wRatio));
         node.prefHeightProperty().bind(root.heightProperty().multiply(hRatio));
+    }
+
+    private Pane setSettingMenu(BorderPane root, Pane leftPane) {
+        Pane settingMenu = new Pane();
+
+        Rectangle settings = new Rectangle();
+        settings.widthProperty().bind(root.widthProperty().multiply(0.273)); // 350/1280
+        settings.heightProperty().bind(root.heightProperty()); // Full height
+        settings.setX(0);
+        settings.setY(0);
+        settings.setFill(Color.web("#5D5D5D"));
+        settings.setOpacity(0.95);
+        settingMenu.getChildren().add(settings);
+
+        Text title = new Text("Settings");
+        title.setFill(Color.WHITE);
+        title.setStyle("-fx-font: 28 Ubuntu;");
+        title.xProperty().bind(root.widthProperty().multiply(0.015)); // 20/1280
+        title.yProperty().bind(root.heightProperty().multiply(0.06)); // 50/832
+        settingMenu.getChildren().add(title);
+
+        Text label = new Text("GTFS .zip Path");
+        label.setTextAlignment(TextAlignment.CENTER);
+        label.setFill(Color.WHITE);
+        label.setStyle("-fx-font: 15 Ubuntu;");
+        label.xProperty().bind(root.widthProperty().multiply(0.017)); // 78/1280
+        label.yProperty().bind(root.heightProperty().multiply(0.12)); // 100/832
+        settingMenu.getChildren().add(label);
+
+        TextField textField = new TextField();
+        textField.setPromptText("Path to GTFS zip file");
+        textField.layoutXProperty().bind(root.widthProperty().multiply(0.017)); // 78/1280
+        textField.layoutYProperty().bind(root.heightProperty().multiply(0.144)); // 120/832
+        textField.prefWidthProperty().bind(root.widthProperty().multiply(0.24)); // 300/1280
+        textField.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
+        settingMenu.getChildren().add(textField);
+
+        Text label2 = new Text("MySQL Connection Details");
+        label2.setTextAlignment(TextAlignment.CENTER);
+        label2.setFill(Color.WHITE);
+        label2.setStyle("-fx-font: 20 Ubuntu;");
+        label2.xProperty().bind(root.widthProperty().multiply(0.017)); // 78/1280
+        label2.yProperty().bind(root.heightProperty().multiply(0.23)); // 200/832
+        settingMenu.getChildren().add(label2);
+
+        Text host = new Text("Host");
+        host.setTextAlignment(TextAlignment.CENTER);
+        host.setFill(Color.WHITE);
+        host.setStyle("-fx-font: 15 Ubuntu;");
+        host.xProperty().bind(root.widthProperty().multiply(0.017)); // 78/1280
+        host.yProperty().bind(root.heightProperty().multiply(0.276)); // 230/832
+        settingMenu.getChildren().add(host);
+
+        TextField hostField = new TextField();
+        hostField.setPromptText("Host");
+        hostField.layoutXProperty().bind(root.widthProperty().multiply(0.017)); // 78/1280
+        hostField.layoutYProperty().bind(root.heightProperty().multiply(0.3)); // 250/832
+        hostField.prefWidthProperty().bind(root.widthProperty().multiply(0.24)); // 300/1280
+        hostField.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
+        settingMenu.getChildren().add(hostField);
+
+        Text user = new Text("User");
+        user.setTextAlignment(TextAlignment.CENTER);
+        user.setFill(Color.WHITE);
+        user.setStyle("-fx-font: 15 Ubuntu;");
+        user.xProperty().bind(root.widthProperty().multiply(0.017)); // 78/1280
+        user.yProperty().bind(root.heightProperty().multiply(0.385)); // 320/832
+        settingMenu.getChildren().add(user);
+
+        TextField userField = new TextField();
+        userField.setPromptText("User");
+        userField.layoutXProperty().bind(root.widthProperty().multiply(0.017)); // 78/1280
+        userField.layoutYProperty().bind(root.heightProperty().multiply(0.41)); // 340/832
+        userField.prefWidthProperty().bind(root.widthProperty().multiply(0.24)); // 300/1280
+        userField.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
+        settingMenu.getChildren().add(userField);
+
+        Text password = new Text("Password");
+        password.setTextAlignment(TextAlignment.CENTER);
+        password.setFill(Color.WHITE);
+        password.setStyle("-fx-font: 15 Ubuntu;");
+        password.xProperty().bind(root.widthProperty().multiply(0.017)); // 78/1280
+        password.yProperty().bind(root.heightProperty().multiply(0.48)); // 400/832
+        settingMenu.getChildren().add(password);
+
+        TextField passwordField = new TextField();
+        passwordField.setPromptText("Password");
+        passwordField.layoutXProperty().bind(root.widthProperty().multiply(0.017)); // 78/1280
+        passwordField.layoutYProperty().bind(root.heightProperty().multiply(0.5)); // 420/832
+        passwordField.prefWidthProperty().bind(root.widthProperty().multiply(0.24)); // 300/1280
+        passwordField.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
+        settingMenu.getChildren().add(passwordField);
+
+        Text port = new Text("Port");
+        port.setTextAlignment(TextAlignment.CENTER);
+        port.setFill(Color.WHITE);
+        port.setStyle("-fx-font: 15 Ubuntu;");
+        port.xProperty().bind(root.widthProperty().multiply(0.017)); // 78/1280
+        port.yProperty().bind(root.heightProperty().multiply(0.6)); // 500/832
+        settingMenu.getChildren().add(port);
+
+        TextField portField = new TextField();
+        portField.setPromptText("Port");
+        portField.layoutXProperty().bind(root.widthProperty().multiply(0.017)); // 78/1280
+        portField.layoutYProperty().bind(root.heightProperty().multiply(0.625)); // 520/832
+        portField.prefWidthProperty().bind(root.widthProperty().multiply(0.24)); // 300/1280
+        portField.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
+        settingMenu.getChildren().add(portField);
+
+        Text database = new Text("Database");
+        database.setTextAlignment(TextAlignment.CENTER);
+        database.setFill(Color.WHITE);
+        database.setStyle("-fx-font: 15 Ubuntu;");
+        database.xProperty().bind(root.widthProperty().multiply(0.017)); // 78/1280
+        database.yProperty().bind(root.heightProperty().multiply(0.72)); // 600/832
+        settingMenu.getChildren().add(database);
+
+        TextField databaseField = new TextField();
+        databaseField.setPromptText("Database");
+        databaseField.layoutXProperty().bind(root.widthProperty().multiply(0.017)); // 78/1280
+        databaseField.layoutYProperty().bind(root.heightProperty().multiply(0.745)); // 620/832
+        databaseField.prefWidthProperty().bind(root.widthProperty().multiply(0.24)); // 300/1280
+        databaseField.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
+        settingMenu.getChildren().add(databaseField);
+
+        Label testLabel = new Label();
+        testLabel.setText("");
+        testLabel.setTextFill(Color.WHITE);
+        testLabel.setStyle("-fx-font: 15 Ubuntu;");
+        testLabel.layoutXProperty().bind(root.widthProperty().multiply(0.017)); // 78/1280
+        testLabel.layoutYProperty().bind(root.heightProperty().multiply(0.95)); // 700/832
+        testLabel.prefWidthProperty().bind(root.widthProperty().multiply(0.24)); // 300/1280
+        testLabel.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
+        settingMenu.getChildren().add(testLabel);
+
+        Button test = new Button("Test Connection");
+        test.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
+        test.layoutXProperty().bind(root.widthProperty().multiply(0.017)); // 78/1280
+        test.layoutYProperty().bind(root.heightProperty().multiply(0.8)); // 700/832
+        test.prefWidthProperty().bind(root.widthProperty().multiply(0.24)); // 300/1280
+        test.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
+        test.setOnAction(event -> {
+            testLabel.setText("");
+            String hostText = hostField.getText();
+            String userText = userField.getText();
+            String passwordText = passwordField.getText();
+            String portText = portField.getText();
+            String databaseText = databaseField.getText();
+            GTFSaccess gtfs = new GTFSaccess(hostText, portText, databaseText, userText, passwordText);
+            gtfs.connect(2);
+            if (gtfs.conn != null) {
+                testLabel.setText("Connection Established");
+            } else {
+                testLabel.setText("Connection Failed");
+            }
+        });
+        settingMenu.getChildren().add(test);
+
+        Button importButton = new Button("Import GTFS");
+        importButton.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
+        importButton.layoutXProperty().bind(root.widthProperty().multiply(0.017)); // 78/1280
+        importButton.layoutYProperty().bind(root.heightProperty().multiply(0.85)); // 700/832
+        importButton.prefWidthProperty().bind(root.widthProperty().multiply(0.24)); // 300/1280
+        importButton.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
+//        importButton.setOnAction(event -> {
+//            String pathText = textField.getText();
+//            String hostText = hostField.getText();
+//            String userText = userField.getText();
+//            String passwordText = passwordField.getText();
+//            String portText = portField.getText();
+//            String databaseText = databaseField.getText();
+//
+//            GTFSaccess gtfs = new GTFSaccess(hostText, databaseText, userText, passwordText);
+//            gtfs.connect();
+////            gtfs.importGTFS(pathText);
+//        });
+        settingMenu.getChildren().add(importButton);
+
+        Line line = new Line();
+        line.startXProperty().bind(root.widthProperty().multiply(0)); // 0/1280
+        line.startYProperty().bind(root.heightProperty().multiply(0.89).add(20)); // 740/832 + 20
+        line.endXProperty().bind(root.widthProperty().multiply(0.273)); // 350/1280
+        line.endYProperty().bind(root.heightProperty().multiply(0.89).add(20)); // 740/832 + 20
+        line.setStroke(Color.WHITE);
+        settingMenu.getChildren().add(line);
+
+        Button close = new Button("X");
+        close.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
+        close.layoutXProperty().bind(root.widthProperty().multiply(0.219)); // 280/1280
+        close.layoutYProperty().bind(root.heightProperty().multiply(0.94)); // 50/832
+        close.prefWidthProperty().bind(root.widthProperty().multiply(0.039)); // 50/1280
+        close.prefHeightProperty().bind(root.heightProperty().multiply(0.036)); // 30/832
+        close.setOnAction(event -> {
+            settingMenu.setVisible(false);
+            settingMenu.setManaged(false);
+            toggleLeftBar(leftPane);
+        });
+        settingMenu.getChildren().add(close);
+
+        return settingMenu;
     }
 
 
