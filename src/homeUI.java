@@ -23,10 +23,6 @@ import javafx.scene.shape.Circle;
 import java.util.Objects;
 
 public class homeUI extends Application {
-
-
-    StackPane settingMenu;
-    boolean isMenuOpen = false;
     double[] romeCoords = {41.6558, 42.1233, 12.2453, 12.8558}; // {minLat, maxLat, minLng, maxLng}
     private final BooleanProperty isOn = new SimpleBooleanProperty(false); // State of the switch
     private Button hideSidePanel, showSidePanel;
@@ -133,7 +129,6 @@ public class homeUI extends Application {
             hideSidePanel.setVisible(true);
         });
 
-
         // Toggle circle (switch knob)
         Circle knob = new Circle();
         knob.radiusProperty().bind(root.widthProperty().multiply(0.012)); // 15/1280
@@ -187,6 +182,7 @@ public class homeUI extends Application {
 
     private void parsePoint(TextField field) {
         field.setOnAction(_ -> {
+            DBaccess gtfs;
             String address = field.getText();
             double[] coords = GeoUtil.getCoordinatesFromAddress(address);
             if (coords != null) {
@@ -195,10 +191,21 @@ public class homeUI extends Application {
                     return;
                 }
                 System.out.println("Coordinates: " + coords[0] + ", " + coords[1]);
-                GTFSaccess gtfs = new GTFSaccess("rome-gtfs.database.windows.net", "rome-gtfs", "gtfsaccess", "Gtfs-142025");
-                gtfs.connect(1);
+                String type = System.getenv("sql.type");
+                if (type == null) {
+                    System.out.println("Connecting to Azure SQL");
+                    gtfs = new DBaccess("rome-gtfs.database.windows.net", "rome-gtfs", "gtfsaccess", "Gtfs-142025");
+                    gtfs.connect();
+                } else if (Integer.parseInt(type) == 1){
+                    System.out.println("Connecting to MySQL");
+                    gtfs = new DBaccess(System.getProperty("DB_HOST"), System.getProperty("DB_PORT"), System.getProperty("DB_NAME"), System.getProperty("DB_USER"), System.getProperty("DB_PASSWORD"));
+                    gtfs.connect();
+                } else {
+                    System.out.println("Invalid type");
+                    return;
+                }
                 Stop closestStop = gtfs.getClosestStops(coords[0], coords[1]);
-                System.out.println("Closest models.Stop: " + closestStop);
+                System.out.println("Closest Stop: " + closestStop);
             } else {
                 System.out.println("Address not found");
             }
@@ -406,7 +413,7 @@ public class homeUI extends Application {
             String passwordText = passwordField.getText();
             String portText = portField.getText();
             String databaseText = databaseField.getText();
-            GTFSaccess gtfs = new GTFSaccess(hostText, portText, databaseText, userText, passwordText);
+            DBaccess gtfs = new DBaccess(hostText, portText, databaseText, userText, passwordText);
             System.setProperty("DB_PASSWORD", passwordText);
             System.setProperty("DB_USER", userText);
             System.setProperty("DB_HOST", hostText);
@@ -414,7 +421,7 @@ public class homeUI extends Application {
             System.setProperty("DB_NAME", databaseText);
             System.setProperty("GTFS_DIR", textField.getText());
             ConfigLoader.saveConfig("config.properties");
-            gtfs.connect(2);
+            gtfs.connect();
             if (gtfs.conn != null) {
                 testLabel.setText("Connection Established");
 

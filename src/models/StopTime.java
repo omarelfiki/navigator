@@ -72,7 +72,7 @@ public class StopTime{
 
     @Override
     public String toString() {
-        return "models.StopTime{" +
+        return "StopTime{" +
                 "stopId='" + (stop != null ? stop.getStopId() : "null") + '\'' +
                 ", tripId='" + (trip != null ? trip.getTripId() : "null") + '\'' +
                 ", departureTime='" + departureTime + '\'' +

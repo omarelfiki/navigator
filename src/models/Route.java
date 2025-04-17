@@ -66,7 +66,7 @@ public class Route {
 
     @Override
     public String toString() {
-        return "models.Route{" +
+        return "Route{" +
                 "routeId='" + routeId + '\'' +
                 ", agencyName='" + (agency != null ? agency.getAgencyId() : "null") + '\'' +
                 ", routeShortName='" + routeShortName + '\'' +

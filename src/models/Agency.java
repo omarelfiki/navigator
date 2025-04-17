@@ -48,7 +48,7 @@ public class Agency {
 
     @Override
     public String toString() {
-        return "models.Agency{" +
+        return "Agency{" +
                 "agencyId='" + agencyId + '\'' +
                 "agencyName='" + agencyName + '\'' +
                 ", agencyUrl='" + agencyUrl + '\'' +
