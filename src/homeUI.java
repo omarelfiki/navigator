@@ -19,13 +19,10 @@ import javafx.stage.Stage;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.shape.Circle;
+
 import java.util.Objects;
 
 public class homeUI extends Application {
-
-
-    StackPane settingMenu;
-    boolean isMenuOpen = false;
     double[] romeCoords = {41.6558, 42.1233, 12.2453, 12.8558}; // {minLat, maxLat, minLng, maxLng}
     private final BooleanProperty isOn = new SimpleBooleanProperty(false); // State of the switch
 
@@ -103,7 +100,6 @@ public class homeUI extends Application {
         background.setFill(Color.LIGHTGRAY);
 
         // Toggle circle (switch knob)
-        //TODO: fix button
         Circle knob = new Circle();
         knob.radiusProperty().bind(root.widthProperty().multiply(0.012)); // 15/1280
         knob.setFill(Color.WHITE);
@@ -141,7 +137,7 @@ public class homeUI extends Application {
         settings.prefWidthProperty().bind(root.widthProperty().multiply(0.039)); // 50/1280
         settings.prefHeightProperty().bind(root.heightProperty().multiply(0.036)); // 30/832
         settings.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
-        settings.setOnAction(event -> {
+        settings.setOnAction(_ -> {
             toggleLeftBar(leftPane);
             Pane settingsPane = setSettingMenu(root, leftPane);
             vbox_left.getChildren().add(settingsPane);
@@ -167,7 +163,7 @@ public class homeUI extends Application {
                 GTFSaccess gtfs = new GTFSaccess("rome-gtfs.database.windows.net", "rome-gtfs", "gtfsaccess", "Gtfs-142025");
                 gtfs.connect(1);
                 Stop closestStop = gtfs.getClosestStops(coords[0], coords[1]);
-                System.out.println("Closest Stop: " + closestStop);
+                System.out.println("Closest models.Stop: " + closestStop);
             } else {
                 System.out.println("Address not found");
             }
@@ -257,6 +253,7 @@ public class homeUI extends Application {
         textField.prefWidthProperty().bind(root.widthProperty().multiply(0.24)); // 300/1280
         textField.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
         settingMenu.getChildren().add(textField);
+        textField.setText(System.getProperty("GTFS_DIR"));
 
         Text label2 = new Text("MySQL Connection Details");
         label2.setTextAlignment(TextAlignment.CENTER);
@@ -281,6 +278,7 @@ public class homeUI extends Application {
         hostField.prefWidthProperty().bind(root.widthProperty().multiply(0.24)); // 300/1280
         hostField.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
         settingMenu.getChildren().add(hostField);
+        hostField.setText(System.getProperty("DB_HOST"));
 
         Text user = new Text("User");
         user.setTextAlignment(TextAlignment.CENTER);
@@ -297,6 +295,7 @@ public class homeUI extends Application {
         userField.prefWidthProperty().bind(root.widthProperty().multiply(0.24)); // 300/1280
         userField.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
         settingMenu.getChildren().add(userField);
+        userField.setText(System.getProperty("DB_USER"));
 
         Text password = new Text("Password");
         password.setTextAlignment(TextAlignment.CENTER);
@@ -313,6 +312,7 @@ public class homeUI extends Application {
         passwordField.prefWidthProperty().bind(root.widthProperty().multiply(0.24)); // 300/1280
         passwordField.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
         settingMenu.getChildren().add(passwordField);
+        passwordField.setText(System.getProperty("DB_PASSWORD"));
 
         Text port = new Text("Port");
         port.setTextAlignment(TextAlignment.CENTER);
@@ -329,6 +329,7 @@ public class homeUI extends Application {
         portField.prefWidthProperty().bind(root.widthProperty().multiply(0.24)); // 300/1280
         portField.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
         settingMenu.getChildren().add(portField);
+        portField.setText(System.getProperty("DB_PORT"));
 
         Text database = new Text("Database");
         database.setTextAlignment(TextAlignment.CENTER);
@@ -345,6 +346,7 @@ public class homeUI extends Application {
         databaseField.prefWidthProperty().bind(root.widthProperty().multiply(0.24)); // 300/1280
         databaseField.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
         settingMenu.getChildren().add(databaseField);
+        databaseField.setText(System.getProperty("DB_NAME"));
 
         Label testLabel = new Label();
         testLabel.setText("");
@@ -356,13 +358,13 @@ public class homeUI extends Application {
         testLabel.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
         settingMenu.getChildren().add(testLabel);
 
-        Button test = new Button("Test Connection");
+        Button test = new Button("Test and Save");
         test.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
         test.layoutXProperty().bind(root.widthProperty().multiply(0.017)); // 78/1280
         test.layoutYProperty().bind(root.heightProperty().multiply(0.8)); // 700/832
         test.prefWidthProperty().bind(root.widthProperty().multiply(0.24)); // 300/1280
         test.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
-        test.setOnAction(event -> {
+        test.setOnAction(_ -> {
             testLabel.setText("");
             String hostText = hostField.getText();
             String userText = userField.getText();
@@ -370,9 +372,17 @@ public class homeUI extends Application {
             String portText = portField.getText();
             String databaseText = databaseField.getText();
             GTFSaccess gtfs = new GTFSaccess(hostText, portText, databaseText, userText, passwordText);
+            System.setProperty("DB_PASSWORD", passwordText);
+            System.setProperty("DB_USER", userText);
+            System.setProperty("DB_HOST", hostText);
+            System.setProperty("DB_PORT", portText);
+            System.setProperty("DB_NAME", databaseText);
+            System.setProperty("GTFS_DIR", textField.getText());
+            ConfigLoader.saveConfig("config.properties");
             gtfs.connect(2);
             if (gtfs.conn != null) {
                 testLabel.setText("Connection Established");
+
             } else {
                 testLabel.setText("Connection Failed");
             }
@@ -395,7 +405,7 @@ public class homeUI extends Application {
 //
 //            GTFSaccess gtfs = new GTFSaccess(hostText, databaseText, userText, passwordText);
 //            gtfs.connect();
-////            gtfs.importGTFS(pathText);
+//            gtfs.importGTFS(pathText);
 //        });
         settingMenu.getChildren().add(importButton);
 
@@ -413,7 +423,7 @@ public class homeUI extends Application {
         close.layoutYProperty().bind(root.heightProperty().multiply(0.94)); // 50/832
         close.prefWidthProperty().bind(root.widthProperty().multiply(0.039)); // 50/1280
         close.prefHeightProperty().bind(root.heightProperty().multiply(0.036)); // 30/832
-        close.setOnAction(event -> {
+        close.setOnAction(_ -> {
             settingMenu.setVisible(false);
             settingMenu.setManaged(false);
             toggleLeftBar(leftPane);
@@ -425,6 +435,12 @@ public class homeUI extends Application {
 
 
     public static void main(String[] args) {
+        if (!ConfigLoader.checkIfConfigExists("config.properties")){
+            ConfigLoader.createConfig("config.properties");
+        } else {
+            System.out.println("Config file found");
+            ConfigLoader.loadConfig("config.properties");
+        }
         launch(args);
     }
 }
