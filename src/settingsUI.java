@@ -130,23 +130,6 @@ public class settingsUI {
         settingsMenu.getChildren().add(portField);
         portField.setText(System.getProperty("DB_PORT"));
 
-        Text database = new Text("Database");
-        database.setTextAlignment(TextAlignment.CENTER);
-        database.setFill(Color.WHITE);
-        database.setStyle("-fx-font: 15 Ubuntu;");
-        database.xProperty().bind(root.widthProperty().multiply(0.017)); // 78/1280
-        database.yProperty().bind(root.heightProperty().multiply(0.72)); // 600/832
-        settingsMenu.getChildren().add(database);
-
-        TextField databaseField = new TextField();
-        databaseField.setPromptText("Database");
-        databaseField.layoutXProperty().bind(root.widthProperty().multiply(0.017)); // 78/1280
-        databaseField.layoutYProperty().bind(root.heightProperty().multiply(0.745)); // 620/832
-        databaseField.prefWidthProperty().bind(root.widthProperty().multiply(0.24)); // 300/1280
-        databaseField.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
-        settingsMenu.getChildren().add(databaseField);
-        databaseField.setText(System.getProperty("DB_NAME"));
-
         Label testLabel = new Label();
         testLabel.setText("");
         testLabel.setTextFill(Color.WHITE);
@@ -169,13 +152,11 @@ public class settingsUI {
             String userText = userField.getText();
             String passwordText = passwordField.getText();
             String portText = portField.getText();
-            String databaseText = databaseField.getText();
-            DBaccess gtfs = new DBaccess(hostText, portText, databaseText, userText, passwordText);
+            DBaccess gtfs = new DBaccess(hostText, portText, userText, passwordText);
             System.setProperty("DB_PASSWORD", passwordText);
             System.setProperty("DB_USER", userText);
             System.setProperty("DB_HOST", hostText);
             System.setProperty("DB_PORT", portText);
-            System.setProperty("DB_NAME", databaseText);
             System.setProperty("GTFS_DIR", textField.getText());
             ConfigLoader.saveConfig("config.properties");
             gtfs.connect();

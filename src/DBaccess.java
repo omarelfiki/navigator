@@ -13,27 +13,27 @@ public class DBaccess {
     //mysql server connection
     private String host;
     private String port;
-    private String dbName;
     private String dbUser;
     private String dbPassword;
+    public String dbName;
 
     private final int type;
     public Connection conn;
 
-    public DBaccess(String server, String database, String user, String password) {
+    public DBaccess(int type, String server, String database, String user, String password) {
         this.server = server;
         this.database = database;
         this.user = user;
         this.password = password;
-        this.type = 1; // 1 for Azure SQL
+        this.type = type; // 1 for Azure SQL
     }
 
-    public DBaccess(String host, String port, String database, String user, String password) {
+    public DBaccess(String host, String port, String user, String password) {
         this.host = host;
         this.port = port;
-        this.dbName = database;
         this.dbUser = user;
         this.dbPassword = password;
+        this.dbName = "gtfsbynavigator";
         this.type = 2; // 2 for MySQL
     }
 
@@ -55,9 +55,9 @@ public class DBaccess {
                 }
             case 2:
                 try {
-                    String connectionUrl = "jdbc:mysql://" + host + ":" + port + "/" + dbName;
+                    String connectionUrl = "jdbc:mysql://" + host + ":" + port;
                     conn = DriverManager.getConnection(connectionUrl, dbUser, dbPassword);
-                    System.out.println("✅ Connected to MySQL GTFS Database");
+                    System.out.println("✅ Connected to MySQL Server");
                 } catch (SQLException e) {
                     System.out.println("SQL Error: " + e.getMessage());
                 }
@@ -104,50 +104,58 @@ public class DBaccess {
 
     public Stop getClosestStops(double lat, double lon) {
         switch (type) {
-            case 1: String Azquery = "SELECT * FROM dbo.get_closest_stop(?, ?)";
-            try (PreparedStatement stmt = conn.prepareStatement(Azquery)) {
-                stmt.setDouble(1, lat);
-                stmt.setDouble(2, lon);
-                ResultSet rs = stmt.executeQuery();
+            case 1:
+                String Azquery = "SELECT * FROM dbo.get_closest_stop(?, ?)";
+                try (PreparedStatement stmt = conn.prepareStatement(Azquery)) {
+                    stmt.setDouble(1, lat);
+                    stmt.setDouble(2, lon);
+                    ResultSet rs = stmt.executeQuery();
 
-                if (rs.next()) {
-                    String stopID = rs.getString("stop_id");
-                    String stopName = rs.getString("stop_name");
-                    double stopLat = rs.getDouble("stop_lat");
-                    double stopLon = rs.getDouble("stop_lon");
+                    if (rs.next()) {
+                        String stopID = rs.getString("stop_id");
+                        String stopName = rs.getString("stop_name");
+                        double stopLat = rs.getDouble("stop_lat");
+                        double stopLon = rs.getDouble("stop_lon");
 
-                    return new Stop(
-                            stopID != null ? stopID : "N/A",
-                            stopName != null ? stopName : "N/A",
-                            stopLat,
-                            stopLon
-                    );
+                        return new Stop(
+                                stopID != null ? stopID : "N/A",
+                                stopName != null ? stopName : "N/A",
+                                stopLat,
+                                stopLon
+                        );
+                    }
+                } catch (SQLException e) {
+                    System.out.println("SQL Error: " + e.getMessage());
                 }
-            } catch (SQLException e) {
-                System.out.println("SQL Error: " + e.getMessage());
-            }
 
-            case 2: String MSQLquery = "SELECT get_closest_stop(?, ?) AS closest_stop;";
-            try (PreparedStatement stmt = conn.prepareStatement(MSQLquery)) {
-                stmt.setDouble(1, lat);
-                stmt.setDouble(2, lon);
-                ResultSet rs = stmt.executeQuery();
-
-                if (rs.next()) {
-                    String json = rs.getString("closest_stop");
-                    JSONObject jsonObject = new JSONObject(json);
-
-                    String stopID = jsonObject.optString("stop_id", "N/A");
-                    String stopName = jsonObject.optString("stop_name", "N/A");
-                    double stopLat = jsonObject.optDouble("stop_lat", 0.0);
-                    double stopLon = jsonObject.optDouble("stop_lon", 0.0);
-
-
-                    return new Stop(stopID, stopName, stopLat, stopLon);
+            case 2:
+                String useDbQuery = "USE " + dbName;
+                try (Statement stmt = conn.createStatement()) {
+                    stmt.execute(useDbQuery);
+                } catch (SQLException e) {
+                    System.out.println("SQL Error: " + e.getMessage());
                 }
-            } catch (SQLException e) {
-                System.out.println("SQL Error: " + e.getMessage());
-            }
+                String MSQLquery = "SELECT get_closest_stop(?, ?) AS closest_stop;";
+                try (PreparedStatement stmt = conn.prepareStatement(MSQLquery)) {
+                    stmt.setDouble(1, lat);
+                    stmt.setDouble(2, lon);
+                    ResultSet rs = stmt.executeQuery();
+
+                    if (rs.next()) {
+                        String json = rs.getString("closest_stop");
+                        JSONObject jsonObject = new JSONObject(json);
+
+                        String stopID = jsonObject.optString("stop_id", "N/A");
+                        String stopName = jsonObject.optString("stop_name", "N/A");
+                        double stopLat = jsonObject.optDouble("stop_lat", 0.0);
+                        double stopLon = jsonObject.optDouble("stop_lon", 0.0);
+
+
+                        return new Stop(stopID, stopName, stopLat, stopLon);
+                    }
+                } catch (SQLException e) {
+                    System.out.println("SQL Error: " + e.getMessage());
+                }
         }
         return null;
     }

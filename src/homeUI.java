@@ -194,11 +194,11 @@ public class homeUI extends Application {
                 String type = System.getenv("sql.type");
                 if (type == null) {
                     System.out.println("Connecting to Azure SQL");
-                    gtfs = new DBaccess("rome-gtfs.database.windows.net", "rome-gtfs", "gtfsaccess", "Gtfs-142025");
+                    gtfs = new DBaccess(1,"rome-gtfs.database.windows.net", "rome-gtfs", "gtfsaccess", "Gtfs-142025");
                     gtfs.connect();
                 } else if (Integer.parseInt(type) == 1) {
                     System.out.println("Connecting to MySQL");
-                    gtfs = new DBaccess(System.getProperty("DB_HOST"), System.getProperty("DB_PORT"), System.getProperty("DB_NAME"), System.getProperty("DB_USER"), System.getProperty("DB_PASSWORD"));
+                    gtfs = new DBaccess(System.getProperty("DB_HOST"), System.getProperty("DB_PORT"), System.getProperty("DB_USER"), System.getProperty("DB_PASSWORD"));
                     gtfs.connect();
                 } else {
                     System.out.println("Invalid type");

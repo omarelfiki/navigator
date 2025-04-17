@@ -13,27 +13,19 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class GTFSImporter {
-    // === CONFIGURATION ===
-   private static final String DB_USER = "GTFSdata";
-   private static final String DB_PASSWORD = "gtfsaccess";
-   private static final String DB_HOST = "localhost";
-   private static final String DB_PORT = "3306";
-   private static final String DB_NAME = "gtfs";
-   private static String GTFS_DIR; //Add path before running the program
+    private static String GTFS_DIR; //Add path before running the program
 
-    private static final String CONNECTION_URL = String.format(
-            "jdbc:mysql://%s:%s/%s?useSSL=false", DB_HOST, DB_PORT, DB_NAME);
+    private final DBaccess access;
 
-    public static void main(String[] args) {
-        try {
-            importGTFS();
-        } catch (Exception e) {
-            System.err.println("Error during GTFS import: " + e.getMessage());
-        }
+    public GTFSImporter(DBaccess access, String path) {
+        this.access = access;
+        GTFS_DIR = path;
     }
 
-    private static void importGTFS() throws IOException, SQLException {
-        try (Connection conn = DriverManager.getConnection(CONNECTION_URL, DB_USER, DB_PASSWORD)) {
+    public void importGTFS() throws IOException, SQLException {
+        try (Connection conn = access.conn) {
+            String useDbQuery =  "USE " + access.dbName;
+            conn.createStatement().execute(useDbQuery);
             insertUniqueServices(conn);
 
             List<String[]> gtfsFiles = List.of(
