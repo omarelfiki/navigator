@@ -5,6 +5,7 @@ import javafx.application.Application;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -19,12 +20,17 @@ import javafx.stage.Stage;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.shape.Circle;
-
 import java.util.Objects;
 
 public class homeUI extends Application {
+
+
+    StackPane settingMenu;
+    boolean isMenuOpen = false;
     double[] romeCoords = {41.6558, 42.1233, 12.2453, 12.8558}; // {minLat, maxLat, minLng, maxLng}
     private final BooleanProperty isOn = new SimpleBooleanProperty(false); // State of the switch
+    private Button hideSidePanel, showSidePanel;
+
 
     @Override
     public void start(Stage primaryStage) {
@@ -43,8 +49,10 @@ public class homeUI extends Application {
         mapView.addLayer(layer);
         mapView.setCenter(romePoint);
 
-        StackPane mapPane = new StackPane(mapView);
+        StackPane mapPane = new StackPane();
+        mapPane.getChildren().add(mapView);
         root.setCenter(mapPane);
+
 
         Pane leftPane = new Pane();
         VBox vbox_left = new VBox();
@@ -98,6 +106,33 @@ public class homeUI extends Application {
         background.setArcWidth(30);
         background.setArcHeight(30);
         background.setFill(Color.LIGHTGRAY);
+
+        //Button to hide side panel
+        hideSidePanel = new Button("<<");
+        hideSidePanel.layoutXProperty().bind(root.widthProperty().multiply(0.245));
+        hideSidePanel.layoutYProperty().bind(root.heightProperty().multiply(0.46));
+        hideSidePanel.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
+        hideSidePanel.setOnAction(event -> {
+            toggleLeftBar(leftPane);
+            hideSidePanel.setVisible(false);
+            showSidePanel.setVisible(true);
+        });
+        leftPane.getChildren().add(hideSidePanel);
+
+        // Button to show side panel (initially hidden)
+        showSidePanel = new Button(">>");
+        showSidePanel.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
+        showSidePanel.setVisible(false);
+        mapPane.getChildren().add(showSidePanel);
+        StackPane.setAlignment(showSidePanel, Pos.CENTER_LEFT);
+        showSidePanel.translateXProperty().bind(root.widthProperty().multiply(0.01));
+        showSidePanel.translateYProperty().bind(root.heightProperty().multiply(-0.04));
+        showSidePanel.setOnAction(event -> {
+            toggleLeftBar(leftPane);
+            showSidePanel.setVisible(false);
+            hideSidePanel.setVisible(true);
+        });
+
 
         // Toggle circle (switch knob)
         Circle knob = new Circle();
