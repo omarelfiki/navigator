@@ -66,6 +66,6 @@ public class Stop {
 
     @Override
     public String toString() {
-        return "Stop ID: " + stopId + '\n' + "Stop Name: " + stopName + '\n' + "Stop Latitude: " + stopLat + '\n' + "Stop Longitude: " + stopLon;
+        return "models.Stop ID: " + stopId + '\n' + "models.Stop Name: " + stopName + '\n' + "models.Stop Latitude: " + stopLat + '\n' + "models.Stop Longitude: " + stopLon;
     }
 }

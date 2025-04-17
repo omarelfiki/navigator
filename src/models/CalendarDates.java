@@ -23,7 +23,7 @@ public class CalendarDates {
 
     @Override
     public String toString() {
-        return "CalendarDates{" +
+        return "models.CalendarDates{" +
                 "serviceId='" + (service != null ? service.getServiceId() : "null") + '\'' +
                 ", date='" + date + '\'' +
                 ", exceptionType='" + exceptionType + '\'' +

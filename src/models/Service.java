@@ -1,5 +1,5 @@
 public class Service {
-    private String serviceId;
+    private final String serviceId;
 
     public Service(String serviceID) {
         this.serviceId = serviceID;

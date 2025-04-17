@@ -76,7 +76,7 @@ public class Trip {
 
     @Override
     public String toString() {
-        return "Trip{" +
+        return "models.Trip{" +
                 "tripId='" + tripId + '\'' +
                 ", service=" + (service != null ? service.getServiceId() : "null") +
                 ", shape=" + (shape != null ? shape.getShapeId() : "null") +

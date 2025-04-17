@@ -35,7 +35,7 @@ public class Shape {
 
     @Override
     public String toString() {
-        return "Shape{" +
+        return "models.Shape{" +
                 "shapeId='" + shapeId + '\'' +
                 ", shapePtLat=" + shapePtLat +
                 ", shapePtLon=" + shapePtLon +
