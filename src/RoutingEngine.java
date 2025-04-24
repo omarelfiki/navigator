@@ -37,7 +37,6 @@ public class RoutingEngine {
                     sendOk(Map.of("pong", request.get("ping")));
                     continue;
                 }
-                // ... process other requests here
             }
 
             sendError("Bad request");
