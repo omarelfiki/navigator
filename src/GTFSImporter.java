@@ -1,7 +1,10 @@
+import com.univocity.parsers.csv.CsvParser;
+import com.univocity.parsers.csv.CsvParserSettings;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 
+import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -46,6 +49,7 @@ public class GTFSImporter {
 
                 if (Files.exists(filePath)) {
                     System.out.println("Importing " + filename + " into " + tableName + "...");
+
                     List<CSVRecord> records = readCSV(filePath);
 
                     if ("calendar".equals(tableName)) {
@@ -53,16 +57,25 @@ public class GTFSImporter {
                             record.toMap().put("start_date", formatDate(record.get("start_date")));
                             record.toMap().put("end_date", formatDate(record.get("end_date")));
                         });
-                    } else if ("calendar_dates".equals(tableName)) {
+
+                    }
+                    if ("calendar_dates".equals(tableName)) {
                         records.forEach(record -> record.toMap().put("date", formatDate(record.get("date"))));
-                    } else if ("stop_times".equals(tableName)) {
+                    }
+                    if ("stop_times".equals(tableName)) {
                         importStopTimesWithChunking(filePath, conn);
                         continue;
-                    } else if ("shapes".equals(tableName)) {
-                        insertShapeIndex(records, conn);
                     }
-
+                     if ("shapes".equals(tableName)) {
+                        insertShapeIndex(records, conn);
+                        continue;
+                    }
+                    if ("trips".equals(tableName)) {
+                        importTripsWithChunking(filePath, conn);
+                        continue;
+                    }
                     uploadToTable(records, tableName, conn);
+
                 } else {
                     System.out.println("⚠️ File not found: " + filePath);
                 }
@@ -72,6 +85,7 @@ public class GTFSImporter {
     }
 
     private static void insertUniqueServices(Connection conn) throws IOException, SQLException {
+
         Set<String> serviceIds = new HashSet<>();
 
         Path calendarPath = Paths.get(GTFS_DIR, "calendar.txt");
@@ -138,6 +152,59 @@ public class GTFSImporter {
         }
         System.out.println("✅ Imported stop_times with chunking.");
     }
+            // method to insert trips with chunking using the uinvocty parser,
+    private static void importTripsWithChunking(Path filePath, Connection conn) throws IOException, SQLException {
+        CsvParserSettings settings = new CsvParserSettings();
+
+        String sql = String.format("INSERT INTO trips (route_id,trip_id,Service_id,shape_id) VALUES (?,?,?,?)");
+        settings.setHeaderExtractionEnabled(true);
+        settings.setIgnoreLeadingWhitespaces(true);
+        settings.setIgnoreTrailingWhitespaces(true);
+        settings.setSkipEmptyLines(true);
+
+        try (BufferedReader reader = Files.newBufferedReader(filePath)) {
+            CsvParser parser = new CsvParser(settings);
+            parser.beginParsing(reader);
+
+            String[] headers = parser.getContext().headers();
+            final int batchSize = 10000;
+            List<Map<String, String>> batch = new ArrayList<>();
+            String[] row;
+
+            while ((row = parser.parseNext()) != null) {
+                Map<String, String> rowMap = new HashMap<>();
+                for (int i = 0; i < headers.length && i < row.length; i++) {
+                    rowMap.put(headers[i], row[i]);
+                }
+                batch.add(rowMap);
+                if (batch.size() >= batchSize) {
+                    insertTripsBatch(batch, sql, conn);
+                    batch.clear();
+                }
+            }
+
+            if (!batch.isEmpty()) {
+                insertTripsBatch(batch, sql, conn);
+            }
+
+            parser.stopParsing();
+            System.out.println("✅ Imported trips with chunking.");
+        }
+    }
+    // method for batching, will be used for trips
+    private static void insertTripsBatch(List<Map<String, String>> batch,String sql, Connection conn) throws SQLException {
+
+        try(PreparedStatement stmt = conn.prepareStatement(sql)) {
+            for(Map<String, String> row : batch) {
+                stmt.setString(1, row.get("route_id"));
+                stmt.setString(2,row.get("trip_id"));
+                stmt.setString(3, row.get("service_id"));
+                stmt.setString(4,row.get("shape_id"));
+                stmt.addBatch();
+            }
+            stmt.executeBatch();
+        }
+    }
 
     private static void insertBatch(List<CSVRecord> batch, String sql, Connection conn) throws SQLException {
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -169,6 +236,7 @@ public class GTFSImporter {
         String sql = String.format("INSERT INTO %s (%s) VALUES (%s)", tableName, columns, placeholders);
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            int insertedCount = 0;
             for (CSVRecord record : records) {
                 int index = 1;
                 for (Map.Entry<String, String> entry : record.toMap().entrySet()) {
@@ -177,14 +245,17 @@ public class GTFSImporter {
 
                     // Handle empty strings for integer fields
                     if (value.isEmpty() && isIntegerColumn(columnName, tableName)) {
-                        stmt.setObject(index++, null); // Set NULL for empty strings
+                        stmt.setObject(index++, null);
+                        insertedCount++;// Set NULL for empty strings
                     } else {
                         stmt.setString(index++, value);
+                        insertedCount++;
                     }
                 }
                 stmt.addBatch();
             }
             stmt.executeBatch();
+            System.out.println("✅ Inserted " + insertedCount + " rows into " + tableName + " table.");
         }
     }
 
