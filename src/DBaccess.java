@@ -55,7 +55,7 @@ public class DBaccess {
                 }
             case 2:
                 try {
-                    String connectionUrl = "jdbc:mysql://" + host + ":" + port;
+                    String connectionUrl = "jdbc:mysql://" + host + ":" + port + "/" + "?allowLoadLocalInfile=true&useCursorFetch=true";
                     conn = DriverManager.getConnection(connectionUrl, dbUser, dbPassword);
                     System.out.println("✅ Connected to MySQL Server");
                 } catch (SQLException e) {

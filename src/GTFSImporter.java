@@ -27,7 +27,7 @@ public class GTFSImporter {
 
     public void importGTFS() throws IOException, SQLException {
         try (Connection conn = access.conn) {
-            String useDbQuery =  "USE " + access.dbName;
+            String useDbQuery = "USE " + access.dbName;
             conn.createStatement().execute(useDbQuery);
             insertUniqueServices(conn);
 
@@ -63,15 +63,15 @@ public class GTFSImporter {
                         records.forEach(record -> record.toMap().put("date", formatDate(record.get("date"))));
                     }
                     if ("stop_times".equals(tableName)) {
-                        importStopTimesWithChunking(filePath, conn);
+                        importStopTimesWithLoadData(filePath, conn);
                         continue;
                     }
-                     if ("shapes".equals(tableName)) {
+                    if ("shapes".equals(tableName)) {
                         insertShapeIndex(records, conn);
                         continue;
                     }
                     if ("trips".equals(tableName)) {
-                        importTripsWithChunking(filePath, conn);
+                        importTripsWithLoadData(filePath, conn);
                         continue;
                     }
                     uploadToTable(records, tableName, conn);
@@ -109,6 +109,80 @@ public class GTFSImporter {
             }
         }
         System.out.println("✅ Inserted " + insertedCount + " unique service_id(s) into service table.");
+    }
+
+
+    // This method imports trip records from a txt file into the 'trips' table using LOAD DATA LOCAL INFILE.
+    //It handles column mismatches, empty integer values, and temporarily disables foreign key checks
+    //to avoid constraint violations during bulk insert.
+    private static void importTripsWithLoadData(Path filePath, Connection conn) throws SQLException {
+        String absolutePath = filePath.toAbsolutePath().toString().replace("\\", "/");
+
+        try (Statement stmt = conn.createStatement()) {
+            // disable the foreign key constrains
+            stmt.execute("SET FOREIGN_KEY_CHECKS=0");
+            String sql = "LOAD DATA LOCAL INFILE '" + absolutePath + "' " +
+                    "INTO TABLE trips " +
+                    "FIELDS TERMINATED BY ',' " +
+                    "LINES TERMINATED BY '\\n' " +
+                    // ignore the first row
+                    "IGNORE 1 LINES " +
+                    // instead of inserting directly to the tables, first capture them in temporary variables, because some fields are empty
+                    "(@route_id, @service_id, @trip_id, @trip_headsign, @trip_short_name, @direction_id, @block_id, @shape_id, @wheelchair_accessible, @exceptional) " +
+                    // now inserting them into the real table
+                    "SET " +
+                    "trip_id = @trip_id, " +
+                    "route_id = @route_id, " +
+                    "service_id = @service_id, " +
+                    "shape_id = @shape_id, " +
+                    "trip_short_name = @trip_short_name, " +
+                    "trip_headsign = @trip_headsign, " +
+                    // special cases for empty field, if the fild is a number insert it, else insert as NULL
+                    "direction_id = CASE WHEN @direction_id REGEXP '^[0-9]+$' THEN @direction_id ELSE NULL END, " +
+                    // special cases for empty field, if the fild is a number insert it, else insert as NULL
+                    "block_id = CASE WHEN @block_id REGEXP '^[0-9]+$' THEN @direction_id ELSE NULL END, " +
+                    // special cases for empty field, if the fild is a number insert it, else insert as NULL
+                    "wheelchair_accessible = CASE WHEN @wheelchair_accessible REGEXP '^[0-9]+$' THEN @wheelchair_accessible ELSE NULL END, " +
+                    // special cases for empty field, if the fild is a number insert it, else insert as NULL
+                    "exceptional = CASE WHEN @exceptional REGEXP '^[0-9]+$' THEN @exceptional ELSE NULL END";
+
+            int rows = stmt.executeUpdate(sql);
+            System.out.println("✅ Inserted " + rows + " trips from: " + filePath.getFileName());
+            // finally enable the foreign key, to insure the relation integrity
+            stmt.execute("SET FOREIGN_KEY_CHECKS=1");
+        }
+    }
+
+    //  this method works same as importTripsWithLoadData
+    private static void importStopTimesWithLoadData(Path filePath, Connection conn) throws SQLException {
+        String absolutePath = filePath.toAbsolutePath().toString().replace("\\", "/");
+
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute("SET FOREIGN_KEY_CHECKS=0");
+
+            String sql = "LOAD DATA LOCAL INFILE '" + absolutePath + "' " +
+                    "INTO TABLE stop_times " +
+                    "FIELDS TERMINATED BY ',' " +
+                    "LINES TERMINATED BY '\\n' " +
+                    "IGNORE 1 LINES " +
+                    "(@trip_id, @arrival_time, @departure_time, @stop_id, @stop_sequence, @stop_headsign, @pickup_type, @drop_off_type, @shape_dist_traveled, @timepoint) " +
+                    "SET " +
+                    "trip_id = @trip_id, " +
+                    "arrival_time = @arrival_time, " +
+                    "departure_time = @departure_time, " +
+                    "stop_id = @stop_id, " +
+                    "stop_sequence = CASE WHEN @stop_sequence REGEXP '^[0-9]+$' THEN @stop_sequence ELSE NULL END, " +
+                    "stop_headsign = NULLIF(@stop_headsign, ''), " +
+                    "pickup_type = CASE WHEN @pickup_type REGEXP '^[0-9]+$' THEN @pickup_type ELSE NULL END, " +
+                    "drop_off_type = CASE WHEN @drop_off_type REGEXP '^[0-9]+$' THEN @drop_off_type ELSE NULL END, " +
+                    "shape_dist_traveled = CASE WHEN @shape_dist_traveled REGEXP '^[0-9]+(\\.[0-9]+)?$' THEN @shape_dist_traveled ELSE NULL END, " +
+                    "timepoint = CASE WHEN @timepoint REGEXP '^[0-9]+$' THEN @timepoint ELSE NULL END";
+
+            int rows = stmt.executeUpdate(sql);
+            System.out.println("✅ Inserted " + rows + " stop_times from: " + filePath.getFileName());
+
+            stmt.execute("SET FOREIGN_KEY_CHECKS=1");
+        }
     }
 
     private static void insertShapeIndex(List<CSVRecord> shapeRecords, Connection conn) throws SQLException {
@@ -152,7 +226,8 @@ public class GTFSImporter {
         }
         System.out.println("✅ Imported stop_times with chunking.");
     }
-            // method to insert trips with chunking using the uinvocty parser,
+
+    // method to insert trips with chunking using the uinvocty parser,
     private static void importTripsWithChunking(Path filePath, Connection conn) throws IOException, SQLException {
         CsvParserSettings settings = new CsvParserSettings();
 
@@ -191,15 +266,16 @@ public class GTFSImporter {
             System.out.println("✅ Imported trips with chunking.");
         }
     }
-    // method for batching, will be used for trips
-    private static void insertTripsBatch(List<Map<String, String>> batch,String sql, Connection conn) throws SQLException {
 
-        try(PreparedStatement stmt = conn.prepareStatement(sql)) {
-            for(Map<String, String> row : batch) {
+    // method for batching, will be used for trips
+    private static void insertTripsBatch(List<Map<String, String>> batch, String sql, Connection conn) throws SQLException {
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            for (Map<String, String> row : batch) {
                 stmt.setString(1, row.get("route_id"));
-                stmt.setString(2,row.get("trip_id"));
+                stmt.setString(2, row.get("trip_id"));
                 stmt.setString(3, row.get("service_id"));
-                stmt.setString(4,row.get("shape_id"));
+                stmt.setString(4, row.get("shape_id"));
                 stmt.addBatch();
             }
             stmt.executeBatch();
