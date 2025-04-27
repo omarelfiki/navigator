@@ -1,13 +1,7 @@
-import com.univocity.parsers.csv.CsvParser;
-import com.univocity.parsers.csv.CsvParserSettings;
 import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-
-import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -68,6 +62,7 @@ public class GTFSImporter {
                     }
                     if ("shapes".equals(tableName)) {
                         insertShapeIndex(records, conn);
+                        uploadToTable(records, tableName, conn);
                         continue;
                     }
                     if ("trips".equals(tableName)) {
@@ -138,13 +133,13 @@ public class GTFSImporter {
                     "trip_short_name = @trip_short_name, " +
                     "trip_headsign = @trip_headsign, " +
                     // special cases for empty field, if the fild is a number insert it, else insert as NULL
-                    "direction_id = CASE WHEN @direction_id REGEXP '^[0-9]+$' THEN @direction_id ELSE NULL END, " +
+                    "direction_id = IF(@direction_id REGEXP '^[0-9]+$', @direction_id, NULL), " +
                     // special cases for empty field, if the fild is a number insert it, else insert as NULL
-                    "block_id = CASE WHEN @block_id REGEXP '^[0-9]+$' THEN @direction_id ELSE NULL END, " +
+                    "block_id = IF(@block_id REGEXP '^[0-9]+$', @direction_id, NULL), " +
                     // special cases for empty field, if the fild is a number insert it, else insert as NULL
-                    "wheelchair_accessible = CASE WHEN @wheelchair_accessible REGEXP '^[0-9]+$' THEN @wheelchair_accessible ELSE NULL END, " +
+                    "wheelchair_accessible = IF(@wheelchair_accessible REGEXP '^[0-9]+$', @wheelchair_accessible, NULL), " +
                     // special cases for empty field, if the fild is a number insert it, else insert as NULL
-                    "exceptional = CASE WHEN @exceptional REGEXP '^[0-9]+$' THEN @exceptional ELSE NULL END";
+                    "exceptional = IF(@exceptional REGEXP '^[0-9]+$', @exceptional, NULL)";
 
             int rows = stmt.executeUpdate(sql);
             System.out.println("✅ Inserted " + rows + " trips from: " + filePath.getFileName());
@@ -171,12 +166,12 @@ public class GTFSImporter {
                     "arrival_time = @arrival_time, " +
                     "departure_time = @departure_time, " +
                     "stop_id = @stop_id, " +
-                    "stop_sequence = CASE WHEN @stop_sequence REGEXP '^[0-9]+$' THEN @stop_sequence ELSE NULL END, " +
+                    "stop_sequence = IF(@stop_sequence REGEXP '^[0-9]+$', @stop_sequence, NULL), " +
                     "stop_headsign = NULLIF(@stop_headsign, ''), " +
-                    "pickup_type = CASE WHEN @pickup_type REGEXP '^[0-9]+$' THEN @pickup_type ELSE NULL END, " +
-                    "drop_off_type = CASE WHEN @drop_off_type REGEXP '^[0-9]+$' THEN @drop_off_type ELSE NULL END, " +
-                    "shape_dist_traveled = CASE WHEN @shape_dist_traveled REGEXP '^[0-9]+(\\.[0-9]+)?$' THEN @shape_dist_traveled ELSE NULL END, " +
-                    "timepoint = CASE WHEN @timepoint REGEXP '^[0-9]+$' THEN @timepoint ELSE NULL END";
+                    "pickup_type = IF(@pickup_type REGEXP '^[0-9]+$', @pickup_type, NULL), " +
+                    "drop_off_type = IF(@drop_off_type REGEXP '^[0-9]+$', @drop_off_type, NULL), " +
+                    "shape_dist_traveled = IF(@shape_dist_traveled REGEXP '^[0-9]+(\\.[0-9]+)?$', @shape_dist_traveled, NULL), " +
+                    "timepoint = IF(@timepoint REGEXP '^[0-9]+$', @timepoint, NULL)";
 
             int rows = stmt.executeUpdate(sql);
             System.out.println("✅ Inserted " + rows + " stop_times from: " + filePath.getFileName());
@@ -203,69 +198,69 @@ public class GTFSImporter {
         System.out.println("✅ Inserted " + insertedCount + " unique shape_id(s) into shape_index table.");
     }
 
-    private static void importStopTimesWithChunking(Path filePath, Connection conn) throws IOException, SQLException {
-        try (Reader reader = Files.newBufferedReader(filePath);
-             CSVParser parser = CSVFormat.DEFAULT.withFirstRecordAsHeader().parse(reader)) {
-
-            String sql = "INSERT INTO stop_times (trip_id, stop_id, stop_sequence) VALUES (?, ?, ?)";
-            List<CSVRecord> batch = new ArrayList<>();
-            int batchSize = 1000;
-
-            for (CSVRecord record : parser) {
-                batch.add(record);
-
-                if (batch.size() == batchSize) {
-                    insertBatch(batch, sql, conn);
-                    batch.clear();
-                }
-            }
-
-            if (!batch.isEmpty()) {
-                insertBatch(batch, sql, conn);
-            }
-        }
-        System.out.println("✅ Imported stop_times with chunking.");
-    }
-
-    // method to insert trips with chunking using the uinvocty parser,
-    private static void importTripsWithChunking(Path filePath, Connection conn) throws IOException, SQLException {
-        CsvParserSettings settings = new CsvParserSettings();
-
-        String sql = String.format("INSERT INTO trips (route_id,trip_id,Service_id,shape_id) VALUES (?,?,?,?)");
-        settings.setHeaderExtractionEnabled(true);
-        settings.setIgnoreLeadingWhitespaces(true);
-        settings.setIgnoreTrailingWhitespaces(true);
-        settings.setSkipEmptyLines(true);
-
-        try (BufferedReader reader = Files.newBufferedReader(filePath)) {
-            CsvParser parser = new CsvParser(settings);
-            parser.beginParsing(reader);
-
-            String[] headers = parser.getContext().headers();
-            final int batchSize = 10000;
-            List<Map<String, String>> batch = new ArrayList<>();
-            String[] row;
-
-            while ((row = parser.parseNext()) != null) {
-                Map<String, String> rowMap = new HashMap<>();
-                for (int i = 0; i < headers.length && i < row.length; i++) {
-                    rowMap.put(headers[i], row[i]);
-                }
-                batch.add(rowMap);
-                if (batch.size() >= batchSize) {
-                    insertTripsBatch(batch, sql, conn);
-                    batch.clear();
-                }
-            }
-
-            if (!batch.isEmpty()) {
-                insertTripsBatch(batch, sql, conn);
-            }
-
-            parser.stopParsing();
-            System.out.println("✅ Imported trips with chunking.");
-        }
-    }
+//    private static void importStopTimesWithChunking(Path filePath, Connection conn) throws IOException, SQLException {
+//        try (Reader reader = Files.newBufferedReader(filePath);
+//             CSVParser parser = CSVFormat.DEFAULT.withFirstRecordAsHeader().parse(reader)) {
+//
+//            String sql = "INSERT INTO stop_times (trip_id, stop_id, stop_sequence) VALUES (?, ?, ?)";
+//            List<CSVRecord> batch = new ArrayList<>();
+//            int batchSize = 1000;
+//
+//            for (CSVRecord record : parser) {
+//                batch.add(record);
+//
+//                if (batch.size() == batchSize) {
+//                    insertBatch(batch, sql, conn);
+//                    batch.clear();
+//                }
+//            }
+//
+//            if (!batch.isEmpty()) {
+//                insertBatch(batch, sql, conn);
+//            }
+//        }
+//        System.out.println("✅ Imported stop_times with chunking.");
+//    }
+//
+//    // method to insert trips with chunking using the uinvocty parser,
+//    private static void importTripsWithChunking(Path filePath, Connection conn) throws IOException, SQLException {
+//        CsvParserSettings settings = new CsvParserSettings();
+//
+//        String sql = String.format("INSERT INTO trips (route_id,trip_id,Service_id,shape_id) VALUES (?,?,?,?)");
+//        settings.setHeaderExtractionEnabled(true);
+//        settings.setIgnoreLeadingWhitespaces(true);
+//        settings.setIgnoreTrailingWhitespaces(true);
+//        settings.setSkipEmptyLines(true);
+//
+//        try (BufferedReader reader = Files.newBufferedReader(filePath)) {
+//            CsvParser parser = new CsvParser(settings);
+//            parser.beginParsing(reader);
+//
+//            String[] headers = parser.getContext().headers();
+//            final int batchSize = 10000;
+//            List<Map<String, String>> batch = new ArrayList<>();
+//            String[] row;
+//
+//            while ((row = parser.parseNext()) != null) {
+//                Map<String, String> rowMap = new HashMap<>();
+//                for (int i = 0; i < headers.length && i < row.length; i++) {
+//                    rowMap.put(headers[i], row[i]);
+//                }
+//                batch.add(rowMap);
+//                if (batch.size() >= batchSize) {
+//                    insertTripsBatch(batch, sql, conn);
+//                    batch.clear();
+//                }
+//            }
+//
+//            if (!batch.isEmpty()) {
+//                insertTripsBatch(batch, sql, conn);
+//            }
+//
+//            parser.stopParsing();
+//            System.out.println("✅ Imported trips with chunking.");
+//        }
+//    }
 
     // method for batching, will be used for trips
     private static void insertTripsBatch(List<Map<String, String>> batch, String sql, Connection conn) throws SQLException {
@@ -322,11 +317,10 @@ public class GTFSImporter {
                     // Handle empty strings for integer fields
                     if (value.isEmpty() && isIntegerColumn(columnName, tableName)) {
                         stmt.setObject(index++, null);
-                        insertedCount++;// Set NULL for empty strings
                     } else {
                         stmt.setString(index++, value);
-                        insertedCount++;
                     }
+                    insertedCount++;// Set NULL for empty strings
                 }
                 stmt.addBatch();
             }
