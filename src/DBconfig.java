@@ -83,7 +83,7 @@ public class DBconfig {
             if (access.conn != null && !access.conn.isClosed()) {
                 System.out.println("Accessing GTFS schema SQL file");
                 try {
-                    String sqlFilePath = "src/resources/gtfs_schema.sql";
+                    String sqlFilePath = "src/resources/newschema.sql";
                     String sql = new String(java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(sqlFilePath)));
                     try (java.sql.Statement statement = access.conn.createStatement()) {
                         for (String stmt : sql.split(";")) {
