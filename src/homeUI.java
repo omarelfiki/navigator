@@ -27,12 +27,12 @@ public class homeUI extends Application {
     double[] romeCoords = {41.6558, 42.1233, 12.2453, 12.8558}; // {minLat, maxLat, minLng, maxLng}
     private final BooleanProperty isOn = new SimpleBooleanProperty(false); // State of the switch
     private Button hideSidePanel, showSidePanel;
-
+    private DBaccess access;
 
     @Override
     public void start(Stage primaryStage) {
         primaryStage.setTitle("Rome Navigator");
-
+        access = DBaccessProvider.getInstance();
         BorderPane root = new BorderPane();
 
         // Create a MapView instance
@@ -182,7 +182,6 @@ public class homeUI extends Application {
 
     private void parsePoint(TextField field) {
         field.setOnAction(_ -> {
-            DBaccess gtfs;
             String address = field.getText();
             double[] coords = GeoUtil.getCoordinatesFromAddress(address);
             if (coords != null) {
@@ -192,9 +191,8 @@ public class homeUI extends Application {
                 }
                 System.out.println("Coordinates: " + coords[0] + ", " + coords[1]);
                 System.out.println("Connecting to MySQL");
-                gtfs = new DBaccess(System.getenv("ROUTING_ENGINE_MYSQL_JDBC"));
-                gtfs.connect();
-                Stop closestStop = gtfs.getClosestStops(coords[0], coords[1]);
+                access.connect();
+                Stop closestStop = access.getClosestStops(coords[0], coords[1]);
                 System.out.println("Closest Stop: " + closestStop);
             } else {
                 System.out.println("Address not found");
