@@ -1,3 +1,5 @@
+
+
 public class Trip {
     private String tripId;
     private Route route;

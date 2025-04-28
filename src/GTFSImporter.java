@@ -60,7 +60,7 @@ public class GTFSImporter {
                     }
                     if ("shapes".equals(tableName)) {
                         insertShapeIndex(records, conn);
-                        uploadToTable(records, tableName, conn);
+                        importShapesWithLoadData(filePath, conn);
                         continue;
                     }
                     if ("trips".equals(tableName)) {
@@ -68,7 +68,6 @@ public class GTFSImporter {
                         continue;
                     }
                     uploadToTable(records, tableName, conn);
-
                 } else {
                     System.out.println("⚠️ File not found: " + filePath);
                 }
@@ -194,6 +193,32 @@ public class GTFSImporter {
             }
         }
         System.out.println("✅ Inserted " + insertedCount + " unique shape_id(s) into shape_index table.");
+    }
+    // sane as importTimesWithLoadData
+    private static void importShapesWithLoadData(Path filePath, Connection conn) throws SQLException {
+        String absolutePath = filePath.toAbsolutePath().toString().replace("\\", "/");
+        try(Statement stmt = conn.createStatement()) {
+            /*stmt.execute("SET FOREIGN_KEY_CHECKS=0");*/
+            String sql = "LOAD DATA LOCAL INFILE '" + absolutePath + "' " +
+                    "INTO TABLE shapes " +
+                    "FIELDS TERMINATED BY ',' " +
+                    "LINES TERMINATED BY '\\n' " +
+                    "IGNORE 1 LINES " +
+                    "(@shape_id, @shape_pt_lat, @shape_pt_lon, @shape_pt_sequence, @shape_dist_traveled) " +
+                    "SET " +
+                    "shape_id =IF(@shape_id REGEXP '^[0-9]+$', @shape_id, NULL), " +
+                    "shape_pt_lat = IF(@shape_pt_lat REGEXP '^[0-9]+$', @shape_pt_lat, NULL), " +
+                    "shape_pt_lon = IF(@shape_pt_lon REGEXP '^[0-9]+$', @shape_pt_lon, NULL), " +
+                    "shape_pt_sequence = IF(@shape_pt_sequence REGEXP '^[0-9]+$', @shape_pt_sequence, NULL), " +
+                    "shape_dist_traveled = IF(@shape_dist_traveled REGEXP '^[0-9]+$', @shape_dist_traveled, NULL)";
+
+
+            int rows = stmt.executeUpdate(sql);
+            System.out.println("✅ Inserted " + rows + " shapes from: " + filePath.getFileName());
+
+            /*stmt.execute("SET FOREIGN_KEY_CHECKS=1");*/
+
+        }
     }
 
 //    private static void importStopTimesWithChunking(Path filePath, Connection conn) throws IOException, SQLException {

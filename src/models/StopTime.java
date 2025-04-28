@@ -1,3 +1,5 @@
+
+
 public class StopTime{
     private Stop stop;
     private Trip trip;

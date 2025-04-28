@@ -1,3 +1,5 @@
+
+
 public class Shape {
     private String shapeId;
     private double shapePtLat;
