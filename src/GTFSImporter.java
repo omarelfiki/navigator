@@ -202,15 +202,15 @@ public class GTFSImporter {
             String sql = "LOAD DATA LOCAL INFILE '" + absolutePath + "' " +
                     "INTO TABLE shapes " +
                     "FIELDS TERMINATED BY ',' " +
-                    "LINES TERMINATED BY '\\n' " +
+                    "LINES TERMINATED BY '\\r\\n' " +
                     "IGNORE 1 LINES " +
                     "(@shape_id, @shape_pt_lat, @shape_pt_lon, @shape_pt_sequence, @shape_dist_traveled) " +
                     "SET " +
-                    "shape_id =@shape_id, " +
-                    "shape_pt_lat = IF(@shape_pt_lat REGEXP '^[0-9]+$', @shape_pt_lat, NULL), " +
-                    "shape_pt_lon = IF(@shape_pt_lon REGEXP '^[0-9]+$', @shape_pt_lon, NULL), " +
+                    "shape_id = @shape_id, " +
+                    "shape_pt_lat = IF(@shape_pt_lat REGEXP '^-?[0-9]+(\\.[0-9]+)?$', @shape_pt_lat, NULL), " +
+                    "shape_pt_lon = IF(@shape_pt_lon REGEXP '^-?[0-9]+(\\.[0-9]+)?$', @shape_pt_lon, NULL), " +
                     "shape_pt_sequence = IF(@shape_pt_sequence REGEXP '^[0-9]+$', @shape_pt_sequence, NULL), " +
-                    "shape_dist_traveled = IF(@shape_dist_traveled REGEXP '^[0-9]+$', @shape_dist_traveled, NULL)";
+                    "shape_dist_traveled = IF(@shape_dist_traveled REGEXP '^-?[0-9]+(\\.[0-9]+)?$', @shape_dist_traveled, NULL)";
 
 
             int rows = stmt.executeUpdate(sql);
