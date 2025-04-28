@@ -13,6 +13,11 @@ public class DBconfig {
             System.out.println("Staring database initialization...");
             if (access.conn != null && !access.conn.isClosed()) {
 
+                System.out.println("Insuring clear database...");
+                access.conn.createStatement().execute("DROP DATABASE IF EXISTS " + access.dbName);
+                access.conn.createStatement().execute("CREATE DATABASE " + access.dbName);
+                access.conn.createStatement().execute("USE " + access.dbName);
+
                 System.out.println("Initializing tables...");
                 initializeTables();
 
