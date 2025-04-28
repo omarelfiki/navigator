@@ -21,6 +21,12 @@ public class DBaccess {
     public void connect() {
         try {
             conn = DriverManager.getConnection(connectionString);
+            String infileQuery = "SET GLOBAL local_infile = 1;";
+            try (Statement stmt = conn.createStatement()) {
+                stmt.execute(infileQuery);
+            } catch (SQLException e) {
+                System.out.println("SQL Error: " + e.getMessage());
+            }
             System.out.println("✅ Connected to MySQL Server");
         } catch (SQLException e) {
             System.out.println("SQL Error: " + e.getMessage());
