@@ -3,36 +3,15 @@ import java.sql.SQLException;
 
 public class DBconfig {
     private final DBaccess access;
-    private final String dbName;
 
     public DBconfig(DBaccess access) {
         this.access = access;
-        this.dbName = "gtfsbynavigator";
     }
 
     public void initializeDB() {
         try {
             System.out.println("Staring database initialization...");
             if (access.conn != null && !access.conn.isClosed()) {
-                String checkDbQuery = "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '" + dbName + "'";
-                var resultSet = access.conn.createStatement().executeQuery(checkDbQuery);
-                if (resultSet.next()) {
-                    System.out.println("GTFS database found. Replacing database...");
-                    String dropDbQuery = "DROP DATABASE " + dbName;
-                    access.conn.createStatement().execute(dropDbQuery);
-                }
-
-                System.out.println("Creating new GTFS database...");
-                String createDbQuery = "CREATE DATABASE IF NOT EXISTS " + dbName;
-                access.conn.createStatement().execute(createDbQuery);
-                System.out.println("GTFS database created successfully.");
-                System.setProperty("DB_NAME", dbName);
-                ConfigLoader.saveConfig("config.properties");
-
-                System.out.println("Connecting to GTFS database...");
-                String useDbQuery = "USE " + dbName;
-                access.conn.createStatement().execute(useDbQuery);
-                System.out.println("Connected to GTFS database.");
 
                 System.out.println("Initializing tables...");
                 initializeTables();
@@ -41,7 +20,7 @@ public class DBconfig {
                 initializeTriggers();
 
                 System.out.println("Loading GTFS data...");
-                GTFSImporter importer = new GTFSImporter(access, System.getProperty("GTFS_DIR"));
+                GTFSImporter importer = new GTFSImporter(access);
                 importer.importGTFS();
                 System.out.println("GTFS data loaded successfully.");
 
@@ -106,13 +85,7 @@ public class DBconfig {
 
 
     public static void main(String[] args) {
-        if (!ConfigLoader.checkIfConfigExists("config.properties")) {
-            ConfigLoader.createConfig("config.properties");
-        } else {
-            System.out.println("Config file found");
-            ConfigLoader.loadConfig("config.properties");
-        }
-        DBaccess access = new DBaccess(System.getProperty("DB_HOST"), System.getProperty("DB_PORT"), System.getProperty("DB_USER"), System.getProperty("DB_PASSWORD"));
+        DBaccess access = new DBaccess(System.getenv("ROUTING_ENGINE_MYSQL_JDBC"));
         access.connect();
         DBconfig config = new DBconfig(access);
         config.initializeDB();

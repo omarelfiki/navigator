@@ -10,19 +10,17 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class GTFSImporter {
-    private static String GTFS_DIR; //Add path before running the program
+    private static String GTFS_DIR;
 
     private final DBaccess access;
 
-    public GTFSImporter(DBaccess access, String path) {
+    public GTFSImporter(DBaccess access) {
         this.access = access;
-        GTFS_DIR = path;
+        GTFS_DIR = System.getenv("GTFS_DIR");
     }
 
     public void importGTFS() throws IOException, SQLException {
         try (Connection conn = access.conn) {
-            String useDbQuery = "USE " + access.dbName;
-            conn.createStatement().execute(useDbQuery);
             insertUniqueServices(conn);
 
             List<String[]> gtfsFiles = List.of(

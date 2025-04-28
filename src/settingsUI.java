@@ -9,6 +9,9 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class settingsUI {
     private final BorderPane root;
     private final Pane leftPane;
@@ -52,7 +55,7 @@ public class settingsUI {
         textField.prefWidthProperty().bind(root.widthProperty().multiply(0.24)); // 300/1280
         textField.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
         settingsMenu.getChildren().add(textField);
-        textField.setText(System.getProperty("GTFS_DIR"));
+        textField.setText(System.getenv("GTFS_DIR"));
 
         Text label2 = new Text("MySQL Connection Details");
         label2.setTextAlignment(TextAlignment.CENTER);
@@ -77,7 +80,6 @@ public class settingsUI {
         hostField.prefWidthProperty().bind(root.widthProperty().multiply(0.24)); // 300/1280
         hostField.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
         settingsMenu.getChildren().add(hostField);
-        hostField.setText(System.getProperty("DB_HOST"));
 
         Text user = new Text("User");
         user.setTextAlignment(TextAlignment.CENTER);
@@ -94,7 +96,6 @@ public class settingsUI {
         userField.prefWidthProperty().bind(root.widthProperty().multiply(0.24)); // 300/1280
         userField.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
         settingsMenu.getChildren().add(userField);
-        userField.setText(System.getProperty("DB_USER"));
 
         Text password = new Text("Password");
         password.setTextAlignment(TextAlignment.CENTER);
@@ -111,7 +112,6 @@ public class settingsUI {
         passwordField.prefWidthProperty().bind(root.widthProperty().multiply(0.24)); // 300/1280
         passwordField.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
         settingsMenu.getChildren().add(passwordField);
-        passwordField.setText(System.getProperty("DB_PASSWORD"));
 
         Text port = new Text("Port");
         port.setTextAlignment(TextAlignment.CENTER);
@@ -128,7 +128,6 @@ public class settingsUI {
         portField.prefWidthProperty().bind(root.widthProperty().multiply(0.24)); // 300/1280
         portField.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
         settingsMenu.getChildren().add(portField);
-        portField.setText(System.getProperty("DB_PORT"));
 
         Label testLabel = new Label();
         testLabel.setText("");
@@ -140,7 +139,9 @@ public class settingsUI {
         testLabel.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
         settingsMenu.getChildren().add(testLabel);
 
-        Button test = new Button("Test and Save");
+        parseConnectionString(System.getenv("ROUTING_ENGINE_MYSQL_JDBC"), userField, passwordField, hostField, portField);
+
+        Button test = new Button("Test MySQL Connection");
         test.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
         test.layoutXProperty().bind(root.widthProperty().multiply(0.017)); // 78/1280
         test.layoutYProperty().bind(root.heightProperty().multiply(0.8)); // 700/832
@@ -148,17 +149,7 @@ public class settingsUI {
         test.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
         test.setOnAction(_ -> {
             testLabel.setText("");
-            String hostText = hostField.getText();
-            String userText = userField.getText();
-            String passwordText = passwordField.getText();
-            String portText = portField.getText();
-            DBaccess gtfs = new DBaccess(hostText, portText, userText, passwordText);
-            System.setProperty("DB_PASSWORD", passwordText);
-            System.setProperty("DB_USER", userText);
-            System.setProperty("DB_HOST", hostText);
-            System.setProperty("DB_PORT", portText);
-            System.setProperty("GTFS_DIR", textField.getText());
-            ConfigLoader.saveConfig("config.properties");
+            DBaccess gtfs = new DBaccess(System.getenv("ROUTING_ENGINE_MYSQL_JDBC"));
             gtfs.connect();
             if (gtfs.conn != null) {
                 testLabel.setText("Connection Established");
@@ -169,7 +160,7 @@ public class settingsUI {
         });
         settingsMenu.getChildren().add(test);
 
-        Button importButton = new Button("Import GTFS");
+        Button importButton = new Button("Reimport GTFS");
         importButton.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
         importButton.layoutXProperty().bind(root.widthProperty().multiply(0.017)); // 78/1280
         importButton.layoutYProperty().bind(root.heightProperty().multiply(0.85)); // 700/832
@@ -207,4 +198,30 @@ public class settingsUI {
         leftPane.setManaged(!isVisible);
     }
 
+    private static void parseConnectionString(String connectionString, TextField usernameField, TextField passwordField, TextField hostField, TextField portField) {
+        // Example connection string: jdbc:mysql://USER:PASSWORD@HOST:PORT/DBNAME
+        String regex = "^jdbc:mysql://([^:]+):([^@]+)@([^:/]+):?(\\d+)?/([^?]+)$";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(connectionString);
+
+        if (matcher.matches()) {
+            String user = matcher.group(1);
+            String password = matcher.group(2);
+            String host = matcher.group(3);
+            String port = matcher.group(4) != null ? matcher.group(4) : "3306"; // Default MySQL port
+            String database = matcher.group(5);
+
+            System.out.println("User: " + user);
+            System.out.println("Password: " + password);
+            System.out.println("Host: " + host);
+            System.out.println("Port: " + port);
+            System.out.println("Database: " + database);
+            usernameField.setText(user);
+            passwordField.setText(password);
+            hostField.setText(host);
+            portField.setText(port);
+        } else {
+            System.out.println("Invalid connection string format.");
+        }
+    }
 }
