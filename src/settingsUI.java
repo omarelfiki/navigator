@@ -149,9 +149,9 @@ public class settingsUI {
         test.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
         test.setOnAction(_ -> {
             testLabel.setText("");
-            DBaccess gtfs = new DBaccess(System.getenv("ROUTING_ENGINE_MYSQL_JDBC"));
-            gtfs.connect();
-            if (gtfs.conn != null) {
+            DBaccess access = DBaccessProvider.getInstance();
+            access.connect();
+            if (access.conn != null) {
                 testLabel.setText("Connection Established");
 
             } else {
@@ -166,6 +166,9 @@ public class settingsUI {
         importButton.layoutYProperty().bind(root.heightProperty().multiply(0.85)); // 700/832
         importButton.prefWidthProperty().bind(root.widthProperty().multiply(0.24)); // 300/1280
         importButton.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
+        importButton.setOnAction(_ -> {
+
+        });
         settingsMenu.getChildren().add(importButton);
 
         Line line = new Line();
@@ -209,13 +212,6 @@ public class settingsUI {
             String password = matcher.group(2);
             String host = matcher.group(3);
             String port = matcher.group(4) != null ? matcher.group(4) : "3306"; // Default MySQL port
-            String database = matcher.group(5);
-
-            System.out.println("User: " + user);
-            System.out.println("Password: " + password);
-            System.out.println("Host: " + host);
-            System.out.println("Port: " + port);
-            System.out.println("Database: " + database);
             usernameField.setText(user);
             passwordField.setText(password);
             hostField.setText(host);

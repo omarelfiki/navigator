@@ -11,6 +11,7 @@ public class DBconfig {
     public void initializeDB() {
         try {
             System.out.println("Staring database initialization...");
+            access.connect();
             if (access.conn != null && !access.conn.isClosed()) {
 
                 System.out.println("Insuring clear database...");
@@ -90,8 +91,7 @@ public class DBconfig {
 
 
     public static void main(String[] args) {
-        DBaccess access = new DBaccess(System.getenv("ROUTING_ENGINE_MYSQL_JDBC"));
-        access.connect();
+        DBaccess access = DBaccessProvider.getInstance();
         DBconfig config = new DBconfig(access);
         config.initializeDB();
     }
