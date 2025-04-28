@@ -206,7 +206,7 @@ public class GTFSImporter {
                     "IGNORE 1 LINES " +
                     "(@shape_id, @shape_pt_lat, @shape_pt_lon, @shape_pt_sequence, @shape_dist_traveled) " +
                     "SET " +
-                    "shape_id =IF(@shape_id REGEXP '^[0-9]+$', @shape_id, NULL), " +
+                    "shape_id =@shape_id, " +
                     "shape_pt_lat = IF(@shape_pt_lat REGEXP '^[0-9]+$', @shape_pt_lat, NULL), " +
                     "shape_pt_lon = IF(@shape_pt_lon REGEXP '^[0-9]+$', @shape_pt_lon, NULL), " +
                     "shape_pt_sequence = IF(@shape_pt_sequence REGEXP '^[0-9]+$', @shape_pt_sequence, NULL), " +
