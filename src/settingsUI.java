@@ -1,3 +1,4 @@
+import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -10,6 +11,8 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -57,7 +60,6 @@ public class settingsUI {
         textField.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
         settingsMenu.getChildren().add(textField);
         textField.setText(System.getProperty("GTFS_DIR"));
-        textField.setEditable(false);
 
         Text label2 = new Text("MySQL Connection Details");
         label2.setTextAlignment(TextAlignment.CENTER);
@@ -173,9 +175,28 @@ public class settingsUI {
         importButton.prefWidthProperty().bind(root.widthProperty().multiply(0.24)); // 300/1280
         importButton.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
         importButton.setOnAction(_ -> {
-            System.setProperty("GTFS_DIR", textField.getText());
-            DBconfig config = new DBconfig(DBaccessProvider.getInstance());
-            config.initializeDB();
+            if (textField.getText().isEmpty()) {
+                testLabel.setText("Please check GTFS Path.");
+            } else if (!Files.isDirectory(Path.of(textField.getText()))) {
+                testLabel.setText("Please check GTFS Path.");
+            } else if (!Files.exists(Path.of(textField.getText()))) {
+                testLabel.setText("Please check GTFS Path.");
+            } else if (!Files.isReadable(Path.of(textField.getText()))) {
+                testLabel.setText("Please check GTFS Path.");
+            } else {
+                System.setProperty("GTFS_DIR", textField.getText());
+                ConsolePopup consolePopup = new ConsolePopup();
+                consolePopup.show();
+                new Thread(() -> {
+                    DBconfig config = new DBconfig(DBaccessProvider.getInstance());
+                    config.initializeDB();
+                    Platform.runLater(() -> {
+                        consolePopup.close();
+                        testLabel.setText("GTFS data loaded successfully.");
+                    });
+                }).start();
+
+            }
         });
         importButton.setDisable(true);
         settingsMenu.getChildren().add(importButton);
