@@ -11,9 +11,7 @@ public class DBconfig {
     public void initializeDB() {
         try {
             System.out.println("Staring database initialization...");
-            access.connect();
             if (access.conn != null && !access.conn.isClosed()) {
-
                 System.out.println("Insuring clear database...");
                 access.conn.createStatement().execute("DROP DATABASE IF EXISTS " + access.dbName);
                 access.conn.createStatement().execute("CREATE DATABASE " + access.dbName);
@@ -87,12 +85,5 @@ public class DBconfig {
         } catch (SQLException e) {
             System.err.println("SQL Error: " + e.getMessage());
         }
-    }
-
-
-    public static void main(String[] args) {
-        DBaccess access = DBaccessProvider.getInstance();
-        DBconfig config = new DBconfig(access);
-        config.initializeDB();
     }
 }

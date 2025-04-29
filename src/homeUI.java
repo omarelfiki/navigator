@@ -178,6 +178,10 @@ public class homeUI extends Application {
         scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/resources/styles.css")).toExternalForm());
         primaryStage.setScene(scene);
         primaryStage.show();
+
+        if (access == null) {
+            ErrorPopup.showError("SQL Error", "Database connection failed. Please check your configuration.");
+        }
     }
 
     private void parsePoint(TextField field) {
@@ -257,6 +261,7 @@ public class homeUI extends Application {
 
 
     public static void main(String[] args) {
+        System.setProperty("GTFS_DIR", System.getenv("GTFS_DIR"));
         launch(args);
     }
 }

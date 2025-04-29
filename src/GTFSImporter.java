@@ -1,5 +1,6 @@
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
+
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -11,12 +12,11 @@ import java.util.stream.Collectors;
 
 public class GTFSImporter {
     private static String GTFS_DIR;
-
     private final DBaccess access;
 
     public GTFSImporter(DBaccess access) {
         this.access = access;
-        GTFS_DIR = System.getenv("GTFS_DIR");
+        GTFS_DIR = System.getProperty("GTFS_DIR");
     }
 
     public void importGTFS() throws IOException, SQLException {
@@ -100,6 +100,7 @@ public class GTFSImporter {
                 insertedCount++;
             }
         }
+
         System.out.println("✅ Inserted " + insertedCount + " unique service_id(s) into service table.");
     }
 
@@ -194,10 +195,11 @@ public class GTFSImporter {
         }
         System.out.println("✅ Inserted " + insertedCount + " unique shape_id(s) into shape_index table.");
     }
+
     // sane as importTimesWithLoadData
     private static void importShapesWithLoadData(Path filePath, Connection conn) throws SQLException {
         String absolutePath = filePath.toAbsolutePath().toString().replace("\\", "/");
-        try(Statement stmt = conn.createStatement()) {
+        try (Statement stmt = conn.createStatement()) {
             /*stmt.execute("SET FOREIGN_KEY_CHECKS=0");*/
             String sql = "LOAD DATA LOCAL INFILE '" + absolutePath + "' " +
                     "INTO TABLE shapes " +
@@ -206,11 +208,11 @@ public class GTFSImporter {
                     "IGNORE 1 LINES " +
                     "(@shape_id, @shape_pt_lat, @shape_pt_lon, @shape_pt_sequence, @shape_dist_traveled) " +
                     "SET " +
-                    "shape_id =@shape_id, " +
-                    "shape_pt_lat = IF(@shape_pt_lat REGEXP '^[0-9]+$', @shape_pt_lat, NULL), " +
-                    "shape_pt_lon = IF(@shape_pt_lon REGEXP '^[0-9]+$', @shape_pt_lon, NULL), " +
+                    "shape_id = @shape_id, " +
+                    "shape_pt_lat = IF(@shape_pt_lat REGEXP '^-?[0-9]+(\\.[0-9]+)?$', @shape_pt_lat, NULL), " +
+                    "shape_pt_lon = IF(@shape_pt_lon REGEXP '^-?[0-9]+(\\.[0-9]+)?$', @shape_pt_lon, NULL), " +
                     "shape_pt_sequence = IF(@shape_pt_sequence REGEXP '^[0-9]+$', @shape_pt_sequence, NULL), " +
-                    "shape_dist_traveled = IF(@shape_dist_traveled REGEXP '^[0-9]+$', @shape_dist_traveled, NULL)";
+                    "shape_dist_traveled = IF(@shape_dist_traveled REGEXP '^-?[0-9]+(\\.[0-9]+)?$', @shape_dist_traveled, NULL)";
 
 
             int rows = stmt.executeUpdate(sql);
@@ -218,104 +220,6 @@ public class GTFSImporter {
 
             /*stmt.execute("SET FOREIGN_KEY_CHECKS=1");*/
 
-        }
-    }
-
-//    private static void importStopTimesWithChunking(Path filePath, Connection conn) throws IOException, SQLException {
-//        try (Reader reader = Files.newBufferedReader(filePath);
-//             CSVParser parser = CSVFormat.DEFAULT.withFirstRecordAsHeader().parse(reader)) {
-//
-//            String sql = "INSERT INTO stop_times (trip_id, stop_id, stop_sequence) VALUES (?, ?, ?)";
-//            List<CSVRecord> batch = new ArrayList<>();
-//            int batchSize = 1000;
-//
-//            for (CSVRecord record : parser) {
-//                batch.add(record);
-//
-//                if (batch.size() == batchSize) {
-//                    insertBatch(batch, sql, conn);
-//                    batch.clear();
-//                }
-//            }
-//
-//            if (!batch.isEmpty()) {
-//                insertBatch(batch, sql, conn);
-//            }
-//        }
-//        System.out.println("✅ Imported stop_times with chunking.");
-//    }
-//
-//    // method to insert trips with chunking using the uinvocty parser,
-//    private static void importTripsWithChunking(Path filePath, Connection conn) throws IOException, SQLException {
-//        CsvParserSettings settings = new CsvParserSettings();
-//
-//        String sql = String.format("INSERT INTO trips (route_id,trip_id,Service_id,shape_id) VALUES (?,?,?,?)");
-//        settings.setHeaderExtractionEnabled(true);
-//        settings.setIgnoreLeadingWhitespaces(true);
-//        settings.setIgnoreTrailingWhitespaces(true);
-//        settings.setSkipEmptyLines(true);
-//
-//        try (BufferedReader reader = Files.newBufferedReader(filePath)) {
-//            CsvParser parser = new CsvParser(settings);
-//            parser.beginParsing(reader);
-//
-//            String[] headers = parser.getContext().headers();
-//            final int batchSize = 10000;
-//            List<Map<String, String>> batch = new ArrayList<>();
-//            String[] row;
-//
-//            while ((row = parser.parseNext()) != null) {
-//                Map<String, String> rowMap = new HashMap<>();
-//                for (int i = 0; i < headers.length && i < row.length; i++) {
-//                    rowMap.put(headers[i], row[i]);
-//                }
-//                batch.add(rowMap);
-//                if (batch.size() >= batchSize) {
-//                    insertTripsBatch(batch, sql, conn);
-//                    batch.clear();
-//                }
-//            }
-//
-//            if (!batch.isEmpty()) {
-//                insertTripsBatch(batch, sql, conn);
-//            }
-//
-//            parser.stopParsing();
-//            System.out.println("✅ Imported trips with chunking.");
-//        }
-//    }
-
-    // method for batching, will be used for trips
-    private static void insertTripsBatch(List<Map<String, String>> batch, String sql, Connection conn) throws SQLException {
-
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            for (Map<String, String> row : batch) {
-                stmt.setString(1, row.get("route_id"));
-                stmt.setString(2, row.get("trip_id"));
-                stmt.setString(3, row.get("service_id"));
-                stmt.setString(4, row.get("shape_id"));
-                stmt.addBatch();
-            }
-            stmt.executeBatch();
-        }
-    }
-
-    private static void insertBatch(List<CSVRecord> batch, String sql, Connection conn) throws SQLException {
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            for (CSVRecord record : batch) {
-                stmt.setString(1, record.get("trip_id"));
-                stmt.setString(2, record.get("stop_id"));
-
-                String stopSequence = record.get("stop_sequence");
-                if (stopSequence == null || stopSequence.isEmpty()) {
-                    stmt.setNull(3, Types.INTEGER); // Set NULL for missing stop_sequence
-                } else {
-                    stmt.setInt(3, Integer.parseInt(stopSequence));
-                }
-
-                stmt.addBatch();
-            }
-            stmt.executeBatch();
         }
     }
 
