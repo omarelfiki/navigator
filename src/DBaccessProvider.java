@@ -8,7 +8,8 @@ public class DBaccessProvider {
             // Fetch connection details from environment variables
             String connectionString = System.getenv("ROUTING_ENGINE_MYSQL_JDBC");
             if (connectionString == null || connectionString.isEmpty()) {
-                throw new IllegalStateException("Connection string is not set in environment variables.");
+                System.err.println("Error: Environment variable ROUTING_ENGINE_MYSQL_JDBC is not set.");
+                return null;
             }
             instance = new DBaccess(connectionString);
         }

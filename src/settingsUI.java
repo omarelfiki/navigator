@@ -1,3 +1,4 @@
+import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -55,7 +56,8 @@ public class settingsUI {
         textField.prefWidthProperty().bind(root.widthProperty().multiply(0.24)); // 300/1280
         textField.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
         settingsMenu.getChildren().add(textField);
-        textField.setText(System.getenv("GTFS_DIR"));
+        textField.setText(System.getProperty("GTFS_DIR"));
+        textField.setEditable(false);
 
         Text label2 = new Text("MySQL Connection Details");
         label2.setTextAlignment(TextAlignment.CENTER);
@@ -80,6 +82,7 @@ public class settingsUI {
         hostField.prefWidthProperty().bind(root.widthProperty().multiply(0.24)); // 300/1280
         hostField.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
         settingsMenu.getChildren().add(hostField);
+        hostField.setEditable(false);
 
         Text user = new Text("User");
         user.setTextAlignment(TextAlignment.CENTER);
@@ -96,6 +99,7 @@ public class settingsUI {
         userField.prefWidthProperty().bind(root.widthProperty().multiply(0.24)); // 300/1280
         userField.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
         settingsMenu.getChildren().add(userField);
+        userField.setEditable(false);
 
         Text password = new Text("Password");
         password.setTextAlignment(TextAlignment.CENTER);
@@ -112,6 +116,7 @@ public class settingsUI {
         passwordField.prefWidthProperty().bind(root.widthProperty().multiply(0.24)); // 300/1280
         passwordField.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
         settingsMenu.getChildren().add(passwordField);
+        passwordField.setEditable(false);
 
         Text port = new Text("Port");
         port.setTextAlignment(TextAlignment.CENTER);
@@ -128,6 +133,7 @@ public class settingsUI {
         portField.prefWidthProperty().bind(root.widthProperty().multiply(0.24)); // 300/1280
         portField.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
         settingsMenu.getChildren().add(portField);
+        portField.setEditable(false);
 
         Label testLabel = new Label();
         testLabel.setText("");
@@ -139,7 +145,18 @@ public class settingsUI {
         testLabel.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
         settingsMenu.getChildren().add(testLabel);
 
-        parseConnectionString(System.getenv("ROUTING_ENGINE_MYSQL_JDBC"), userField, passwordField, hostField, portField);
+        Label infoLabel = new Label();
+        infoLabel.setText("Set connection details as environment variables under \n \"ROUTING_ENGINE_MYSQL_JDBC\".");
+        infoLabel.setTextFill(Color.WHITE);
+        infoLabel.setStyle("-fx-font: 12 Ubuntu;");
+        infoLabel.setAlignment(Pos.CENTER);
+        infoLabel.setTextAlignment(TextAlignment.CENTER);
+        infoLabel.layoutXProperty().bind(root.widthProperty().multiply(0.017)); // 78/1280
+        infoLabel.layoutYProperty().bind(root.heightProperty().multiply(0.72)); // 700/832
+        infoLabel.prefWidthProperty().bind(root.widthProperty().multiply(0.24)); // 300/1280
+        infoLabel.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
+        settingsMenu.getChildren().add(infoLabel);
+
 
         Button test = new Button("Test MySQL Connection");
         test.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
@@ -147,17 +164,6 @@ public class settingsUI {
         test.layoutYProperty().bind(root.heightProperty().multiply(0.8)); // 700/832
         test.prefWidthProperty().bind(root.widthProperty().multiply(0.24)); // 300/1280
         test.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
-        test.setOnAction(_ -> {
-            testLabel.setText("");
-            DBaccess access = DBaccessProvider.getInstance();
-            access.connect();
-            if (access.conn != null) {
-                testLabel.setText("Connection Established");
-
-            } else {
-                testLabel.setText("Connection Failed");
-            }
-        });
         settingsMenu.getChildren().add(test);
 
         Button importButton = new Button("Reimport GTFS");
@@ -167,9 +173,29 @@ public class settingsUI {
         importButton.prefWidthProperty().bind(root.widthProperty().multiply(0.24)); // 300/1280
         importButton.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
         importButton.setOnAction(_ -> {
-
+            System.setProperty("GTFS_DIR", textField.getText());
+            DBconfig config = new DBconfig(DBaccessProvider.getInstance());
+            config.initializeDB();
         });
+        importButton.setDisable(true);
         settingsMenu.getChildren().add(importButton);
+
+        test.setOnAction(_ -> {
+            testLabel.setText("");
+            if (userField.getText().isEmpty() || passwordField.getText().isEmpty() || hostField.getText().isEmpty() || portField.getText().isEmpty()) {
+                testLabel.setText("Please check configuration.");
+            } else {
+                DBaccess access = DBaccessProvider.getInstance();
+                access.connect();
+                if (access.conn != null) {
+                    testLabel.setText("Connection Established");
+                    importButton.setDisable(false);
+
+                } else {
+                    testLabel.setText("Connection Failed");
+                }
+            }
+        });
 
         Line line = new Line();
         line.startXProperty().bind(root.widthProperty().multiply(0)); // 0/1280
@@ -191,6 +217,13 @@ public class settingsUI {
             toggleLeftBar(leftPane);
         });
         settingsMenu.getChildren().add(close);
+
+        String connectionString = System.getenv("ROUTING_ENGINE_MYSQL_JDBC");
+        if (connectionString == null || connectionString.isEmpty()) {
+            ErrorPopup.showError("SQL Error", "Database connection failed. Please check your configuration.");
+        } else {
+            parseConnectionString(connectionString, userField, passwordField, hostField, portField);
+        }
 
         return settingsMenu;
     }
