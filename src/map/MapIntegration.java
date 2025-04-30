@@ -28,18 +28,7 @@ public class MapIntegration {
         TileFactory tileFactory = tileUtil.getTileFactory();
 
         // Setup local file cache
-        if (isOnline) {
-            File cacheDir = new File(System.getProperty("user.home") + File.separator + ".jxmapviewer2");
-            tileFactory.setLocalCache(new FileBasedLocalCache(cacheDir, false));
-            String cacheDirPath = System.getProperty("user.home") + File.separator + ".jxmapviewer2" + File.separator + "tile.openstreetmap.org";
-            String zipFilePath = System.getProperty("user.home") + File.separator + "Archive.zip";
-            try {
-                tileUtil.createZip(cacheDirPath, zipFilePath);
-                System.out.println("Cache created at: " + zipFilePath);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+        setCache(tileFactory, tileUtil);
 
         map = new JXMapViewer();
         map.setTileFactory(tileFactory);
@@ -57,6 +46,28 @@ public class MapIntegration {
 
         mapPane.getChildren().add(swingNode);
         return mapPane;
+    }
+
+    private void setCache(TileFactory tileFactory, TileUtil tileUtil) {
+        if (isOnline) {
+            File cacheDir = new File(System.getProperty("user.home") + File.separator + ".jxmapviewer2");
+            if (!cacheDir.exists()) {
+                if (cacheDir.mkdirs()) {
+                    System.out.println("Cache directory created: " + cacheDir.getAbsolutePath());
+                } else {
+                    System.err.println("Failed to create cache directory: " + cacheDir.getAbsolutePath());
+                }
+            }
+            tileFactory.setLocalCache(new FileBasedLocalCache(cacheDir, false));
+            String cacheDirPath = System.getProperty("user.home") + File.separator + ".jxmapviewer2" + File.separator + "tile.openstreetmap.org";
+            String zipFilePath = System.getProperty("user.home") + File.separator + "Archive.zip";
+            try {
+                tileUtil.createZip(cacheDirPath, zipFilePath);
+                System.out.println("Cache created at: " + zipFilePath);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public JXMapViewer getMap() {
