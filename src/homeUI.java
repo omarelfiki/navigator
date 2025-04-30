@@ -227,7 +227,7 @@ public class homeUI extends Application {
                 Set<Waypoint> waypoints = new HashSet<Waypoint>(Arrays.asList(
                         new DefaultWaypoint(op),
                         new DefaultWaypoint(dp)
-                        ));
+                ));
 
                 WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<Waypoint>();
                 waypointPainter.setWaypoints(waypoints);
