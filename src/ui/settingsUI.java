@@ -10,7 +10,6 @@ import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.regex.Matcher;

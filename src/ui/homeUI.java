@@ -1,6 +1,3 @@
-import com.gluonhq.maps.MapLayer;
-import com.gluonhq.maps.MapPoint;
-import com.gluonhq.maps.MapView;
 import javafx.application.Application;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
@@ -20,36 +17,35 @@ import javafx.stage.Stage;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.shape.Circle;
-
-import java.util.Objects;
+import org.jxmapviewer.JXMapViewer;
+import org.jxmapviewer.painter.CompoundPainter;
+import org.jxmapviewer.painter.Painter;
+import org.jxmapviewer.viewer.DefaultWaypoint;
+import org.jxmapviewer.viewer.GeoPosition;
+import org.jxmapviewer.viewer.Waypoint;
+import org.jxmapviewer.viewer.WaypointPainter;
+import java.util.*;
 
 public class homeUI extends Application {
     double[] romeCoords = {41.6558, 42.1233, 12.2453, 12.8558}; // {minLat, maxLat, minLng, maxLng}
-    private final BooleanProperty isOn = new SimpleBooleanProperty(false); // State of the switch
+    private final BooleanProperty isOn = new SimpleBooleanProperty(false);
     private Button hideSidePanel, showSidePanel;
+    public boolean isOnline;
     private DBaccess access;
+    private MapIntegration mapIntegration;
 
     @Override
     public void start(Stage primaryStage) {
         primaryStage.setTitle("Rome Navigator");
+
+        initializeNetwork();
         access = DBaccessProvider.getInstance();
+
         BorderPane root = new BorderPane();
 
-        // Create a MapView instance
-        MapView mapView = new MapView();
-        mapView.setPrefWidth(600);
-        mapView.setPrefHeight(600);
-        mapView.setZoom(13);
-
-        MapPoint romePoint = new MapPoint(41.9028, 12.4964); // Coordinates for Rome
-        MapLayer layer = new MapLayer();
-        mapView.addLayer(layer);
-        mapView.setCenter(romePoint);
-
-        StackPane mapPane = new StackPane();
-        mapPane.getChildren().add(mapView);
+        mapIntegration = new MapIntegration(isOnline);
+        StackPane mapPane = mapIntegration.createMapPane();
         root.setCenter(mapPane);
-
 
         Pane leftPane = new Pane();
         VBox vbox_left = new VBox();
@@ -79,6 +75,11 @@ public class homeUI extends Application {
         StackPane endGroup = createTextFieldWithIcon("↙", "Destination");
         bindPosition(endGroup, root, 0.18);
         leftPane.getChildren().add(endGroup);
+
+        parsePoint(
+                (TextField) ((HBox) startGroup.getChildren().get(0)).getChildren().get(1),
+                (TextField) ((HBox) endGroup.getChildren().get(0)).getChildren().get(1)
+        );
 
         Text label = new Text("Navigate to see public transport \n options");
         label.setTextAlignment(TextAlignment.CENTER);
@@ -184,19 +185,62 @@ public class homeUI extends Application {
         }
     }
 
-    private void parsePoint(TextField field) {
-        field.setOnAction(_ -> {
-            String address = field.getText();
-            double[] coords = GeoUtil.getCoordinatesFromAddress(address);
-            if (coords != null) {
-                if (coords[0] < romeCoords[0] || coords[0] > romeCoords[1] || coords[1] < romeCoords[2] || coords[1] > romeCoords[3]) {
-                    System.out.println("coordinates out of bounds");
+    private void initializeNetwork() {
+        if (NetworkUtil.isNetworkAvailable()) {
+            isOnline = true;
+        } else {
+            System.out.println("Network is not available. Switching to offline mode.");
+            isOnline = false;
+        }
+    }
+
+    private void parsePoint(TextField origin, TextField destination) {
+        JXMapViewer map = mapIntegration.getMap();
+        destination.setOnAction(_ -> {
+            String oaddress = origin.getText();
+            String daddress = destination.getText();
+            if (oaddress.isEmpty() || daddress.isEmpty()) {
+                System.out.println("Please enter both origin and destination addresses.");
+                return;
+            }
+
+            double[] ocoords = GeoUtil.getCoordinatesFromAddress(oaddress);
+            double[] dcoords = GeoUtil.getCoordinatesFromAddress(daddress);
+
+            if (ocoords != null && dcoords != null) {
+                if (ocoords[0] < romeCoords[0] || ocoords[0] > romeCoords[1] || ocoords[1] < romeCoords[2] || ocoords[1] > romeCoords[3]) {
+                    System.out.println("origin coordinates out of bounds");
+                    return;
+                } else if (dcoords[0] < romeCoords[0] || dcoords[0] > romeCoords[1] || dcoords[1] < romeCoords[2] || dcoords[1] > romeCoords[3]) {
+                    System.out.println("destination coordinates out of bounds");
                     return;
                 }
-                System.out.println("Coordinates: " + coords[0] + ", " + coords[1]);
-                System.out.println("Connecting to MySQL");
+
+                System.out.println("Origin Coordinates: " + ocoords[0] + ", " + ocoords[1]);
+                System.out.println("Destination Coordinates: " + dcoords[0] + ", " + dcoords[1]);
+                GeoPosition op = new GeoPosition(ocoords[0], ocoords[1]);
+                GeoPosition dp = new GeoPosition(dcoords[0], dcoords[1]);
+                List<GeoPosition> track = Arrays.asList(op, dp);
+                RoutePainter routePainter = new RoutePainter(track);
+
+                map.zoomToBestFit(new HashSet<GeoPosition>(track), 0.7);
+                Set<Waypoint> waypoints = new HashSet<Waypoint>(Arrays.asList(
+                        new DefaultWaypoint(op),
+                        new DefaultWaypoint(dp)
+                        ));
+
+                WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<Waypoint>();
+                waypointPainter.setWaypoints(waypoints);
+
+                List<Painter<JXMapViewer>> painters = new ArrayList<Painter<JXMapViewer>>();
+                painters.add(routePainter);
+                painters.add(waypointPainter);
+
+                CompoundPainter<JXMapViewer> painter = new CompoundPainter<JXMapViewer>(painters);
+                map.setOverlayPainter(painter);
+
                 access.connect();
-                Stop closestStop = access.getClosestStops(coords[0], coords[1]);
+                Stop closestStop = access.getClosestStops(ocoords[0], ocoords[1]);
                 System.out.println("Closest Stop: " + closestStop);
             } else {
                 System.out.println("Address not found");
@@ -231,7 +275,6 @@ public class homeUI extends Application {
         TextField textField = new TextField();
         textField.setPromptText(prompt);
         textField.getStyleClass().add("rounded-textfield");
-        parsePoint(textField);
 
         HBox.setHgrow(textField, Priority.ALWAYS);
         inner.getChildren().addAll(iconCircle, textField);
