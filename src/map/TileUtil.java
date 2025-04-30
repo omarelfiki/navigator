@@ -2,8 +2,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import org.jxmapviewer.OSMTileFactoryInfo;
@@ -24,10 +23,10 @@ public class TileUtil {
             info = new OSMTileFactoryInfo();
         } else {
             try {
-                String encodedPath = URLEncoder.encode(System.getProperty("user.home") + File.separator + "Archive.zip", StandardCharsets.UTF_8.toString());
-                info = new OSMTileFactoryInfo("Zip archive", "jar:file:" + encodedPath + "!");
+                String encodedPath = Paths.get(System.getProperty("user.home"), "Archive.zip").toUri().toString();
+                info = new OSMTileFactoryInfo("Zip archive", "jar:" + encodedPath + "!");
             } catch (Exception e) {
-                throw new RuntimeException("Failed to encode file path for TileFactory", e);
+                throw new RuntimeException("Failed to construct file path for TileFactory", e);
             }
         }
         return new DefaultTileFactory(info);
