@@ -62,15 +62,15 @@ public class RouteFinder {
         int bestTime = Integer.MAX_VALUE;
 
         for (TripMatch match : validMatches) {
-            StopDistance from = new StopDistance(match.getDeparture().getStop(),
+            StopDistance from = new StopDistance(match.departure().getStop(),
                     HaversineUtil.calculateDistance(startLat, startLon,
-                            match.getDeparture().getStop().getStopLat(),
-                            match.getDeparture().getStop().getStopLon()));
+                            match.departure().getStop().getStopLat(),
+                            match.departure().getStop().getStopLon()));
 
-            StopDistance to = new StopDistance(match.getArrival().getStop(),
+            StopDistance to = new StopDistance(match.arrival().getStop(),
                     HaversineUtil.calculateDistance(endLat, endLon,
-                            match.getArrival().getStop().getStopLat(),
-                            match.getArrival().getStop().getStopLon()));
+                            match.arrival().getStop().getStopLat(),
+                            match.arrival().getStop().getStopLon()));
 
             int walkBefore = (int) from.getWalkingTimeMinutes();
             int walkAfter = (int) to.getWalkingTimeMinutes();
@@ -79,8 +79,8 @@ public class RouteFinder {
 
             if (totalTime < bestTime) {
                 bestTime = totalTime;
-                bestResult = new RouteResult(from, to, match.getTrip(),
-                        match.getDeparture().getDepartureTime(), match.getArrival().getArrivalTime(),
+                bestResult = new RouteResult(from, to, match.trip(),
+                        match.departure().getDepartureTime(), match.arrival().getArrivalTime(),
                         walkBefore, walkAfter, transitTime);
             }
         }
