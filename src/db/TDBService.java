@@ -143,11 +143,16 @@ public class TDBService {
     private <T> List<T> executeQueryList(String sql, Object[] p, ResultSetExtractor<T> extractor) {
         List<T> results = new ArrayList<>();
         try (Connection conn = getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
-            while (rs.next()) {
-                results.add(extractor.extract(rs));
+             PreparedStatement stmt = conn.prepareStatement(sql)){
+             if (p != null) {
+            for (int i = 0; i < p.length; i++) {
+                stmt.setObject(i + 1, p[i]);
             }
+        }
+        ResultSet rs = stmt.executeQuery();
+        while (rs.next()) {
+            results.add(extractor.extract(rs));
+        }
         } catch (SQLException e) {
             throw new RuntimeException("Error executing query: " + sql, e);
         }
