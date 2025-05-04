@@ -1,4 +1,4 @@
-
+package models;
 
 public class Service {
     private final String serviceId;

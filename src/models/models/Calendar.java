@@ -1,5 +1,5 @@
 
-
+package models;
 public record Calendar(Service service, boolean monday, boolean tuesday, boolean wednesday, boolean thursday,
                        boolean friday, boolean saturday, boolean sunday, String startDate, String endDate) {
     @Override

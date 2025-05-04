@@ -1,3 +1,5 @@
+package ui;
+
 import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.control.TextArea;

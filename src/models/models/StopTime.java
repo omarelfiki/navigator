@@ -1,4 +1,4 @@
-
+package models;
 
 public class StopTime{
     private Stop stop;

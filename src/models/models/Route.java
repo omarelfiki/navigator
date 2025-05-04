@@ -1,5 +1,5 @@
 
-
+package models;
 public class Route {
     private String routeId;
     private Agency agency;
@@ -34,6 +34,11 @@ public class Route {
         this.routeTextColor = routeTextColor;
     }
 
+    public Route(String routeId, String routeShortName, String routeLongName) {
+        this.routeId = routeId;
+        this.routeShortName = routeShortName;
+        this.routeLongName = routeLongName;
+    }
     public String getRouteId() {
         return routeId;
     }

@@ -1,4 +1,4 @@
-
+package models;
 
 public class CalendarDates {
     private Service service;

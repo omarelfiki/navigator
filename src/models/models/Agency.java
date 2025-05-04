@@ -1,4 +1,4 @@
-
+package models;
 
 public class Agency {
     private String agencyId;

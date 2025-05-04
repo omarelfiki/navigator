@@ -1,6 +1,7 @@
+package db;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
-
+import models.*;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;

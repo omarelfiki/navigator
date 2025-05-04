@@ -1,3 +1,5 @@
+package models;
+
 public class Stop {
    private String stopId;
    private String stopName;
@@ -32,6 +34,8 @@ public class Stop {
         this.stopLat = stopLat;
         this.stopLon = stopLon;
     }
+
+
 
     public String getStopId() {
         return stopId;
