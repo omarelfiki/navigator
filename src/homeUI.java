@@ -304,7 +304,16 @@ public class homeUI extends Application {
 
 
     public static void main(String[] args) {
+        DBaccess db = new DBaccess("localhost", "3306", "root", "", "gtfs");
+        TransitDataService service = new TDSImplement(db);
+        List<StopTime> tripTimes = service.getStopTimesForTrip("0#10-10");
+        System.out.println("Stops for trip:");
+        for (StopTime st : tripTimes) {
+            System.out.println("Stop ID: " + st.getStop().getStopId() + ", Departure: " + st.getDepartureTime());
+        }
         System.setProperty("GTFS_DIR", System.getenv("GTFS_DIR"));
         launch(args);
+
+
     }
 }
