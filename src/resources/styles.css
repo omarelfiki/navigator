@@ -1,0 +1,32 @@
+.input-container {
+    -fx-background-color: white;
+    -fx-background-radius: 35;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 4, 0.3, 0, 1);
+    -fx-alignment: center-left;
+    -fx-padding: 5 5; /* less vertical padding */
+}
+
+.circle-icon {
+    -fx-min-width: 36px;
+    -fx-min-height: 36px;
+    -fx-max-width: 36px;
+    -fx-max-height: 36px;
+    -fx-background-color: #f0f0f0;
+    -fx-background-radius: 18px;
+    -fx-alignment: center;
+}
+
+.icon-label {
+    -fx-font-size: 20px;
+    -fx-text-fill: black;
+}
+
+.rounded-textfield {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-font-size: 14px; /* smaller font */
+    -fx-text-fill: #555555;
+    -fx-prompt-text-fill: #999999;
+    -fx-background-insets: 0;
+    -fx-padding: 6 6 2 4; /* reduce height and spacing */
+}
