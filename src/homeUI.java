@@ -304,6 +304,7 @@ public class homeUI extends Application {
 
 
     public static void main(String[] args) {
+        System.setProperty("GTFS_DIR", System.getenv("GTFS_DIR"));
         launch(args);
     }
 }
