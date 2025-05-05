@@ -1,4 +1,3 @@
-package ui;
 
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;

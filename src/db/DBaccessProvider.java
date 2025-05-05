@@ -1,4 +1,4 @@
-package  db;
+
 public class DBaccessProvider {
     private static DBaccess instance;
 

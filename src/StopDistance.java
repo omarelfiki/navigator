@@ -1,4 +1,4 @@
-import models.Stop;
+
 public class StopDistance {
     private final Stop stop;
     private final double distanceKm;

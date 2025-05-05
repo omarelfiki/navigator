@@ -1,4 +1,3 @@
-package ui;
 
 import javafx.application.Platform;
 import javafx.geometry.Pos;
@@ -17,7 +16,7 @@ import java.nio.file.Path;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javafx.application.Platform;
-import db.*;
+
 public class settingsUI {
     private final BorderPane root;
     private final Pane leftPane;

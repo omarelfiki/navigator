@@ -1,4 +1,4 @@
-package map;
+
 import javafx.embed.swing.SwingNode;
 import javafx.scene.layout.StackPane;
 import org.jxmapviewer.JXMapViewer;

@@ -1,5 +1,5 @@
-import java.util.ArrayList;
 
+import java.util.ArrayList;
 public class NearbyStops {
 
     public static ArrayList<Stop> getNearbyStops(double lat, double lon, double radiusMeters) {

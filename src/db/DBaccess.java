@@ -1,6 +1,5 @@
-package db;
+
 import org.json.JSONObject;
-import models.*;
 import java.sql.*;
 
 public class DBaccess {
