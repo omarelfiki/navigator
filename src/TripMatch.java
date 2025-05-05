@@ -1,3 +1,4 @@
+
 public record TripMatch(Trip trip, StopTime departure, StopTime arrival) {
 
     public int getInTransitMinutes() {

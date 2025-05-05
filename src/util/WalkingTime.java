@@ -1,3 +1,5 @@
+
+
 public class WalkingTime {
 
     // Returns the walking time in minutes.

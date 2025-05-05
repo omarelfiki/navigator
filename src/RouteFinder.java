@@ -1,5 +1,4 @@
 import java.util.*;
-
 public class RouteFinder {
 
     public static RouteResult findOptimalTrip(double startLat, double startLon, double endLat, double endLon, DBService dbService) {

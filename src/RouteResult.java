@@ -1,3 +1,4 @@
+
 public class RouteResult {
     private final StopDistance from;
     private final StopDistance to;

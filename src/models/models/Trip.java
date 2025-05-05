@@ -1,4 +1,4 @@
-
+package models;
 
 public class Trip {
     private String tripId;
@@ -39,7 +39,11 @@ public class Trip {
         this.wheelChairAccess = wheelChairAccess;
         this.blockId = blockId;
     }
-
+    public Trip(String tripId, Route route, String headSign) {
+        this.tripId = tripId;
+        this.route = route;
+        this.headSign = headSign;
+    }
     public String getTripId() {
         return tripId;
     }

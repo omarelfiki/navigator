@@ -1,3 +1,4 @@
+
 import javafx.embed.swing.SwingNode;
 import javafx.scene.layout.StackPane;
 import org.jxmapviewer.JXMapViewer;
@@ -11,7 +12,6 @@ import org.jxmapviewer.viewer.TileFactory;
 import javax.swing.event.MouseInputListener;
 import java.io.File;
 import java.io.IOException;
-
 public class MapIntegration {
     JXMapViewer map;
 
