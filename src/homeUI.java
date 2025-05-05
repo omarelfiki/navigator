@@ -31,7 +31,6 @@ public class homeUI extends Application {
     private final BooleanProperty isOn = new SimpleBooleanProperty(false);
     private Button hideSidePanel, showSidePanel;
     public boolean isOnline;
-    private DBaccess access;
     private MapIntegration mapIntegration;
 
     @Override
@@ -39,7 +38,7 @@ public class homeUI extends Application {
         primaryStage.setTitle("Rome Navigator");
 
         initializeNetwork();
-        access = DBaccessProvider.getInstance();
+        DBaccess access = DBaccessProvider.getInstance();
 
         BorderPane root = new BorderPane();
 
@@ -238,10 +237,6 @@ public class homeUI extends Application {
 
                 CompoundPainter<JXMapViewer> painter = new CompoundPainter<>(painters);
                 map.setOverlayPainter(painter);
-
-                access.connect();
-                Stop closestStop = access.getClosestStops(ocoords[0], ocoords[1]);
-                System.out.println("Closest Stop: " + closestStop);
             } else {
                 System.out.println("Address not found");
             }
