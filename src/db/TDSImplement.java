@@ -64,13 +64,13 @@ public class TDSImplement implements TransitDataService
     }
 
     @Override
-    public List<StopTime> getFutureDepartures(String stopId, int afterTime) {
+    public List<StopTime> getFutureDepartures(String stopId, Time afterTime) {
         String sql = "SELECT trip_id, stop_id, arrival_time, departure_time, stop_sequence FROM stop_times WHERE stop_id = ? AND departure_time > ? ORDER BY departure_time";
         List<StopTime> futureDepartures = new ArrayList<>();
         try (
              PreparedStatement ps = db.conn.prepareStatement(sql)) {
             ps.setString(1, stopId);
-            ps.setInt(2,afterTime);
+            ps.setTime(2,afterTime);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 StopTime st = new StopTime();

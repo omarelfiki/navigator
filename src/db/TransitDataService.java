@@ -1,4 +1,5 @@
 
+import java.sql.Time;
 import java.util.List;
 
 public interface TransitDataService {
@@ -6,7 +7,7 @@ public interface TransitDataService {
     List<Stop> getAllStops();
     List<StopTime> getStopTimesForTrip(String tripId);
     List<StopTime> getStopTimesForStop(String stopId);
-    List<StopTime> getFutureDepartures(String stopId, int afterTime);
+    List<StopTime> getFutureDepartures(String stopId, Time afterTime);
     Trip getTrip(String tripId);
     Route getRoute(String routeId);
 }

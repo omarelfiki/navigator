@@ -25,6 +25,7 @@ import org.jxmapviewer.viewer.DefaultWaypoint;
 import org.jxmapviewer.viewer.GeoPosition;
 import org.jxmapviewer.viewer.Waypoint;
 import org.jxmapviewer.viewer.WaypointPainter;
+import java.sql.Time;
 import java.util.*;
 public class homeUI extends Application {
     double[] romeCoords = {41.6558, 42.1233, 12.2453, 12.8558}; // {minLat, maxLat, minLng, maxLng}
@@ -304,16 +305,23 @@ public class homeUI extends Application {
 
 
     public static void main(String[] args) {
-        DBaccess db = new DBaccess("localhost", "3306", "root", "", "gtfs");
+        DBaccess db = new DBaccess("localhost", "3306", "root", "7723960", "gtfs");
         TransitDataService service = new TDSImplement(db);
-        List<StopTime> tripTimes = service.getStopTimesForTrip("0#10-10");
-        System.out.println("Stops for trip:");
-        for (StopTime st : tripTimes) {
-            System.out.println("Stop ID: " + st.getStop().getStopId() + ", Departure: " + st.getDepartureTime());
+        Time afterTime = Time.valueOf("8:15:00");
+        List<StopTime> futureDepartures = service.getFutureDepartures("05000", afterTime);
+        if (futureDepartures != null && !futureDepartures.isEmpty()) {
+            for (StopTime st : futureDepartures) {
+                System.out.println("Stop: " + st.stop.getStopName());
+                System.out.println("Trip: " + st.trip.getTripId());
+                System.out.println("Departure: " + st.getDepartureTime());
+                System.out.println("Sequence: " + st.getStopSequence());
+                System.out.println("------");
+            }
+        } else {
+            System.out.println("Stop not found.");
+            System.setProperty("GTFS_DIR", System.getenv("GTFS_DIR"));
+            launch(args);
+
+
         }
-        System.setProperty("GTFS_DIR", System.getenv("GTFS_DIR"));
-        launch(args);
-
-
-    }
-}
+    }}
