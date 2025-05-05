@@ -9,5 +9,9 @@ public class WalkingTime {
         return (distance / 5.0) * 60.0;
     }
 
+    public static boolean isWalkable(double latFrom, double longFrom, double latTo, double longTo) {
+        double distance = HaversineUtil.calculateDistance(latFrom, longFrom, latTo, longTo);
+        return distance <= 1000.0;
+    }
 
 }
