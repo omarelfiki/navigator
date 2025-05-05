@@ -25,7 +25,6 @@ import org.jxmapviewer.viewer.DefaultWaypoint;
 import org.jxmapviewer.viewer.GeoPosition;
 import org.jxmapviewer.viewer.Waypoint;
 import org.jxmapviewer.viewer.WaypointPainter;
-import java.sql.Time;
 import java.util.*;
 public class homeUI extends Application {
     double[] romeCoords = {41.6558, 42.1233, 12.2453, 12.8558}; // {minLat, maxLat, minLng, maxLng}
@@ -78,8 +77,8 @@ public class homeUI extends Application {
         leftPane.getChildren().add(endGroup);
 
         parsePoint(
-                (TextField) ((HBox) startGroup.getChildren().get(0)).getChildren().get(1),
-                (TextField) ((HBox) endGroup.getChildren().get(0)).getChildren().get(1)
+                (TextField) ((HBox) startGroup.getChildren().getFirst()).getChildren().get(1),
+                (TextField) ((HBox) endGroup.getChildren().getFirst()).getChildren().get(1)
         );
 
         Text label = new Text("Navigate to see public transport \n options");
@@ -224,20 +223,20 @@ public class homeUI extends Application {
                 List<GeoPosition> track = Arrays.asList(op, dp);
                 RoutePainter routePainter = new RoutePainter(track);
 
-                map.zoomToBestFit(new HashSet<GeoPosition>(track), 0.7);
-                Set<Waypoint> waypoints = new HashSet<Waypoint>(Arrays.asList(
+                map.zoomToBestFit(new HashSet<>(track), 0.7);
+                Set<Waypoint> waypoints = new HashSet<>(Arrays.asList(
                         new DefaultWaypoint(op),
                         new DefaultWaypoint(dp)
                 ));
 
-                WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<Waypoint>();
+                WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<>();
                 waypointPainter.setWaypoints(waypoints);
 
-                List<Painter<JXMapViewer>> painters = new ArrayList<Painter<JXMapViewer>>();
+                List<Painter<JXMapViewer>> painters = new ArrayList<>();
                 painters.add(routePainter);
                 painters.add(waypointPainter);
 
-                CompoundPainter<JXMapViewer> painter = new CompoundPainter<JXMapViewer>(painters);
+                CompoundPainter<JXMapViewer> painter = new CompoundPainter<>(painters);
                 map.setOverlayPainter(painter);
 
                 access.connect();
