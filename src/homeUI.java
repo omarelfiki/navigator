@@ -305,23 +305,6 @@ public class homeUI extends Application {
 
 
     public static void main(String[] args) {
-        DBaccess db = new DBaccess("localhost", "3306", "root", "7723960", "gtfs");
-        TransitDataService service = new TDSImplement(db);
-        Time afterTime = Time.valueOf("8:15:00");
-        List<StopTime> futureDepartures = service.getFutureDepartures("05000", afterTime);
-        if (futureDepartures != null && !futureDepartures.isEmpty()) {
-            for (StopTime st : futureDepartures) {
-                System.out.println("Stop: " + st.stop.getStopName());
-                System.out.println("Trip: " + st.trip.getTripId());
-                System.out.println("Departure: " + st.getDepartureTime());
-                System.out.println("Sequence: " + st.getStopSequence());
-                System.out.println("------");
-            }
-        } else {
-            System.out.println("Stop not found.");
-            System.setProperty("GTFS_DIR", System.getenv("GTFS_DIR"));
-            launch(args);
-
-
-        }
-    }}
+        launch(args);
+    }
+}
