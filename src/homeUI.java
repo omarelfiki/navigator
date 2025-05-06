@@ -79,6 +79,8 @@ public class homeUI extends Application {
         bindPosition(endGroup, root, 0.18);
         leftPane.getChildren().add(endGroup);
 
+        endGroup.visibleProperty().bind(isOn.not());
+
         TextField originField = (TextField) ((HBox) startGroup.getChildren().getFirst()).getChildren().get(1);
         TextField destinationField = (TextField) ((HBox) endGroup.getChildren().getFirst()).getChildren().get(1);
 
@@ -132,6 +134,16 @@ public class homeUI extends Application {
         label.xProperty().bind(root.widthProperty().multiply(0.061)); // 78/1280
         label.yProperty().bind(root.heightProperty().multiply(0.48)); // 400/832
         leftPane.getChildren().add(label);
+
+        isOn.addListener((_, _, _) -> {
+            if (isOn.get()) {
+                title.setText("Heatmap");
+                label.setText("Heatmap Mode Activated. \n Finding routes...");
+            } else {
+                title.setText("Navigator");
+                label.setText("Navigate to see public transport \n options");
+            }
+        });
 
         Line line = new Line();
         line.startXProperty().bind(root.widthProperty().multiply(0)); // 0/1280
