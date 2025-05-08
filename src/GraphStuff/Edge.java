@@ -1,14 +1,16 @@
 abstract class Edge {
-    protected final String toStopId;
-    protected final String departureTime;
-    protected final String arrivalTime;
-    protected final String mode;
+    String toStopId;
+    String departureTime;
+    String arrivalTime;
+    String mode;
+    Double weight;
 
-    public Edge(String toStopId, String departureTime, String arrivalTime, String mode) {
+    public Edge(String toStopId, String departureTime, String arrivalTime, String mode,Double weight) {
         this.toStopId = toStopId;
         this.departureTime = departureTime;
         this.arrivalTime = arrivalTime;
         this.mode = mode;
+        this.weight=weight;
     }
 
     public abstract Trip getTripInfo();
@@ -30,10 +32,13 @@ abstract class Edge {
     }
 
     public double getWeight() {
-        return toMinutes(arrivalTime) - toMinutes(departureTime);
+        return weight;
+    }
+    public void setWeight(Node startingNode){
+        this.weight = toSeconds(this.arrivalTime) -toSeconds(startingNode.arrivalTime);
     }
 
-    private double toMinutes(String time) {
+    private double toSeconds(String time) {
         String[] parts = time.split(":");
         int hours = Integer.parseInt(parts[0]);
         int minutes = Integer.parseInt(parts[1]);

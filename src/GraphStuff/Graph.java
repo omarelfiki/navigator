@@ -1,9 +1,16 @@
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 public class Graph {
-    public final Map<String, Node> nodes = new HashMap<>();
-    public final Map<String, List<Edge>> adjacencyList = new HashMap<>();
+    public final Map<String, Node> nodes;
+    public final Map<String, List<Edge>> adjacencyList;
 
+    public Graph (Map<String, Node> nodes,Map<String, List<Edge>> adjacencyList){
+        this.adjacencyList=adjacencyList;
+        this.nodes=nodes;
+    }
     public void addEdge(Node fromNode, Edge edge) {
         adjacencyList.computeIfAbsent(fromNode.stopId, k -> new ArrayList<>()).add(edge);
         nodes.putIfAbsent(fromNode.stopId, fromNode);
@@ -14,9 +21,9 @@ public class Graph {
         return adjacencyList.getOrDefault(stopId, Collections.emptyList());
     }
 
-    private double toDouble(String time) {
-        String[] parts = time.split(":");
-        return Integer.parseInt(parts[0]) + Integer.parseInt(parts[1]) / 60.0;
+    public void addNode(String stopId,Node node ){
+        nodes.put(stopId,node);
+
     }
 
     @Override

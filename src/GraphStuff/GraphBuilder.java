@@ -13,27 +13,25 @@ public class GraphBuilder {
     }
 
     public Graph buildGraph(LatLon startPoint, LatLon endPoint, String startTime) {
-        Graph graph = new Graph();
+        Map<String, Node> nodes=new HashMap<>();
+        Map<String, List<Edge>> adjacencyList=new HashMap<>();
+
+        Graph graph = new Graph(nodes,adjacencyList);
         Node startNode = new Node("START", startTime, null);
-        graph.nodes.put(startNode.stopId, startNode);
+        graph.addNode(startNode.stopId, startNode);
 
-        double centerLat = (startPoint.lat + endPoint.lat) / 2.0;
-        double centerLon = (startPoint.lon + endPoint.lon) / 2.0;
-        double boundingRadiusKm = GeoUtil.distance(startPoint.lat, startPoint.lon, endPoint.lat, endPoint.lon) / 2.0 + maxWalkingDistanceKm;
+        List<Stop> candidateStops = getAllStops();
 
-        List<Stop> candidateStops = getStopsWithinRadiusOptimized(centerLat, centerLon, boundingRadiusKm);
+        //list of stops next to the START stop
         for (Stop stop : candidateStops) {
             double distance = GeoUtil.distance(startPoint.lat, startPoint.lon, stop.getStopLat(), stop.getStopLon());
             if (distance > maxWalkingDistanceKm) continue;
             double walkSeconds = distance / 5.0 * 3600.0;
             String arrivalTime = addSecondsToTime(startTime, (int) walkSeconds);
-            double weight = walkSeconds;
-            Edge edge = new WalkingEdge(stop.getStopId(), startTime, arrivalTime, distance) {
-                @Override
-                public double getWeight() {
-                    return weight;
-                }
-            };
+
+            Edge edge = new WalkingEdge(stop.getStopId(), startTime, arrivalTime, distance);
+            edge.setWeight(startNode);
+            graph.addNode(startNode.stopId, startNode);
             graph.addEdge(startNode, edge);
         }
 
@@ -50,12 +48,9 @@ public class GraphBuilder {
             if (earliestEdge != null) {
                 double weight = toSeconds(earliestEdge.getArrivalTime()) - toSeconds(current.arrivalTime);
                 if (weight >= 0 && !visited.contains(earliestEdge.getToStopId())) {
-                    graph.addEdge(current, new TripEdge(earliestEdge.getToStopId(), earliestEdge.getDepartureTime(), earliestEdge.getArrivalTime(), earliestEdge.getTripInfo()) {
-                        @Override
-                        public double getWeight() {
-                            return weight;
-                        }
-                    });
+                    Edge edge = new TripEdge(earliestEdge.getToStopId(), earliestEdge.getDepartureTime(), earliestEdge.getArrivalTime(), earliestEdge.getTripInfo());
+                    edge.setWeight(current);
+                    graph.addEdge(current, edge);
                     frontier.add(new Node(earliestEdge.getToStopId(), earliestEdge.getArrivalTime(), earliestEdge.getTripInfo()));
                 }
             }
@@ -64,12 +59,10 @@ public class GraphBuilder {
             for (Edge edge : transferEdges) {
                 double weight = toSeconds(edge.getArrivalTime()) - toSeconds(current.arrivalTime);
                 if (weight >= 0 && !visited.contains(edge.getToStopId())) {
-                    graph.addEdge(current, new WalkingEdge(edge.getToStopId(), edge.getDepartureTime(), edge.getArrivalTime(), ((WalkingEdge) edge).getDistanceKm()) {
-                        @Override
-                        public double getWeight() {
-                            return weight;
-                        }
-                    });
+                    Edge walkingEdge =new WalkingEdge(edge.getToStopId(), edge.getDepartureTime(), edge.getArrivalTime(), edge.getDistanceKm());
+                    walkingEdge.setWeight(current);
+                    graph.addEdge(current,walkingEdge );
+
                     frontier.add(new Node(edge.getToStopId(), edge.getArrivalTime(), null));
                 }
             }
@@ -81,12 +74,8 @@ public class GraphBuilder {
                 String arrivalTime = addSecondsToTime(current.arrivalTime, (int) walkSeconds);
                 double weight = walkSeconds;
                 if (weight >= 0) {
-                    Edge edge = new WalkingEdge("END", current.arrivalTime, arrivalTime, toGoal) {
-                        @Override
-                        public double getWeight() {
-                            return weight;
-                        }
-                    };
+                    Edge edge = new WalkingEdge("END", current.arrivalTime, arrivalTime, toGoal) ;
+                    edge.setWeight(current);
                     graph.addEdge(current, edge);
                     graph.nodes.put("END", new Node("END", arrivalTime, null));
                 }
@@ -98,11 +87,11 @@ public class GraphBuilder {
 
     private Edge getEarliestTransitEdge(Node current) {
         String query = "SELECT t.trip_id, st.departure_time, st2.stop_id AS to_stop_id, st2.arrival_time " +
-                "FROM stop_times st " +
-                "JOIN stop_times st2 ON st.trip_id = st2.trip_id AND st2.stop_sequence = st.stop_sequence + 1 " +
-                "JOIN trips t ON t.trip_id = st.trip_id " +
-                "WHERE st.stop_id = ? AND TIME_TO_SEC(st.departure_time) > TIME_TO_SEC(?) " +
-                "ORDER BY TIME_TO_SEC(st.departure_time) LIMIT 1";
+                       "FROM stop_times st " +
+                       "JOIN stop_times st2 ON st.trip_id = st2.trip_id AND st2.stop_sequence = st.stop_sequence + 1 " +
+                       "JOIN trips t ON t.trip_id = st.trip_id " +
+                       "WHERE st.stop_id = ? AND TIME_TO_SEC(st.departure_time) > TIME_TO_SEC(?) " +
+                       "ORDER BY TIME_TO_SEC(st.departure_time) LIMIT 10";
 
         try (PreparedStatement ps = db.conn.prepareStatement(query)) {
             ps.setString(1, current.stopId);
@@ -128,9 +117,12 @@ public class GraphBuilder {
     private List<Edge> getTransferEdges(Node current) {
         List<Edge> edges = new ArrayList<>();
         double[] coords = getStopCoordinates(current.stopId);
-        List<Stop> nearby = getStopsWithinRadiusOptimized(coords[0], coords[1], 0.2); // limit radius
+        List<Stop> allStops = getAllStops();
         PriorityQueue<Stop> closest = new PriorityQueue<>(Comparator.comparingDouble(s -> GeoUtil.distance(coords[0], coords[1], s.getStopLat(), s.getStopLon())));
-        closest.addAll(nearby);
+        for (Stop s : allStops) {
+            double d = GeoUtil.distance(coords[0], coords[1], s.getStopLat(), s.getStopLon());
+            if (d <= maxWalkingDistanceKm) closest.add(s);
+        }
 
         int added = 0;
         while (!closest.isEmpty() && added < 3) {
@@ -140,13 +132,9 @@ public class GraphBuilder {
             double distance = GeoUtil.distance(coords[0], coords[1], stop.getStopLat(), stop.getStopLon());
             double walkSeconds = distance / 5.0 * 3600.0;
             String arrival = addSecondsToTime(current.arrivalTime, (int) walkSeconds);
-            double weight = walkSeconds;
-            edges.add(new WalkingEdge(stop.getStopId(), current.arrivalTime, arrival, distance) {
-                @Override
-                public double getWeight() {
-                    return weight;
-                }
-            });
+            Edge walkingEdge =new WalkingEdge(stop.getStopId(), current.arrivalTime, arrival, distance);
+            walkingEdge.setWeight(current);
+            edges.add(walkingEdge);
             added++;
         }
 
@@ -180,24 +168,18 @@ public class GraphBuilder {
         return new double[] { 0.0, 0.0 };
     }
 
-    private List<Stop> getStopsWithinRadiusOptimized(double lat, double lon, double radiusKm) {
+    private List<Stop> getAllStops() {
         List<Stop> stops = new ArrayList<>();
-        double latDelta = radiusKm / 111.0;
-        double lonDelta = radiusKm / (111.0 * Math.cos(Math.toRadians(lat)));
-        String query = "SELECT stop_id, stop_name, stop_lat, stop_lon FROM stops WHERE stop_lat BETWEEN ? AND ? AND stop_lon BETWEEN ? AND ?";
+        String query = "SELECT stop_id, stop_name, stop_lat, stop_lon FROM stops";
         try (PreparedStatement ps = db.conn.prepareStatement(query)) {
-            ps.setDouble(1, lat - latDelta);
-            ps.setDouble(2, lat + latDelta);
-            ps.setDouble(3, lon - lonDelta);
-            ps.setDouble(4, lon + lonDelta);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                double stopLat = rs.getDouble("stop_lat");
-                double stopLon = rs.getDouble("stop_lon");
-                double distance = GeoUtil.distance(lat, lon, stopLat, stopLon);
-                if (distance <= radiusKm) {
-                    stops.add(new Stop(rs.getString("stop_id"), rs.getString("stop_name"), stopLat, stopLon));
-                }
+                stops.add(new Stop(
+                        rs.getString("stop_id"),
+                        rs.getString("stop_name"),
+                        rs.getDouble("stop_lat"),
+                        rs.getDouble("stop_lon")
+                ));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -222,9 +204,4 @@ public class GraphBuilder {
         return hours * 3600 + minutes * 60 + seconds;
     }
 
-    private String fixTimeString(String time) {
-        String[] parts = time.split(":");
-        int hours = Integer.parseInt(parts[0]);
-        return String.format("%02d:%s:%s", hours % 24, parts[1], parts[2]);
-    }
 }

@@ -2,7 +2,7 @@ public class TripEdge extends Edge {
     private final Trip trip;
 
     public TripEdge(String toStopId, String departureTime, String arrivalTime, Trip trip) {
-        super(toStopId, departureTime, arrivalTime, "ride");
+        super(toStopId, departureTime, arrivalTime, "ride",null);
         this.trip = trip;
     }
 
