@@ -1,13 +1,3 @@
-//
-//import org.json.JSONObject;
-//
-//import java.sql.PreparedStatement;
-//import java.sql.ResultSet;
-//import java.sql.SQLException;
-//import java.sql.Statement;
-
-import org.json.JSONObject;
-
 import java.sql.*;
 import java.util.ArrayList;
 
@@ -34,20 +24,15 @@ public class NearbyStops {
             ResultSet rs = stmt.executeQuery();
 
             while (rs.next()) {
-                String json = rs.getString("nearby_stops");
-                JSONObject jsonObject = new JSONObject(json);
-
-                String stopID = jsonObject.optString("stop_id", "N/A");
-                String stopName = jsonObject.optString("stop_name", "N/A");
-                double stopLat = jsonObject.optDouble("stop_lat", 0.0);
-                double stopLon = jsonObject.optDouble("stop_lon", 0.0);
-
+                String stopID = rs.getString("stop_id");
+                String stopName = rs.getString("stop_name");
+                double stopLat = rs.getDouble("stop_lat");
+                double stopLon = rs.getDouble("stop_lon");
                 stopsWithinRadius.add(new Stop(stopID, stopName, stopLat, stopLon));
             }
         } catch (SQLException e) {
             System.out.println("SQL Error: " + e.getMessage());
         }
-
         return stopsWithinRadius;
     }
 }
