@@ -15,7 +15,7 @@ public class DBaccess {
 
     public DBaccess(String connectionString) {
         this.dbName = connectionString.split("/")[3];
-        this.connectionString = connectionString + "?allowLoadLocalInfile=true&useCursorFetch=true";
+        this.connectionString = connectionString + "&allowLoadLocalInfile=true&useCursorFetch=true";
     }
 
     public void connect() {
