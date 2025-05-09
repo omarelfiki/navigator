@@ -1,9 +1,7 @@
-CREATE FUNCTION get_closest_stop(lat FLOAT, lon FLOAT)
-    RETURNS JSON
-    DETERMINISTIC
+create function get_closest_stops(lat float, lon float, radius float) returns json
+    deterministic
 BEGIN
-    DECLARE
-result JSON;
+    DECLARE result JSON;
 
 SELECT JSON_ARRAYAGG(
                JSON_OBJECT(
@@ -17,7 +15,6 @@ SELECT JSON_ARRAYAGG(
 INTO result
 FROM stops s
 WHERE SQRT(POW(s.stop_lat - lat, 2) + POW(s.stop_lon - lon, 2)) <= radius;
-
 
 RETURN result;
 END;
