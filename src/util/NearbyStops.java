@@ -16,8 +16,8 @@ public class NearbyStops {
         } catch (SQLException e) {
             System.out.println("SQL Error: " + e.getMessage());
         }
-        String MSQLquery = "SELECT get_nearby_stops(?, ?, ?) AS nearby_stops;";
-        try (PreparedStatement stmt = db.conn.prepareStatement(MSQLquery)) {
+        String procedureCall = "{CALL get_closest_stops(?, ?, ?)}";
+        try (CallableStatement stmt = db.conn.prepareCall(procedureCall)) {
             stmt.setDouble(1, lat);
             stmt.setDouble(2, lon);
             stmt.setDouble(3, radiusMeters);
