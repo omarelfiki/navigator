@@ -9,15 +9,11 @@ public class DBaccess {
 
 
     public DBaccess(String host, String port, String user, String password, String dbName) {
-        //this.dbName = dbName;
-        this("jdbc:mysql://" + user + ":" + password + "@" + host + ":" + port + "/" + dbName + "?allowLoadLocalInfile=true&useCursorFetch=true");
+        this("jdbc:mysql://" + user + ":" + password + "@" + host + ":" + port + "/" + dbName);
     }
 
     public DBaccess(String connectionString) {
         this.connectionString = connectionString;
-        //this.dbName = connectionString.split("/")[3];
-        // Ensure the connection string includes the required parameter
-        //this.connectionString = connectionString + "allowLoadLocalInfile=true&useCursorFetch=true";
     }
 
     public void connect() {
@@ -37,12 +33,12 @@ public class DBaccess {
             try (Statement stmt = conn.createStatement()) {
                 stmt.execute(infileQuery);
             } catch (SQLException e) {
-                System.out.println("SQL Error (Server-Side Initialization): " + e.getMessage());
+                System.err.println("SQL Error (Server-Side Initialization): " + e.getMessage());
             }
 
-            System.out.println("Connected to MySQL Server");
+            System.err.println("Connected to MySQL Server");
         } catch (SQLException e) {
-            System.out.println("SQL Error (Connection): " + e.getMessage());
+            System.err.println("SQL Error (Connection): " + e.getMessage());
         }
     }
 }
