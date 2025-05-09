@@ -4,6 +4,7 @@ public class AStarRouterV {
     Map<String, Double> bestCosts = new HashMap<>();
 
     public List<Node> findFastestPath(double latStart, double lonStart, double latStop, double lonStop, String startTime) {
+        System.out.println("Starting point" + latStart + " " + lonStart);
         ArrayList<Stop> startStops = NearbyStops.getNearbyStops(latStart, lonStart, 200);
         System.out.println("Start stops: " + startStops.size());
         ArrayList<Stop> stopStops = NearbyStops.getNearbyStops(latStop, lonStop, 200);
@@ -13,7 +14,7 @@ public class AStarRouterV {
         PriorityQueue<Node> pq = new PriorityQueue<>(Comparator.comparingDouble(n -> n.g + n.h));
 
         for (Stop stop : startStops) {
-            double walkTime = WalkingTime.getWalkingTime(latStart, latStop, stop.getStopLat(), stop.getStopLon());
+            double walkTime = WalkingTime.getWalkingTime(latStart, lonStart, stop.getStopLat(), stop.getStopLon());
             String arrivalTime = timeUtil.addTime(startTime, walkTime);
             Node node = new Node(stop.stopId, arrivalTime, null, "walk", null);
             pq.add(node);

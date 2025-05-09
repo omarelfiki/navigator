@@ -2,8 +2,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class EdgeService {
-    TDSImplement tds;
-    TimeUtil timeUtil;
+    TDSImplement tds = new TDSImplement();
+    TimeUtil timeUtil = new TimeUtil();
     public ArrayList<Edge> getEdges(Node node) {
         ArrayList<Edge> edges = new ArrayList<>();
         Stop startStop = tds.getStop(node.stopId);

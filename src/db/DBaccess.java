@@ -25,7 +25,7 @@ public class DBaccess {
             } catch (SQLException e) {
                 System.out.println("SQL Error: " + e.getMessage());
             }
-            System.out.println("✅ Connected to MySQL Server");
+            //System.out.println("✅ Connected to MySQL Server");
         } catch (SQLException e) {
             System.out.println("SQL Error: " + e.getMessage());
         }
