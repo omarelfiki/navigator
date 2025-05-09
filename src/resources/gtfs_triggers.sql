@@ -8,6 +8,7 @@ SELECT
     s.stop_lon,
     SQRT(POW(s.stop_lat - lat, 2) + POW(s.stop_lon - lon, 2)) AS distance
 FROM stops s
-WHERE SQRT(POW(s.stop_lat - lat, 2) + POW(s.stop_lon - lon, 2)) <= radius;
+WHERE SQRT(POW(s.stop_lat - lat, 2) + POW(s.stop_lon - lon, 2)) <= radius
+LIMIT 5;
 END$$
 DELIMITER ;
