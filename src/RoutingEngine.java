@@ -2,6 +2,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.util.List;
 import java.util.Map;
 
 import com.leastfixedpoint.json.JSONReader;
@@ -33,12 +34,25 @@ public class RoutingEngine {
             }
 
             if (json instanceof Map<?, ?> request) {
-                if (request.containsKey("ping")) {
-                    sendOk(Map.of("pong", request.get("ping")));
+                if (request.containsKey("load")) {
+                    DBconfig dbConfig = new DBconfig((String) request.get("load"));
+                    dbConfig.initializeDB();
+                    continue;
+                }
+
+                // > {"routeFrom":{"lat":1,"lon":1},"to":{"lat":2,"lon":2},"startingAt":"08:30:00"} -- input
+//                List<Node> path = router.findFastestPath(latStart,lonStart,latEnd,lonEnd,statTime); == method call
+
+                //< [{"mode":"walk","to":{"lat":3,"lon":3},"duration":1,"startTime":"08:30"},
+                //{"mode":"ride","to":{"lat":2,"lon":2},"duration":6,"startTime":"08:35",
+                //"stop":"Hoofdstraat","route":{"operator":"My Bus Company","shortName":"5",
+                //"longName":"Bus number 5","headSign":"Naar Hoofdstraat"}}]
+
+                if (request.containsKey("routeFrom")) {
+                    sendOk("Test response");
                     continue;
                 }
             }
-
             sendError("Bad request");
         }
     }
