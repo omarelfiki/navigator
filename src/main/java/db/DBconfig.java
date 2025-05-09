@@ -1,5 +1,7 @@
 package db;
 
+import util.ZipExtractor;
+
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Objects;
@@ -7,16 +9,20 @@ import java.util.Objects;
 public class DBconfig {
     private final DBaccess access;
 
-    private final String GTFS_FILE_PATH;
+    private final String GTFS_PATH;
+
+    private final int filetype; // 0 for dir, 1 for zip
 
     public DBconfig(DBaccess access) {
         this.access = access;
-        this.GTFS_FILE_PATH = System.getenv("GTFS_DIR");
+        this.GTFS_PATH = System.getenv("GTFS_DIR");
+        filetype = 0;
     }
 
     public DBconfig(String filePath) {
         this.access = DBaccessProvider.getInstance();
-        GTFS_FILE_PATH = filePath;
+        GTFS_PATH = filePath;
+        filetype = 1;
     }
 
     public void initializeDB() {
@@ -36,8 +42,20 @@ public class DBconfig {
                 initializeTriggers();
 
                 System.err.println("Loading GTFS data...");
-                GTFSImporter importer = new GTFSImporter(GTFS_FILE_PATH);
-                importer.importGTFS();
+                switch (filetype) {
+                    case 0 -> {
+                        System.err.println("Loading GTFS data from directory: " + GTFS_PATH);
+                        GTFSImporter importer = new GTFSImporter(GTFS_PATH);
+                        importer.importGTFS();
+                    }
+                    case 1 -> {
+                        System.err.println("Loading GTFS data from zip file: " + GTFS_PATH);
+                        String tempDir = System.getenv("ROUTING_ENGINE_STORAGE_DIRECTORY");
+                        ZipExtractor.extractZipToDirectory(GTFS_PATH, tempDir);
+                        GTFSImporter importer = new GTFSImporter(tempDir);
+                        importer.importGTFS();
+                    }
+                }
                 System.err.println("GTFS data loaded successfully.");
 
                 System.err.println("Database initialization completed.");
