@@ -18,7 +18,7 @@ public class RoutingTest {
         if (path != null) {
             System.out.println("Path found:");
             for (Node node : path) {
-                System.out.println(node.stopId + " " + node.arrivalTime);
+                //System.out.println(node.stopId + " " + node.arrivalTime);
             }
         } else {
             System.out.println("No path found.");

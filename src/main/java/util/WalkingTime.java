@@ -1,3 +1,7 @@
+package util;
+
+import util.HaversineUtil;
+
 import java.sql.SQLOutput;
 
 public class WalkingTime {

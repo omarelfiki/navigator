@@ -2,7 +2,6 @@ package util;
 
 import java.util.*;
 import models.*;
-
 public class AStarRouterV {
     Map<String, Double> bestCosts = new HashMap<>();
 
