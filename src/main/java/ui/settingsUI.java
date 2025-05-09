@@ -12,11 +12,14 @@ import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import db.*;
+
 public class settingsUI {
     private final BorderPane root;
     private final Pane leftPane;
@@ -258,7 +261,7 @@ public class settingsUI {
 
     private static void parseConnectionString(String connectionString, TextField usernameField, TextField passwordField, TextField hostField, TextField portField) {
         // Example connection string: jdbc:mysql://USER:PASSWORD@HOST:PORT/DBNAME
-        String regex = "^jdbc:mysql://([^:]+):([^@]+)@([^:/]+):?(\\d+)?/([^?]+)$";
+        String regex = "^jdbc:mysql://([^:]+):([^@]+)@([^:/]+):?(\\d+)?/([^?]+)(\\?.*)?$";
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(connectionString);
 

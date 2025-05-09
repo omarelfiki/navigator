@@ -12,12 +12,13 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class GTFSImporter {
-    private static String GTFS_DIR;
+    private final String GTFS_DIR;
     private final DBaccess access;
 
     public GTFSImporter(String GTFS_DIR) {
         this.access = DBaccessProvider.getInstance();
-        GTFSImporter.GTFS_DIR = GTFS_DIR;
+        this.GTFS_DIR = GTFS_DIR;
+
     }
 
     public void importGTFS() throws IOException, SQLException {
@@ -41,7 +42,7 @@ public class GTFSImporter {
                 Path filePath = Paths.get(GTFS_DIR, filename);
 
                 if (Files.exists(filePath)) {
-                    System.out.println("Importing " + filename + " into " + tableName + "...");
+                    System.err.println("Importing " + filename + " into " + tableName + "...");
 
                     List<CSVRecord> records = readCSV(filePath);
 
@@ -70,14 +71,14 @@ public class GTFSImporter {
                     }
                     uploadToTable(records, tableName, conn);
                 } else {
-                    System.out.println("⚠️ File not found: " + filePath);
+                    System.err.println("File not found: " + filePath);
                 }
             }
         }
-        System.out.println("✅ GTFS import complete.");
+        System.err.println("GTFS import complete.");
     }
 
-    private static void insertUniqueServices(Connection conn) throws IOException, SQLException {
+    private void insertUniqueServices(Connection conn) throws IOException, SQLException {
 
         Set<String> serviceIds = new HashSet<>();
 
@@ -102,14 +103,14 @@ public class GTFSImporter {
             }
         }
 
-        System.out.println("✅ Inserted " + insertedCount + " unique service_id(s) into service table.");
+        System.err.println("Inserted " + insertedCount + " unique service_id(s) into service table.");
     }
 
 
     // This method imports trip records from a txt file into the 'trips' table using LOAD DATA LOCAL INFILE.
     //It handles column mismatches, empty integer values, and temporarily disables foreign key checks
     //to avoid constraint violations during bulk insert.
-    private static void importTripsWithLoadData(Path filePath, Connection conn) throws SQLException {
+    private void importTripsWithLoadData(Path filePath, Connection conn) throws SQLException {
         String absolutePath = filePath.toAbsolutePath().toString().replace("\\", "/");
 
         try (Statement stmt = conn.createStatement()) {
@@ -141,7 +142,7 @@ public class GTFSImporter {
                     "exceptional = IF(@exceptional REGEXP '^[0-9]+$', @exceptional, NULL)";
 
             int rows = stmt.executeUpdate(sql);
-            System.out.println("✅ Inserted " + rows + " trips from: " + filePath.getFileName());
+            System.err.println("Inserted " + rows + " trips from: " + filePath.getFileName());
             // finally enable the foreign key, to insure the relation integrity
             stmt.execute("SET FOREIGN_KEY_CHECKS=1");
         }
@@ -173,7 +174,7 @@ public class GTFSImporter {
                     "timepoint = IF(@timepoint REGEXP '^[0-9]+$', @timepoint, NULL)";
 
             int rows = stmt.executeUpdate(sql);
-            System.out.println("✅ Inserted " + rows + " stop_times from: " + filePath.getFileName());
+            System.err.println("Inserted " + rows + " stop_times from: " + filePath.getFileName());
 
             stmt.execute("SET FOREIGN_KEY_CHECKS=1");
         }
@@ -194,7 +195,7 @@ public class GTFSImporter {
                 insertedCount++;
             }
         }
-        System.out.println("✅ Inserted " + insertedCount + " unique shape_id(s) into shape_index table.");
+        System.err.println("Inserted " + insertedCount + " unique shape_id(s) into shape_index table.");
     }
 
     // sane as importTimesWithLoadData
@@ -217,7 +218,7 @@ public class GTFSImporter {
 
 
             int rows = stmt.executeUpdate(sql);
-            System.out.println("✅ Inserted " + rows + " shapes from: " + filePath.getFileName());
+            System.err.println("Inserted " + rows + " shapes from: " + filePath.getFileName());
 
             /*stmt.execute("SET FOREIGN_KEY_CHECKS=1");*/
 
@@ -253,7 +254,7 @@ public class GTFSImporter {
                 stmt.addBatch();
             }
             stmt.executeBatch();
-            System.out.println("✅ Inserted " + insertedCount + " rows into " + tableName + " table.");
+            System.err.println("Inserted " + insertedCount + " rows into " + tableName + " table.");
         }
     }
 
