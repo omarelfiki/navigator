@@ -14,9 +14,9 @@ public class GTFSImporter {
     private static String GTFS_DIR;
     private final DBaccess access;
 
-    public GTFSImporter(DBaccess access) {
-        this.access = access;
-        GTFS_DIR = System.getProperty("GTFS_DIR");
+    public GTFSImporter(String GTFS_DIR) {
+        this.access = DBaccessProvider.getInstance();
+        GTFSImporter.GTFS_DIR = GTFS_DIR;
     }
 
     public void importGTFS() throws IOException, SQLException {

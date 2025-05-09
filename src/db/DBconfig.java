@@ -5,13 +5,22 @@ import java.sql.SQLException;
 public class DBconfig {
     private final DBaccess access;
 
+    private final String GTFS_FILE_PATH;
+
     public DBconfig(DBaccess access) {
         this.access = access;
+        this.GTFS_FILE_PATH = System.getenv("GTFS_DIR");
+    }
+
+    public DBconfig(String filePath) {
+        this.access = DBaccessProvider.getInstance();
+        GTFS_FILE_PATH = filePath;
     }
 
     public void initializeDB() {
+        access.connect();
         try {
-            System.out.println("Staring database initialization...");
+            System.out.println("Starting database initialization...");
             if (access.conn != null && !access.conn.isClosed()) {
                 System.out.println("Insuring clear database...");
                 access.conn.createStatement().execute("DROP DATABASE IF EXISTS " + access.dbName);
@@ -25,7 +34,7 @@ public class DBconfig {
                 initializeTriggers();
 
                 System.out.println("Loading GTFS data...");
-                GTFSImporter importer = new GTFSImporter(access);
+                GTFSImporter importer = new GTFSImporter(GTFS_FILE_PATH);
                 importer.importGTFS();
                 System.out.println("GTFS data loaded successfully.");
 

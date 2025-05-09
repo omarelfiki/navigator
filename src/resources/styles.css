@@ -6,6 +6,13 @@
     -fx-padding: 5 5; /* less vertical padding */
 }
 
+.input-container-small{
+    -fx-background-color: white;
+    -fx-background-radius: 25;
+    -fx-alignment: center-left;
+    -fx-padding: 5 5; /* less vertical padding */
+}
+
 .circle-icon {
     -fx-min-width: 36px;
     -fx-min-height: 36px;
@@ -13,6 +20,16 @@
     -fx-max-height: 36px;
     -fx-background-color: #f0f0f0;
     -fx-background-radius: 18px;
+    -fx-alignment: center;
+}
+
+.circle-icon-small {
+    -fx-min-width: 30px;
+    -fx-min-height: 30px;
+    -fx-max-width: 30px;
+    -fx-max-height: 30px;
+    -fx-background-color: #f0f0f0;
+    -fx-background-radius: 16px;
     -fx-alignment: center;
 }
 
@@ -30,3 +47,7 @@
     -fx-background-insets: 0;
     -fx-padding: 6 6 2 4; /* reduce height and spacing */
 }
+
+/*.small-date-picker {*/
+/*    -fx-font-size: 12px;*/
+/*}*/
