@@ -101,6 +101,14 @@ public class RoutingEngine {
     private List<Map<String, Object>> parseResult(List<Node> path) {
         return path.stream().map(node -> {
             if (Objects.equals(node.mode, "WALK")) {
+                if(node.parent == null) {
+                    return Map.of(
+                            "mode", "walk",
+                            "to", Map.of("lat", 12.123, "lon", 12.123),
+                            "duration", 0,
+                            "startTime", "startTimeWillBeHere"
+                    );
+                }
                 return Map.of(
                         "mode", "walk",
                         "to", Map.of("lat", node.stop.stopLat, "lon", node.stop.stopLon),
