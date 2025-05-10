@@ -13,54 +13,58 @@ public class DBconfig {
 
     private final int filetype; // 0 for dir, 1 for zip
 
+    private final boolean isDebugMode;
+
     public DBconfig(DBaccess access) {
         this.access = access;
         this.GTFS_PATH = System.getenv("GTFS_DIR");
         filetype = 0;
+        isDebugMode = true;
     }
 
     public DBconfig(String filePath) {
         this.access = DBaccessProvider.getInstance();
         GTFS_PATH = filePath;
         filetype = 1;
+        isDebugMode = false;
     }
 
     public void initializeDB() {
         access.connect();
         try {
-            System.err.println("Starting database initialization...");
+            if (isDebugMode) System.err.println("Starting database initialization...");
             if (access.conn != null && !access.conn.isClosed()) {
-                System.err.println("Insuring clear database...");
+                if (isDebugMode) System.err.println("Insuring clear database...");
                 access.conn.createStatement().execute("DROP DATABASE IF EXISTS " + access.dbName);
                 access.conn.createStatement().execute("CREATE DATABASE " + access.dbName);
                 access.conn.createStatement().execute("USE " + access.dbName);
 
-                System.err.println("Initializing tables...");
+                if (isDebugMode) System.err.println("Initializing tables...");
                 initializeTables();
 
-                System.err.println("Initializing triggers...");
+                if (isDebugMode) System.err.println("Initializing triggers...");
                 initializeTriggers();
 
-                System.err.println("Loading GTFS data...");
+                if (isDebugMode) System.err.println("Loading GTFS data...");
                 switch (filetype) {
                     case 0 -> {
-                        System.err.println("Loading GTFS data from directory: " + GTFS_PATH);
-                        GTFSImporter importer = new GTFSImporter(GTFS_PATH);
+                        if (isDebugMode) System.err.println("Loading GTFS data from directory: " + GTFS_PATH);
+                        GTFSImporter importer = new GTFSImporter(GTFS_PATH, isDebugMode);
                         importer.importGTFS();
                     }
                     case 1 -> {
-                        System.err.println("Loading GTFS data from zip file: " + GTFS_PATH);
+                        if (isDebugMode) System.err.println("Loading GTFS data from zip file: " + GTFS_PATH);
                         String tempDir = System.getenv("ROUTING_ENGINE_STORAGE_DIRECTORY");
                         ZipExtractor.extractZipToDirectory(GTFS_PATH, tempDir);
-                        GTFSImporter importer = new GTFSImporter(tempDir);
+                        GTFSImporter importer = new GTFSImporter(tempDir, isDebugMode);
                         importer.importGTFS();
                     }
                 }
-                System.err.println("GTFS data loaded successfully.");
+                if (isDebugMode) System.err.println("GTFS data loaded successfully.");
 
-                System.err.println("Database initialization completed.");
+                if (isDebugMode) System.err.println("Database initialization completed.");
             } else {
-                System.err.println("Stopping database initialization: connection to the database is not established.");
+                if (isDebugMode) System.err.println("Stopping database initialization: connection to the database is not established.");
             }
         } catch (SQLException e) {
             System.err.println("SQL Error: " + e.getMessage());
@@ -72,7 +76,7 @@ public class DBconfig {
     public void initializeTriggers() {
         try {
             if (access.conn != null && !access.conn.isClosed()) {
-                System.err.println("Accessing GTFS trigger SQL file");
+                if (isDebugMode) System.err.println("Accessing GTFS trigger SQL file");
                 try {
                    String sqlFilePath = Objects.requireNonNull(getClass().getClassLoader().getResource("gtfs_triggers.sql")).getPath();
                     String sql = new String(java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(sqlFilePath)));
@@ -82,9 +86,9 @@ public class DBconfig {
                 } catch (java.io.IOException e) {
                     System.err.println("Error reading SQL file: " + e.getMessage());
                 }
-                System.err.println("GTFS data model trigger created successfully.");
+                if (isDebugMode) System.err.println("GTFS data model trigger created successfully.");
             } else {
-                System.err.println("Stopping trigger initialization: connection to the database is not established.");
+                if (isDebugMode) System.err.println("Stopping trigger initialization: connection to the database is not established.");
             }
         } catch (SQLException e) {
             System.err.println("SQL Error: " + e.getMessage());
@@ -94,7 +98,7 @@ public class DBconfig {
     public void initializeTables() {
         try {
             if (access.conn != null && !access.conn.isClosed()) {
-                System.err.println("Accessing GTFS schema SQL file");
+                if (isDebugMode) System.err.println("Accessing GTFS schema SQL file");
                 try {
                     String sqlFilePath = Objects.requireNonNull(getClass().getClassLoader().getResource("newschema.sql")).getPath();
                     String sql = new String(java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(sqlFilePath)));
@@ -108,9 +112,9 @@ public class DBconfig {
                 } catch (java.io.IOException e) {
                     System.err.println("Error reading SQL file: " + e.getMessage());
                 }
-                System.err.println("GTFS data model table created successfully.");
+                if (isDebugMode) System.err.println("GTFS data model table created successfully.");
             } else {
-                System.err.println("Stopping table initialization: connection to the database is not established.");
+                if (isDebugMode) System.err.println("Stopping table initialization: connection to the database is not established.");
             }
         } catch (SQLException e) {
             System.err.println("SQL Error: " + e.getMessage());

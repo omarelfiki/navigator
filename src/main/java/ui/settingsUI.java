@@ -211,7 +211,9 @@ public class settingsUI {
                 testLabel.setText("Please check configuration.");
             } else {
                 DBaccess access = DBaccessProvider.getInstance();
-                access.connect();
+                if (access != null) {
+                    access.connect();
+                }
                 if (access.conn != null) {
                     testLabel.setText("Connection Established");
                     importButton.setDisable(false);
