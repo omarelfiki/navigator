@@ -9,7 +9,6 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.DatePicker;
-import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -26,13 +25,8 @@ import db.*;
 import util.*;
 import ui.*;
 import org.jxmapviewer.JXMapViewer;
-import org.jxmapviewer.painter.CompoundPainter;
-import org.jxmapviewer.painter.Painter;
-import org.jxmapviewer.viewer.DefaultWaypoint;
-import org.jxmapviewer.viewer.GeoPosition;
-import org.jxmapviewer.viewer.Waypoint;
-import org.jxmapviewer.viewer.WaypointPainter;
 import java.util.*;
+import static ui.UiHelper.*;
 
 public class homeUI extends Application {
     double[] romeCoords = {41.6558, 42.1233, 12.2453, 12.8558}; // {minLat, maxLat, minLng, maxLng}
@@ -59,13 +53,7 @@ public class homeUI extends Application {
         vbox_left.getChildren().add(leftPane);
         root.setLeft(vbox_left);
 
-        Rectangle leftBar = new Rectangle();
-        leftBar.widthProperty().bind(root.widthProperty().multiply(0.273)); // 350/1280
-        leftBar.heightProperty().bind(root.heightProperty()); // Full height
-        leftBar.setX(0);
-        leftBar.setY(0);
-        leftBar.setFill(Color.web("#5D5D5D"));
-        leftBar.setOpacity(0.95);
+        Rectangle leftBar = getLeftBar(root);
         leftPane.getChildren().add(leftBar);
 
         Text title = new Text("Navigator");
@@ -149,12 +137,7 @@ public class homeUI extends Application {
             }
         });
 
-        Line line = new Line();
-        line.startXProperty().bind(root.widthProperty().multiply(0)); // 0/1280
-        line.startYProperty().bind(root.heightProperty().multiply(0.89).add(20)); // 740/832 + 20
-        line.endXProperty().bind(root.widthProperty().multiply(0.273)); // 350/1280
-        line.endYProperty().bind(root.heightProperty().multiply(0.89).add(20)); // 740/832 + 20
-        line.setStroke(Color.WHITE);
+        Line line = getLine(root);
         leftPane.getChildren().add(line);
 
         // Background rectangle (toggle track)
@@ -245,23 +228,6 @@ public class homeUI extends Application {
         }
     }
 
-    private static void bindDateTime(StackPane timeContainer, StackPane dateContainer, TextField originField, TextField destinationField) {
-        timeContainer.visibleProperty().bind(
-                Bindings.createBooleanBinding(
-                        () -> !originField.getText().isEmpty() && !destinationField.getText().isEmpty(),
-                        originField.textProperty(),
-                        destinationField.textProperty()
-                )
-        );
-
-        dateContainer.visibleProperty().bind(
-                Bindings.createBooleanBinding(
-                        () -> !originField.getText().isEmpty() && !destinationField.getText().isEmpty(),
-                        originField.textProperty(),
-                        destinationField.textProperty()
-                )
-        );
-    }
 
     private void initializeNetwork() {
         if (NetworkUtil.isNetworkAvailable()) {
@@ -282,10 +248,8 @@ public class homeUI extends Application {
             System.out.println("Please enter both origin and destination addresses.");
             return;
         }
-
         double[] ocoords = GeoUtil.getCoordinatesFromAddress(oaddress);
         double[] dcoords = GeoUtil.getCoordinatesFromAddress(daddress);
-
         if (ocoords != null && dcoords != null) {
             if (ocoords[0] < romeCoords[0] || ocoords[0] > romeCoords[1] || ocoords[1] < romeCoords[2] || ocoords[1] > romeCoords[3]) {
                 System.out.println("origin coordinates out of bounds");
@@ -294,29 +258,9 @@ public class homeUI extends Application {
                 System.out.println("destination coordinates out of bounds");
                 return;
             }
-
             System.out.println("Origin Coordinates: " + ocoords[0] + ", " + ocoords[1]);
             System.out.println("Destination Coordinates: " + dcoords[0] + ", " + dcoords[1]);
-            GeoPosition op = new GeoPosition(ocoords[0], ocoords[1]);
-            GeoPosition dp = new GeoPosition(dcoords[0], dcoords[1]);
-            List<GeoPosition> track = Arrays.asList(op, dp);
-            RoutePainter routePainter = new RoutePainter(track);
-
-            map.zoomToBestFit(new HashSet<>(track), 0.7);
-            Set<Waypoint> waypoints = new HashSet<>(Arrays.asList(
-                    new DefaultWaypoint(op),
-                    new DefaultWaypoint(dp)
-            ));
-
-            WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<>();
-            waypointPainter.setWaypoints(waypoints);
-
-            List<Painter<JXMapViewer>> painters = new ArrayList<>();
-            painters.add(routePainter);
-            painters.add(waypointPainter);
-
-            CompoundPainter<JXMapViewer> painter = new CompoundPainter<>(painters);
-            map.setOverlayPainter(painter);
+            WayPoint.addWaypoint(ocoords, dcoords, map);
         } else {
             System.out.println("Address not found");
         }
@@ -331,87 +275,6 @@ public class homeUI extends Application {
 
         isOn.set(!isOn.get()); // Toggle the state
     }
-
-    private StackPane createTextFieldWithIcon(String icon, String prompt) {
-        StackPane container = new StackPane();
-        container.getStyleClass().add("input-container");
-
-        HBox inner = new HBox(10);
-        inner.setStyle("-fx-padding: 10;");
-
-        StackPane iconCircle = new StackPane();
-        iconCircle.getStyleClass().add("circle-icon");
-
-        Label iconLabel = new Label(icon);
-        iconLabel.getStyleClass().add("icon-label");
-        iconCircle.getChildren().add(iconLabel);
-
-        TextField textField = new TextField();
-        textField.setPromptText(prompt);
-        textField.getStyleClass().add("rounded-textfield");
-
-        HBox.setHgrow(textField, Priority.ALWAYS);
-        inner.getChildren().addAll(iconCircle, textField);
-
-        container.getChildren().add(inner);
-        return container;
-    }
-
-    private StackPane createDateTimeContainer(String iconText, String promptText, double layoutXMultiplier, double widthMultiplier, double heightMultiplier, Pane root, int type) {
-        StackPane container = new StackPane();
-        container.getStyleClass().add("input-container-small");
-        HBox inner = new HBox(5);
-        inner.setStyle("-fx-padding: 5;");
-        inner.setAlignment(Pos.CENTER);
-        switch (type) {
-            case 0:
-                DatePicker dateField = new DatePicker();
-                dateField.setPromptText(promptText);
-                dateField.getStyleClass().add("small-date-picker");
-                HBox.setHgrow(dateField, Priority.ALWAYS);
-                inner.getChildren().add(dateField);
-                break;
-            case 1:
-                StackPane iconCircle = new StackPane();
-                iconCircle.getStyleClass().add("circle-icon-small");
-                Label iconLabel = new Label(iconText);
-                iconLabel.getStyleClass().add("icon-label");
-                iconCircle.getChildren().add(iconLabel);
-                TextField timeField = new TextField();
-                timeField.setPromptText(promptText);
-                timeField.getStyleClass().add("rounded-textfield");
-                HBox.setHgrow(timeField, Priority.ALWAYS);
-                inner.getChildren().addAll(iconCircle, timeField);
-                break;
-        }
-        container.getChildren().add(inner);
-        container.layoutXProperty().bind(root.widthProperty().multiply(layoutXMultiplier));
-        container.layoutYProperty().bind(root.heightProperty().multiply(0.276));
-        container.prefWidthProperty().bind(root.widthProperty().multiply(widthMultiplier));
-        container.prefHeightProperty().bind(root.heightProperty().multiply(heightMultiplier));
-        container.setStyle("-fx-background-color: #FFFFFF; -fx-text-fill: gray;");
-        return container;
-    }
-
-    private void toggleLeftBar(Pane leftPane) {
-        boolean isVisible = leftPane.isVisible();
-        leftPane.setVisible(!isVisible);
-        leftPane.setManaged(!isVisible);
-    }
-
-    private void bindPosition(Region node, Pane root, double yRatio) {
-        node.layoutXProperty().bind(root.widthProperty().multiply(0.017));
-        node.layoutYProperty().bind(root.heightProperty().multiply(yRatio));
-        node.prefWidthProperty().bind(root.widthProperty().multiply(0.24));
-        node.prefHeightProperty().bind(root.heightProperty().multiply(0.035));
-    }
-
-    private void showSettingsMenu(BorderPane root, Pane leftPane, VBox vbox_left) {
-        settingsUI settingsUI = new settingsUI(root, leftPane);
-        Pane settingsPane = settingsUI.createSettingsMenu();
-        vbox_left.getChildren().add(settingsPane);
-    }
-
 
     public static void main(String[] args) {
         System.setProperty("GTFS_DIR", System.getenv("GTFS_DIR"));
