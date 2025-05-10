@@ -1,4 +1,3 @@
-DELIMITER $$
 CREATE PROCEDURE get_closest_stops(IN lat DOUBLE, IN lon DOUBLE, IN radius DOUBLE)
 BEGIN
 SELECT
@@ -14,5 +13,4 @@ SELECT
 FROM stops s
 HAVING distance <= radius
 ORDER BY distance;
-END$$
-DELIMITER ;
+END;

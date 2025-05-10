@@ -30,7 +30,6 @@ public class DBconfig {
     }
 
     public void initializeDB() {
-        access.connect();
         try {
             if (isDebugMode) System.err.println("Starting database initialization...");
             if (access.conn != null && !access.conn.isClosed()) {

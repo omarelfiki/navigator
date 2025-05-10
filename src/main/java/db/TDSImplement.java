@@ -13,9 +13,7 @@ public class TDSImplement implements TransitDataService
         this.db = DBaccessProvider.getInstance();
         if (db == null) {
             System.err.println("Error: Database access instance is null.");
-            return;
         }
-        db.connect();
     }
 
     @Override
