@@ -25,45 +25,45 @@ public class DBconfig {
         filetype = 1;
     }
 
-    public void initializeDB() {
+    public void initializeDB(boolean isDebugMode) {
         access.connect();
         try {
-            System.err.println("Starting database initialization...");
+            if (isDebugMode) System.err.println("Starting database initialization...");
             if (access.conn != null && !access.conn.isClosed()) {
-                System.err.println("Insuring clear database...");
+                if (isDebugMode) System.err.println("Insuring clear database...");
                 access.conn.createStatement().execute("DROP DATABASE IF EXISTS " + access.dbName);
                 access.conn.createStatement().execute("CREATE DATABASE " + access.dbName);
                 access.conn.createStatement().execute("USE " + access.dbName);
 
-                System.err.println("Initializing tables...");
+                if (isDebugMode) System.err.println("Initializing tables...");
                 initializeTables();
 
-                System.err.println("Initializing triggers...");
+                if (isDebugMode) System.err.println("Initializing triggers...");
                 initializeTriggers();
 
-                System.err.println("Loading GTFS data...");
+                if (isDebugMode) System.err.println("Loading GTFS data...");
                 switch (filetype) {
                     case 0 -> {
-                        System.err.println("Loading GTFS data from directory: " + GTFS_PATH);
+                        if (isDebugMode) System.err.println("Loading GTFS data from directory: " + GTFS_PATH);
                         GTFSImporter importer = new GTFSImporter(GTFS_PATH);
                         importer.importGTFS();
                     }
                     case 1 -> {
-                        System.err.println("Loading GTFS data from zip file: " + GTFS_PATH);
+                        if (isDebugMode) System.err.println("Loading GTFS data from zip file: " + GTFS_PATH);
                         String tempDir = System.getenv("ROUTING_ENGINE_STORAGE_DIRECTORY");
                         ZipExtractor.extractZipToDirectory(GTFS_PATH, tempDir);
                         GTFSImporter importer = new GTFSImporter(tempDir);
                         importer.importGTFS();
                     }
                 }
-                System.err.println("GTFS data loaded successfully.");
+                if (isDebugMode) System.err.println("GTFS data loaded successfully.");
 
-                System.err.println("Database initialization completed.");
+                if (isDebugMode) System.err.println("Database initialization completed.");
             } else {
-                System.err.println("Stopping database initialization: connection to the database is not established.");
+                if (isDebugMode) System.err.println("Stopping database initialization: connection to the database is not established.");
             }
         } catch (SQLException e) {
-            System.err.println("SQL Error: " + e.getMessage());
+            if (isDebugMode) System.err.println("SQL Error: " + e.getMessage());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

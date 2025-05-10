@@ -193,7 +193,7 @@ public class settingsUI {
                 consolePopup.show();
                 new Thread(() -> {
                     DBconfig config = new DBconfig(DBaccessProvider.getInstance());
-                    config.initializeDB();
+                    config.initializeDB(true);
                     Platform.runLater(() -> {
                         consolePopup.close();
                         testLabel.setText("GTFS data loaded successfully.");
@@ -211,7 +211,9 @@ public class settingsUI {
                 testLabel.setText("Please check configuration.");
             } else {
                 DBaccess access = DBaccessProvider.getInstance();
-                access.connect();
+                if (access != null) {
+                    access.connect();
+                }
                 if (access.conn != null) {
                     testLabel.setText("Connection Established");
                     importButton.setDisable(false);
