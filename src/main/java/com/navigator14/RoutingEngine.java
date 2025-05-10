@@ -64,7 +64,7 @@ public class RoutingEngine {
                         sendError("No path found");
                         break;
                     }
-                    List<Map<String, Object>> result = parseResult(path);
+                    List<Map<String, Object>> result = parseResult(path, requestR);
                     sendOk(result);
                     continue;
                 }
@@ -98,7 +98,7 @@ public class RoutingEngine {
         responseWriter.getWriter().flush();
     }
 
-    private List<Map<String, Object>> parseResult(List<Node> path) {
+    private List<Map<String, Object>> parseResult(List<Node> path, Request request) {
         return path.stream().map(node -> {
             if (Objects.equals(node.mode, "WALK")) {
                 if(node.parent == null) {
@@ -106,7 +106,7 @@ public class RoutingEngine {
                             "mode", "walk",
                             "to", Map.of("lat", 12.123, "lon", 12.123),
                             "duration", 0,
-                            "startTime", "startTimeWillBeHere"
+                            "startTime", request.time()
                     );
                 }
                 return Map.of(
