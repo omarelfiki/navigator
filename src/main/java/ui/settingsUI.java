@@ -193,7 +193,7 @@ public class settingsUI {
                 consolePopup.show();
                 new Thread(() -> {
                     DBconfig config = new DBconfig(DBaccessProvider.getInstance());
-                    config.initializeDB(true);
+                    config.initializeDB();
                     Platform.runLater(() -> {
                         consolePopup.close();
                         testLabel.setText("GTFS data loaded successfully.");

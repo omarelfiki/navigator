@@ -15,9 +15,12 @@ public class GTFSImporter {
     private final String GTFS_DIR;
     private final DBaccess access;
 
-    public GTFSImporter(String GTFS_DIR) {
+    private final boolean isDebugMode;
+
+    public GTFSImporter(String GTFS_DIR, boolean isDebugMode) {
         this.access = DBaccessProvider.getInstance();
         this.GTFS_DIR = GTFS_DIR;
+        this.isDebugMode = isDebugMode;
 
     }
 
@@ -42,7 +45,7 @@ public class GTFSImporter {
                 Path filePath = Paths.get(GTFS_DIR, filename);
 
                 if (Files.exists(filePath)) {
-                    System.err.println("Importing " + filename + " into " + tableName + "...");
+                    if (isDebugMode) System.err.println("Importing " + filename + " into " + tableName + "...");
 
                     List<CSVRecord> records = readCSV(filePath);
 
@@ -71,11 +74,11 @@ public class GTFSImporter {
                     }
                     uploadToTable(records, tableName, conn);
                 } else {
-                    System.err.println("File not found: " + filePath);
+                    if (isDebugMode) System.err.println("File not found: " + filePath);
                 }
             }
         }
-        System.err.println("GTFS import complete.");
+        if (isDebugMode) System.err.println("GTFS import complete.");
     }
 
     private void insertUniqueServices(Connection conn) throws IOException, SQLException {
@@ -103,7 +106,7 @@ public class GTFSImporter {
             }
         }
 
-        System.err.println("Inserted " + insertedCount + " unique service_id(s) into service table.");
+        if (isDebugMode) System.err.println("Inserted " + insertedCount + " unique service_id(s) into service table.");
     }
 
 
@@ -142,14 +145,14 @@ public class GTFSImporter {
                     "exceptional = IF(@exceptional REGEXP '^[0-9]+$', @exceptional, NULL)";
 
             int rows = stmt.executeUpdate(sql);
-            System.err.println("Inserted " + rows + " trips from: " + filePath.getFileName());
+            if (isDebugMode) System.err.println("Inserted " + rows + " trips from: " + filePath.getFileName());
             // finally enable the foreign key, to insure the relation integrity
             stmt.execute("SET FOREIGN_KEY_CHECKS=1");
         }
     }
 
     //  this method works same as importTripsWithLoadData
-    private static void importStopTimesWithLoadData(Path filePath, Connection conn) throws SQLException {
+    private void importStopTimesWithLoadData(Path filePath, Connection conn) throws SQLException {
         String absolutePath = filePath.toAbsolutePath().toString().replace("\\", "/");
 
         try (Statement stmt = conn.createStatement()) {
@@ -174,13 +177,13 @@ public class GTFSImporter {
                     "timepoint = IF(@timepoint REGEXP '^[0-9]+$', @timepoint, NULL)";
 
             int rows = stmt.executeUpdate(sql);
-            System.err.println("Inserted " + rows + " stop_times from: " + filePath.getFileName());
+            if (isDebugMode) System.err.println("Inserted " + rows + " stop_times from: " + filePath.getFileName());
 
             stmt.execute("SET FOREIGN_KEY_CHECKS=1");
         }
     }
 
-    private static void insertShapeIndex(List<CSVRecord> shapeRecords, Connection conn) throws SQLException {
+    private void insertShapeIndex(List<CSVRecord> shapeRecords, Connection conn) throws SQLException {
         Set<String> shapeIds = shapeRecords.stream()
                 .map(record -> record.get("shape_id"))
                 .collect(Collectors.toSet());
@@ -195,11 +198,11 @@ public class GTFSImporter {
                 insertedCount++;
             }
         }
-        System.err.println("Inserted " + insertedCount + " unique shape_id(s) into shape_index table.");
+        if (isDebugMode) System.err.println("Inserted " + insertedCount + " unique shape_id(s) into shape_index table.");
     }
 
     // sane as importTimesWithLoadData
-    private static void importShapesWithLoadData(Path filePath, Connection conn) throws SQLException {
+    private void importShapesWithLoadData(Path filePath, Connection conn) throws SQLException {
         String absolutePath = filePath.toAbsolutePath().toString().replace("\\", "/");
         try (Statement stmt = conn.createStatement()) {
             /*stmt.execute("SET FOREIGN_KEY_CHECKS=0");*/
@@ -218,14 +221,14 @@ public class GTFSImporter {
 
 
             int rows = stmt.executeUpdate(sql);
-            System.err.println("Inserted " + rows + " shapes from: " + filePath.getFileName());
+            if (isDebugMode) System.err.println("Inserted " + rows + " shapes from: " + filePath.getFileName());
 
             /*stmt.execute("SET FOREIGN_KEY_CHECKS=1");*/
 
         }
     }
 
-    private static void uploadToTable(List<CSVRecord> records, String tableName, Connection conn) throws SQLException {
+    private void uploadToTable(List<CSVRecord> records, String tableName, Connection conn) throws SQLException {
         if (records.isEmpty()) return;
 
         String columns = String.join(", ", records.getFirst().toMap().keySet());
@@ -254,7 +257,7 @@ public class GTFSImporter {
                 stmt.addBatch();
             }
             stmt.executeBatch();
-            System.err.println("Inserted " + insertedCount + " rows into " + tableName + " table.");
+            if (isDebugMode) System.err.println("Inserted " + insertedCount + " rows into " + tableName + " table.");
         }
     }
 

@@ -38,7 +38,7 @@ public class RoutingEngine {
             if (json instanceof Map<?, ?> request) {
                 if (request.containsKey("load")) {
                     DBconfig dbConfig = new DBconfig((String) request.get("load"));
-                    dbConfig.initializeDB(false);
+                    dbConfig.initializeDB();
                     sendOk("Database and GTFS dataset loaded");
                     continue;
                 }
