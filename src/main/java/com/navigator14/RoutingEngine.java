@@ -4,12 +4,15 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.util.List;
 import java.util.Map;
 
 import com.leastfixedpoint.json.JSONReader;
 import com.leastfixedpoint.json.JSONSyntaxError;
 import com.leastfixedpoint.json.JSONWriter;
 import db.DBconfig;
+import util.AStarRouterV;
+import util.Node;
 
 public class RoutingEngine {
     private final JSONReader requestReader =
@@ -51,19 +54,16 @@ public class RoutingEngine {
                 //"stop":"Hoofdstraat","route":{"operator":"My Bus Company","shortName":"5",
                 //"longName":"Bus number 5","headSign":"Naar Hoofdstraat"}}]
 
-                if (request.containsKey("routeFrom")) {
-                    System.out.println(request);
-                    Map<String, Double> routeFrom = (Map<String, Double>) request.get("routeFrom");
-                    Map<String, Double> to = (Map<String, Double>) request.get("to");
-                    String startTime = (String) request.get("startingAt");
-
-                    double latStart = routeFrom.get("lat");
-                    double lonStart = routeFrom.get("lon");
-                    double latEnd = to.get("lat");
-                    double lonEnd = to.get("lon");
-
-                    List<Node> path = router.findFastestPath(latStart,lonStart,latEnd,lonEnd,startTime);
-
+                if (request.containsKey("routeFrom") && request.containsKey("to") && request.containsKey("startingAt")) {
+                    AStarRouterV router = new AStarRouterV();
+                    Map<String, Object> routeFrom = (Map<String, Object>) request.get("routeFrom");
+                    Map<String, Object> to = (Map<String, Object>) request.get("to");
+                    String time = (String) request.get("startingAt");
+                    double latStart = (double) routeFrom.get("lat");
+                    double lonStart = (double) routeFrom.get("lon");
+                    double latEnd = (double) to.get("lat");
+                    double lonEnd = (double) to.get("lon");
+                    List<Node> path = router.findFastestPath(latStart,lonStart,latEnd,lonEnd,time);
 
                     sendOk("Test response");
                     continue;
