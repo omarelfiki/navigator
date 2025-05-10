@@ -119,9 +119,7 @@ public class homeUI extends Application {
         };
 
         // Handle errors
-        task.setOnFailed(event -> {
-            Platform.runLater(() -> label.setText("Error finding routes."));
-        });
+        task.setOnFailed(_ -> Platform.runLater(() -> label.setText("Error finding routes.")));
 
         isOn.addListener((_, _, _) -> {
             if (isOn.get()) {
@@ -214,9 +212,7 @@ public class homeUI extends Application {
         });
         leftPane.getChildren().add(settings);
 
-        dateField.valueProperty().addListener((_, _, _) -> {
-            new Thread(task).start();
-        }); // start task when date changes
+        dateField.valueProperty().addListener((_, _, _) -> new Thread(task).start()); // start task when date changes
 
         Scene scene = new Scene(root, 1280, 832);
         scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/styles.css")).toExternalForm());
