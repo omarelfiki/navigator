@@ -11,10 +11,12 @@ public class DBconfig {
 
     private final String GTFS_PATH;
 
-    private final int filetype; // 0 for dir, 1 for zip
+    private final int filetype; // 0 for dir (UI), 1 for zip (Routing Engine)
+    //dir will be deprecated in the future
 
     private final boolean isDebugMode;
 
+    //ui constructor
     public DBconfig(DBaccess access) {
         this.access = access;
         this.GTFS_PATH = System.getenv("GTFS_DIR");
@@ -22,6 +24,7 @@ public class DBconfig {
         isDebugMode = true;
     }
 
+    //routing engine constructor
     public DBconfig(String filePath) {
         this.access = DBaccessProvider.getInstance();
         GTFS_PATH = filePath;
