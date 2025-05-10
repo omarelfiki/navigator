@@ -7,7 +7,8 @@ public class AStarRouterV {
 
     public List<Node> findFastestPath(double latStart, double lonStart, double latStop, double lonStop, String startTime) {
         System.out.println("Starting point" + latStart + " " + lonStart);
-        Node STARTING_NODE = new Node("start", startTime, null, "walk", null);
+        Node STARTING_NODE = new Node("start", startTime, null, "WALK", null);
+
         ArrayList<Stop> startStops = NearbyStops.getNearbyStops(latStart, lonStart, 500);
         System.out.println("Start stops: " + startStops.size());
         ArrayList<Stop> stopStops = NearbyStops.getNearbyStops(latStop, lonStop, 500);
@@ -21,7 +22,7 @@ public class AStarRouterV {
             double walkTime = WalkingTime.getWalkingTime(latStart, lonStart, stop.getStopLat(), stop.getStopLon());
             System.out.println("Walking time to stop: " + stop.getStopId() + " " + walkTime);
             String arrivalTime = timeUtil.addTime(startTime, walkTime);
-            Node node = new Node(stop.stopId, arrivalTime, STARTING_NODE, "walk", null);
+            Node node = new Node(stop.stopId, arrivalTime, STARTING_NODE, "WALK", null);
             node.g = walkTime;
             updateBestCost(stop.stopId, node.g);
             pq.add(node);
@@ -48,7 +49,6 @@ public class AStarRouterV {
                     nextNode.g = current.g + weight;
                     nextNode.h = WalkingTime.getWalkingTime(latitude, longitude, latStop, lonStop);
                     pq.add(nextNode);
-//                    System.out.println("old best time" + bestKnownCostTo(toStopId) + " new time" + nextNode.g);
                     updateBestCost(toStopId, nextNode.g);
                 }
             }

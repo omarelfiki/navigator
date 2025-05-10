@@ -19,6 +19,7 @@ class TransferEdge implements Edge {
     double rideTime;
     StopTime currentStopTime;
     StopTime nextStopTime;
+    String rideStartTime;
 
     TDSImplement tds = new TDSImplement();
     TimeUtil timeUtil = new TimeUtil();
@@ -42,7 +43,7 @@ class TransferEdge implements Edge {
 
         // WAIT = time between my arrival at stop and trip's departure
         this.waitingTime = timeUtil.calculateDifference(this.departureTime, currentStopTime.getDepartureTime());
-
+        this.rideStartTime = currentStopTime.getDepartureTime();
         // RIDE = time from bus departure to bus arrival at next stop
         this.rideTime = timeUtil.calculateDifference(currentStopTime.getDepartureTime(), nextStopTime.getArrivalTime());
 
