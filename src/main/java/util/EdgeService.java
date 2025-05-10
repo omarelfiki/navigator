@@ -25,6 +25,7 @@ public class EdgeService {
                         stop.stopId,
                         node.arrivalTime
                 );
+                System.out.println("Walking " + edge.fromStopId + " to " + edge.toStopId + " weight " +edge.weight +" at " + edge.departureTime+ " to " + edge.arrivalTime);
                 edges.add(edge);
             }
         }
@@ -36,6 +37,7 @@ public class EdgeService {
                     node.arrivalTime,
                     node.trip
             );
+            System.out.println("Trip " + tripEdge.fromStopId + " to " + tripEdge.toStopId + " weight " +tripEdge.weight +" by route "+ tripEdge.trip.getRoute().routeId + " at " + tripEdge.departureTime+ " to " + tripEdge.arrivalTime);
             edges.add(tripEdge);
         }
 
@@ -50,7 +52,7 @@ public class EdgeService {
                     departureTime,
                     trip
             );
-            System.out.println("Transfer " + transferEdge.fromStopId + " to " + transferEdge.toStopId + " weight " +transferEdge.weight +" by route "+ transferEdge.trip.getRoute().routeId + " at " + transferEdge.departureTime+ " to " + transferEdge.arrivalTime);
+            System.out.println("Transfer " + transferEdge.fromStopId + " to " + transferEdge.toStopId + " weight " +transferEdge.weight +" by route "+ transferEdge.trip.getRoute().routeId + " at " + transferEdge.departureTime+" waiting until " +transferEdge.rideStartTime+ " to " + transferEdge.arrivalTime);
             edges.add(transferEdge);
         }
 
