@@ -15,7 +15,7 @@ class TransferEdge implements Edge {
     Trip trip;
     Stop startStop;
     Stop endStop;
-    TDSImplement tds;
+    TDSImplement tds = new TDSImplement();
     double waitingTime;
     double rideTime;
     StopTime currentStopTime;
@@ -23,21 +23,28 @@ class TransferEdge implements Edge {
 
 
 
-    public TransferEdge(String fromStopId,String departureTime,Trip trip) {
-        //this.toStopId = toStopId;
+    public TransferEdge(String fromStopId, String departureTime, Trip trip) {
         this.fromStopId = fromStopId;
-        this.startStop = tds.getStop(fromStopId);
-       // this.endStop = tds.getStop(toStopId);
         this.departureTime = departureTime;
         this.trip = trip;
-        currentStopTime = tds.getStopTime(trip,endStop);
-        nextStopTime = tds.getNextStopTime(currentStopTime);
-        this.waitingTime = calculateWaitingTime(departureTime,arrivalTime);
-        this.arrivalTime =nextStopTime.getArrivalTime();
+        this.startStop = tds.getStop(fromStopId);
+        this.currentStopTime = tds.getStopTime(trip, startStop);
+        this.nextStopTime = tds.getNextStopTime(currentStopTime);
+
+        if (nextStopTime == null) {
+            throw new IllegalArgumentException("No next stop time found for transfer.");
+        }
+
+        this.toStopId = nextStopTime.getStop().getStopId();
+        this.endStop = nextStopTime.getStop();
+        this.arrivalTime = nextStopTime.getArrivalTime();
+
+        this.waitingTime = calculateWaitingTime(departureTime, currentStopTime.getDepartureTime());
+        this.rideTime = calculateRideTime();
         this.weight = calculateWeight();
         this.mode = "TRANSFER";
-        this.rideTime = calculateRideTime();
     }
+
     public double calculateWaitingTime(String start, String end) {
         TimeUtil timeUtil = new TimeUtil();
         return timeUtil.calculateDifference(start, end);

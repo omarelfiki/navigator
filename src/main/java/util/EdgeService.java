@@ -4,6 +4,7 @@ import db.TDSImplement;
 import models.Stop;
 import models.Trip;
 
+import java.sql.SQLOutput;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,16 +16,14 @@ public class EdgeService {
         Stop startStop = tds.getStop(node.stopId);
 
         // add stops that can be reached by walking
-        List<Stop> walkingDistanceStops = NearbyStops.getNearbyStops(startStop.stopLat, startStop.stopLon, 200);
+        List<Stop> walkingDistanceStops = NearbyStops.getNearbyStops(startStop.stopLat, startStop.stopLon, 350);
         //create edges for each of these stops
         for (Stop stop : walkingDistanceStops) {
             if (!stop.stopId.equals(node.stopId)) {
-                double time = WalkingTime.getWalkingTime(startStop.stopLat, startStop.stopLon, stop.stopLat, stop.stopLon);
-                String timeInString = timeUtil.addTime(node.arrivalTime, time);
                 WalkingEdge edge = new WalkingEdge(
                         startStop.stopId,
                         stop.stopId,
-                        timeInString
+                        node.arrivalTime
                 );
                 edges.add(edge);
             }
@@ -40,8 +39,10 @@ public class EdgeService {
             edges.add(tripEdge);
         }
 
+        System.out.println("getting upcoming trips for " + node.stopId + " at " + node.arrivalTime);
         //add transfer edges
         List<Trip> upcomingTrips = tds.getUpcomingDistinctRouteTrips(node.stopId, node.arrivalTime);
+        System.out.println("upcoming trips: " + upcomingTrips.size());
         for (Trip trip : upcomingTrips) {
             String departureTime = node.arrivalTime;
             TransferEdge transferEdge = new TransferEdge(
@@ -49,8 +50,10 @@ public class EdgeService {
                     departureTime,
                     trip
             );
+            System.out.println("Transfer edge: " + transferEdge.fromStopId + " to " + transferEdge.toStopId + " with weight " + transferEdge.weight);
             edges.add(transferEdge);
         }
+
         return edges;
     }
 }

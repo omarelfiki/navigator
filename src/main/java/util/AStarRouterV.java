@@ -7,9 +7,11 @@ public class AStarRouterV {
 
     public List<Node> findFastestPath(double latStart, double lonStart, double latStop, double lonStop, String startTime) {
         System.out.println("Starting point" + latStart + " " + lonStart);
-        ArrayList<Stop> startStops = NearbyStops.getNearbyStops(latStart, lonStart, 200);
+        Node STARTING_NODE = new Node("start", startTime, null, "walk", null);
+        ArrayList<Stop> startStops = NearbyStops.getNearbyStops(latStart, lonStart, 500);
         System.out.println("Start stops: " + startStops.size());
-        ArrayList<Stop> stopStops = NearbyStops.getNearbyStops(latStop, lonStop, 200);
+        ArrayList<Stop> stopStops = NearbyStops.getNearbyStops(latStop, lonStop, 500);
+        System.out.println("Stop stops: " + stopStops.size());
         EdgeService edgeService = new EdgeService();
         TimeUtil timeUtil = new TimeUtil();
 
@@ -17,14 +19,16 @@ public class AStarRouterV {
 
         for (Stop stop : startStops) {
             double walkTime = WalkingTime.getWalkingTime(latStart, lonStart, stop.getStopLat(), stop.getStopLon());
+            System.out.println("Walking time to stop: " + stop.getStopId() + " " + walkTime);
             String arrivalTime = timeUtil.addTime(startTime, walkTime);
-            Node node = new Node(stop.stopId, arrivalTime, null, "walk", null);
+            Node node = new Node(stop.stopId, arrivalTime, STARTING_NODE, "walk", null);
+            node.g = walkTime;
+            updateBestCost(stop.stopId, node.g);
             pq.add(node);
         }
 
         while (!pq.isEmpty()) {
             Node current = pq.poll();
-            System.out.println("Current node: " + current.stopId + " Arrival time: " + current.arrivalTime);
             if (isAtGoal(current, stopStops)) {
                 return reconstructPath(current);
             }
@@ -36,18 +40,20 @@ public class AStarRouterV {
                 String arrivalTime = edge.getArrivalTime();
                 double weight = edge.getWeight();
 
-                if (current.g + weight < bestKnownCostTo(toStopId)) {
-
+                if (current.g + weight+5 < bestKnownCostTo(toStopId)) {
                     Node nextNode = new Node(toStopId, arrivalTime, current, edge.getMode(), edge.getTrip());
+//                    System.out.println("Next node: " + nextNode.stopId + " from " + nextNode.parent.stopId + " with arrival time " + nextNode.arrivalTime);
                     double latitude = nextNode.stop.getStopLat();
                     double longitude = nextNode.stop.getStopLon();
                     nextNode.g = current.g + weight;
                     nextNode.h = WalkingTime.getWalkingTime(latitude, longitude, latStop, lonStop);
                     pq.add(nextNode);
+//                    System.out.println("old best time" + bestKnownCostTo(toStopId) + " new time" + nextNode.g);
                     updateBestCost(toStopId, nextNode.g);
                 }
             }
         }
+        System.out.println("best costs for visited nodes: " + bestCosts);
         return null;
     }
 
