@@ -14,11 +14,11 @@ public class RoutingTest {
             return;
         }
 
-        List<Node> path = router.findFastestPath(41.9011,12.5002,41.7489,12.5015,"08:00:00");
+        List<Node> path = router.findFastestPath(41.9296,12.4844,41.7489,12.5015,"08:00:00");
         if (path != null) {
             System.out.println("Path found:");
             for (Node node : path) {
-                //System.out.println(node.stopId + " " + node.arrivalTime);
+                System.out.println(node.stopId + " " + node.arrivalTime);
             }
         } else {
             System.out.println("No path found.");

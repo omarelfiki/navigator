@@ -1,7 +1,10 @@
 package db;
 
+import java.sql.SQLException;
+
 public class DBaccessProvider {
     private static DBaccess instance;
+
 
     private DBaccessProvider() {}
 
@@ -14,6 +17,26 @@ public class DBaccessProvider {
                 return null;
             }
             instance = new DBaccess(connectionString);
+            instance.connect();
+            if (instance.conn == null) {
+                System.err.println("Error: Unable to establish a connection to the database.");
+                return null;
+            }
+        } else if (instance.conn == null) {
+            // Reconnect if the connection is closed
+            instance.connect();
+            if (instance.conn == null) {
+                System.err.println("Error: Unable to re-establish a connection to the database.");
+                return null;
+            }
+        } else {
+            try {
+                if (instance.conn.isClosed()) {
+                    instance.connect();
+                }
+            } catch (SQLException e) {
+                System.err.println("Error: Unable to check the connection status. " + e.getMessage());
+            }
         }
         return instance;
     }
