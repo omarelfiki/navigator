@@ -1,10 +1,12 @@
 package com.navigator14;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.concurrent.Task;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -22,29 +24,25 @@ import javafx.scene.image.ImageView;
 import javafx.scene.shape.Circle;
 import map.*;
 import db.*;
-import util.*;
 import ui.*;
-import org.jxmapviewer.JXMapViewer;
+
 import java.util.*;
+
+import static util.NavUtil.parsePoint;
 import static ui.UiHelper.*;
 
 public class homeUI extends Application {
-    double[] romeCoords = {41.6558, 42.1233, 12.2453, 12.8558}; // {minLat, maxLat, minLng, maxLng}
     private final BooleanProperty isOn = new SimpleBooleanProperty(false);
     private Button hideSidePanel, showSidePanel;
-    public boolean isOnline;
-    private MapIntegration mapIntegration;
 
     @Override
     public void start(Stage primaryStage) {
         primaryStage.setTitle("Navigator");
-
-        initializeNetwork();
         DBaccess access = DBaccessProvider.getInstance();
 
         BorderPane root = new BorderPane();
 
-        mapIntegration = new MapIntegration(isOnline);
+        MapIntegration mapIntegration = MapProvider.getInstance();
         StackPane mapPane = mapIntegration.createMapPane();
         root.setCenter(mapPane);
 
@@ -95,29 +93,6 @@ public class homeUI extends Application {
                 dateField.valueProperty()
         );
 
-        originField.textProperty().addListener((_, _, _) -> {
-            if (filled.get()) {
-                parsePoint(originField, destinationField, timeField, dateField);
-            }
-        });
-
-        destinationField.textProperty().addListener((_, _, _) -> {
-            if (filled.get()) {
-                parsePoint(originField, destinationField, timeField, dateField);
-            }
-        });
-
-        timeField.textProperty().addListener((_, _, _) -> {
-            if (filled.get()) {
-                parsePoint(originField, destinationField, timeField, dateField);
-            }
-        });
-
-        dateField.valueProperty().addListener((_, _, _) -> {
-            if (filled.get()) {
-                parsePoint(originField, destinationField, timeField, dateField);
-            }
-        });
 
         Text label = new Text("Navigate to see public transport \n options");
         label.setTextAlignment(TextAlignment.CENTER);
@@ -126,6 +101,27 @@ public class homeUI extends Application {
         label.xProperty().bind(root.widthProperty().multiply(0.061)); // 78/1280
         label.yProperty().bind(root.heightProperty().multiply(0.48)); // 400/832
         leftPane.getChildren().add(label);
+
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() {
+                if (filled.get()) {
+                    String origin = originField.getText();
+                    String destination = destinationField.getText();
+                    String time = timeField.getText();
+                    Date date = java.sql.Date.valueOf(dateField.getValue());
+                    label.setText("Finding routes...");
+                    String result = parsePoint(origin, destination, time, date);
+                    Platform.runLater(() -> label.setText(result));
+                }
+                return null;
+            }
+        };
+
+        // Handle errors
+        task.setOnFailed(event -> {
+            Platform.runLater(() -> label.setText("Error finding routes."));
+        });
 
         isOn.addListener((_, _, _) -> {
             if (isOn.get()) {
@@ -218,6 +214,10 @@ public class homeUI extends Application {
         });
         leftPane.getChildren().add(settings);
 
+        dateField.valueProperty().addListener((_, _, _) -> {
+            new Thread(task).start();
+        }); // start task when date changes
+
         Scene scene = new Scene(root, 1280, 832);
         scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/styles.css")).toExternalForm());
         primaryStage.setScene(scene);
@@ -228,51 +228,12 @@ public class homeUI extends Application {
         }
     }
 
-
-    private void initializeNetwork() {
-        if (NetworkUtil.isNetworkAvailable()) {
-            isOnline = true;
-        } else {
-            System.out.println("Network is not available. Switching to offline mode.");
-            isOnline = false;
-        }
-    }
-
-    private void parsePoint(TextField origin, TextField destination, TextField time, DatePicker date) {
-        JXMapViewer map = mapIntegration.getMap();
-        String oaddress = origin.getText();
-        String daddress = destination.getText();
-//        String otime = time.getText();
-//        Date selectedDate = java.sql.Date.valueOf(date.getValue());
-        if (oaddress.isEmpty() || daddress.isEmpty()) {
-            System.out.println("Please enter both origin and destination addresses.");
-            return;
-        }
-        double[] ocoords = GeoUtil.getCoordinatesFromAddress(oaddress);
-        double[] dcoords = GeoUtil.getCoordinatesFromAddress(daddress);
-        if (ocoords != null && dcoords != null) {
-            if (ocoords[0] < romeCoords[0] || ocoords[0] > romeCoords[1] || ocoords[1] < romeCoords[2] || ocoords[1] > romeCoords[3]) {
-                System.out.println("origin coordinates out of bounds");
-                return;
-            } else if (dcoords[0] < romeCoords[0] || dcoords[0] > romeCoords[1] || dcoords[1] < romeCoords[2] || dcoords[1] > romeCoords[3]) {
-                System.out.println("destination coordinates out of bounds");
-                return;
-            }
-            System.out.println("Origin Coordinates: " + ocoords[0] + ", " + ocoords[1]);
-            System.out.println("Destination Coordinates: " + dcoords[0] + ", " + dcoords[1]);
-            WayPoint.addWaypoint(ocoords, dcoords, map);
-        } else {
-            System.out.println("Address not found");
-        }
-    }
-
     private void toggleSwitch(Rectangle background) {
         if (isOn.get()) {
             background.setFill(Color.LIGHTGRAY); // Off state
         } else {
             background.setFill(Color.LIMEGREEN); // On state
         }
-
         isOn.set(!isOn.get()); // Toggle the state
     }
 
