@@ -53,6 +53,17 @@ public class RoutingEngine {
 
                 if (request.containsKey("routeFrom")) {
                     System.out.println(request);
+                    Map<String, Double> routeFrom = (Map<String, Double>) request.get("routeFrom");
+                    Map<String, Double> to = (Map<String, Double>) request.get("to");
+                    String startTime = (String) request.get("startingAt");
+
+                    double latStart = routeFrom.get("lat");
+                    double lonStart = routeFrom.get("lon");
+                    double latEnd = to.get("lat");
+                    double lonEnd = to.get("lon");
+
+                    List<Node> path = router.findFastestPath(latStart,lonStart,latEnd,lonEnd,startTime);
+
 
                     sendOk("Test response");
                     continue;
