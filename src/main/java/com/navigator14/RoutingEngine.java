@@ -52,6 +52,8 @@ public class RoutingEngine {
                 //"longName":"Bus number 5","headSign":"Naar Hoofdstraat"}}]
 
                 if (request.containsKey("routeFrom")) {
+                    System.out.println(request);
+
                     sendOk("Test response");
                     continue;
                 }
