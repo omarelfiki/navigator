@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import com.leastfixedpoint.json.JSONReader;
 import com.leastfixedpoint.json.JSONSyntaxError;
@@ -16,9 +17,9 @@ import util.Node;
 
 public class RoutingEngine {
     private final JSONReader requestReader =
-        new JSONReader(new InputStreamReader(System.in));
+            new JSONReader(new InputStreamReader(System.in));
     private final JSONWriter<OutputStreamWriter> responseWriter =
-        new JSONWriter<>(new OutputStreamWriter(System.out));
+            new JSONWriter<>(new OutputStreamWriter(System.out));
 
     public static void main(String[] args) throws IOException {
         new RoutingEngine().run();
@@ -46,52 +47,66 @@ public class RoutingEngine {
                     continue;
                 }
 
-                // > {"routeFrom":{"lat":1,"lon":1},"to":{"lat":2,"lon":2},"startingAt":"08:30:00"} -- input
-//                List<Node> path = router.findFastestPath(latStart,lonStart,latEnd,lonEnd,statTime); == method call
+                // {"routeFrom":{"lat":41.9296,"lon":12.4844},"to":{"lat":41.7489,"lon":12.5015},"startingAt":"08:00:00"}
+                // -- test method call
 
                 //< [{"mode":"walk","to":{"lat":3,"lon":3},"duration":1,"startTime":"08:30"},
                 //{"mode":"ride","to":{"lat":2,"lon":2},"duration":6,"startTime":"08:35",
                 //"stop":"Hoofdstraat","route":{"operator":"My Bus Company","shortName":"5",
                 //"longName":"Bus number 5","headSign":"Naar Hoofdstraat"}}]
+                // -- complete output
+
+                // [] -- outer array
+                // {"mode":"walk", "to":{"lat":3,"lon":3}, "duration":1, "startTime":"08:30"} -- inner object
+                // {"mode":"ride", "to":{"lat":2,"lon":2}, "duration":6, "startTime":"08:35", "stop":"Hoofdstraat", "route":{"operator":"My Bus Company","shortName":"5","longName":"Bus number 5","headSign":"Naar Hoofdstraat"} } -- second object
+                // -- output breakdown
+
 
                 if (request.containsKey("routeFrom") && request.containsKey("to") && request.containsKey("startingAt")) {
                     AStarRouterV router = new AStarRouterV();
                     Map<String, Object> routeFrom = (Map<String, Object>) request.get("routeFrom");
                     Map<String, Object> to = (Map<String, Object>) request.get("to");
                     String time = (String) request.get("startingAt");
-                    double latStart = (double) routeFrom.get("lat");
-                    double lonStart = (double) routeFrom.get("lon");
-                    double latEnd = (double) to.get("lat");
-                    double lonEnd = (double) to.get("lon");
-                    List<Node> path = router.findFastestPath(latStart,lonStart,latEnd,lonEnd,time);
-
-
-                    Node firstNode = path.get(0);
-                    Node lastNode = path.get(path.size()-1);
-
-                    if((TripEdge)firstNode.getMode().equals("walk")) {
-                        String output = "[" +
-                                "{\"mode\":\"walk \"," +
-                                "\"to\":{\"lat\":" + firstNode.getStopLat() + ",\"lon\":" + firstNode.getStopLon() + "}," +
-                                "\"duration\":" +  (TripEdge)firstNode.getWeight() + "," +
-                                "\"startTime\":\"" +  + "\"}," +
+                    double latStart = ((Number) routeFrom.get("lat")).doubleValue();
+                    double lonStart = ((Number) routeFrom.get("lon")).doubleValue();
+                    double latEnd = ((Number) to.get("lat")).doubleValue();
+                    double lonEnd = ((Number) to.get("lon")).doubleValue();
+                    List<Node> path = router.findFastestPath(latStart, lonStart, latEnd, lonEnd, time);
+                    StringBuilder object = new StringBuilder("[");
+                    if (path == null) {
+                        sendError("No path found");
                     } else {
-
-                        // Add the methods between the pluses
-
-//                            String output = "{\"mode\":\"" +  + "\"," +
-//                            "\"to\":{\"lat\":" +  + ",\"lon\":" +  + "}," +
-//                            "\"duration\":" +  + "," +
-//                            "\"startTime\":\"" + ] + "\"," +
-//                            "\"stop\":\"" +  + "\"," +
-//                            "\"route\":{" +
-//                            "\"operator\":\"" +  + "\"," +
-//                            "\"shortName\":\"" +  + "\"," +
-//                            "\"longName\":\"" +  + "\"," +
-//                            "\"headSign\":\"" +  + "\"" + "}}]";
+                        for (Node node : path) {
+                            if (Objects.equals(node.mode, "WALK")){
+                                object.append("{\"mode\":\"walk\", \"to\":{\"lat\":")
+                                        .append(node.stop.stopLat).append(",\"lon\":")
+                                        .append(node.stop.stopLon).append("}, \"duration\":")
+                                        .append(0).append(", \"startTime\":\"")
+                                        .append(node.arrivalTime).append("\"},");
+                            }
+                            else if (Objects.equals(node.mode, "SAME_TRIP")){
+                                object.append("{\"mode\":\"ride\", \"to\":{\"lat\":")
+                                        .append(node.stop.stopLat)
+                                        .append(",\"lon\":")
+                                        .append(node.stop.stopLon)
+                                        .append("}, \"duration\":")
+                                        .append(0).append(", \"startTime\":\"")
+                                        .append(node.arrivalTime)
+                                        .append("\", \"stop\":\"")
+                                        .append(node.stop.getStopName())
+                                        .append("\", \"route\":{\"operator\":\"")
+                                        .append(node.trip.route.getAgency().getAgencyName())
+                                        .append("\"shortName\":\"").append(node.trip.route.getRouteShortName())
+                                        .append("\",\"longName\":\"")
+                                        .append(node.trip.route.getRouteLongName())
+                                        .append("\"headSign\":\"")
+                                        .append(node.trip.getHeadSign())
+                                        .append("\"}},");
+                            }
+                            object.append("]");
+                        }
                     }
-
-                    sendOk(output);
+                    sendOk(object.toString());
                     continue;
                 }
             }
