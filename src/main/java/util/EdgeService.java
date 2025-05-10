@@ -50,7 +50,7 @@ public class EdgeService {
                     departureTime,
                     trip
             );
-            System.out.println("Transfer edge: " + transferEdge.fromStopId + " to " + transferEdge.toStopId + " with weight " + transferEdge.weight);
+            System.out.println("Transfer " + transferEdge.fromStopId + " to " + transferEdge.toStopId + " weight " +transferEdge.weight +" by route "+ transferEdge.trip.getRoute().routeId + " at " + transferEdge.departureTime+ " to " + transferEdge.arrivalTime);
             edges.add(transferEdge);
         }
 

@@ -14,7 +14,7 @@ class TripEdge implements Edge {
     double weight;
     Stop endStop;
     Stop startStop;
-    TDSImplement tds;
+    TDSImplement tds = new TDSImplement();
     TimeUtil timeUtil = new TimeUtil();
     String mode;
 

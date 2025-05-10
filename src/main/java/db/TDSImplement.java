@@ -138,7 +138,7 @@ public class TDSImplement implements TransitDataService
         List<Trip> trips = new ArrayList<>();
 
         String sql = """
-        SELECT st.trip_id, st.arrival_time
+        SELECT DISTINCT st.trip_id, st.arrival_time
         FROM stop_times st
         JOIN trips t ON st.trip_id = t.trip_id
         JOIN (
@@ -147,7 +147,7 @@ public class TDSImplement implements TransitDataService
             JOIN trips t ON st.trip_id = t.trip_id
             WHERE st.stop_id = ?
               AND TIME(st.arrival_time) > TIME(?)
-              AND TIME(st.arrival_time) <= ADDTIME(TIME(?), '00:30:00')
+              AND TIME(st.arrival_time) <= ADDTIME(TIME(?), '00:15:00')
             GROUP BY t.route_id
         ) AS earliest
         ON t.route_id = earliest.route_id AND st.arrival_time = earliest.earliest_time

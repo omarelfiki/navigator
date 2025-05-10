@@ -14,7 +14,7 @@ public class RoutingTest {
             return;
         }
 
-        List<Node> path = router.findFastestPath(41.9296,12.4844,41.7489,12.5015,"08:00:00");
+        List<Node> path = router.findFastestPath(41.8298,12.5563,41.8258,12.5623,"08:00:00");
         if (path != null) {
             System.out.println("Path found:");
             for (Node node : path) {
