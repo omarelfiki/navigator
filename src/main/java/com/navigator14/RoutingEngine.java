@@ -65,7 +65,33 @@ public class RoutingEngine {
                     double lonEnd = (double) to.get("lon");
                     List<Node> path = router.findFastestPath(latStart,lonStart,latEnd,lonEnd,time);
 
-                    sendOk("Test response");
+
+                    Node firstNode = path.get(0);
+                    Node lastNode = path.get(path.size()-1);
+
+                    if((TripEdge)firstNode.getMode().equals("walk")) {
+                        String output = "[" +
+                                "{\"mode\":\"walk \"," +
+                                "\"to\":{\"lat\":" + firstNode.getStopLat() + ",\"lon\":" + firstNode.getStopLon() + "}," +
+                                "\"duration\":" +  (TripEdge)firstNode.getWeight() + "," +
+                                "\"startTime\":\"" +  + "\"}," +
+                    } else {
+
+                        // Add the methods between the pluses
+
+//                            String output = "{\"mode\":\"" +  + "\"," +
+//                            "\"to\":{\"lat\":" +  + ",\"lon\":" +  + "}," +
+//                            "\"duration\":" +  + "," +
+//                            "\"startTime\":\"" + ] + "\"," +
+//                            "\"stop\":\"" +  + "\"," +
+//                            "\"route\":{" +
+//                            "\"operator\":\"" +  + "\"," +
+//                            "\"shortName\":\"" +  + "\"," +
+//                            "\"longName\":\"" +  + "\"," +
+//                            "\"headSign\":\"" +  + "\"" + "}}]";
+                    }
+
+                    sendOk(output);
                     continue;
                 }
             }
