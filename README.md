@@ -6,7 +6,6 @@ A JavaFX-powered system to plan your journey across [Rome's] public transportati
 
 Nav-App transforms raw GTFS transit data into an intelligent routing engine with a graphical interface.
 Designed for public transit systems, it enables real-time route discovery using buses, trains, trams, and walking transfers.
-
 “Never miss your next stop again.”
 
  Features
