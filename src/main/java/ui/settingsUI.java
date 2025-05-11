@@ -12,11 +12,10 @@ import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
-
+import static ui.UiHelper.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
 
 import db.*;
 
@@ -32,13 +31,7 @@ public class settingsUI {
     public Pane createSettingsMenu() {
         Pane settingsMenu = new Pane();
 
-        Rectangle settings = new Rectangle();
-        settings.widthProperty().bind(root.widthProperty().multiply(0.273)); // 350/1280
-        settings.heightProperty().bind(root.heightProperty()); // Full height
-        settings.setX(0);
-        settings.setY(0);
-        settings.setFill(Color.web("#5D5D5D"));
-        settings.setOpacity(0.95);
+        Rectangle settings = getLeftBar(root);
         settingsMenu.getChildren().add(settings);
 
         Text title = new Text("Settings");
@@ -211,7 +204,7 @@ public class settingsUI {
                 testLabel.setText("Please check configuration.");
             } else {
                 DBaccess access = DBaccessProvider.getInstance();
-                access.connect();
+                assert access != null;
                 if (access.conn != null) {
                     testLabel.setText("Connection Established");
                     importButton.setDisable(false);
@@ -222,12 +215,7 @@ public class settingsUI {
             }
         });
 
-        Line line = new Line();
-        line.startXProperty().bind(root.widthProperty().multiply(0)); // 0/1280
-        line.startYProperty().bind(root.heightProperty().multiply(0.89).add(20)); // 740/832 + 20
-        line.endXProperty().bind(root.widthProperty().multiply(0.273)); // 350/1280
-        line.endYProperty().bind(root.heightProperty().multiply(0.89).add(20)); // 740/832 + 20
-        line.setStroke(Color.WHITE);
+        Line line = getLine(root);
         settingsMenu.getChildren().add(line);
 
         Button close = new Button("X");
@@ -251,31 +239,5 @@ public class settingsUI {
         }
 
         return settingsMenu;
-    }
-
-    private void toggleLeftBar(Pane leftPane) {
-        boolean isVisible = leftPane.isVisible();
-        leftPane.setVisible(!isVisible);
-        leftPane.setManaged(!isVisible);
-    }
-
-    private static void parseConnectionString(String connectionString, TextField usernameField, TextField passwordField, TextField hostField, TextField portField) {
-        // Example connection string: jdbc:mysql://USER:PASSWORD@HOST:PORT/DBNAME
-        String regex = "^jdbc:mysql://([^:]+):([^@]+)@([^:/]+):?(\\d+)?/([^?]+)(\\?.*)?$";
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(connectionString);
-
-        if (matcher.matches()) {
-            String user = matcher.group(1);
-            String password = matcher.group(2);
-            String host = matcher.group(3);
-            String port = matcher.group(4) != null ? matcher.group(4) : "3306"; // Default MySQL port
-            usernameField.setText(user);
-            passwordField.setText(password);
-            hostField.setText(host);
-            portField.setText(port);
-        } else {
-            System.out.println("Invalid connection string format.");
-        }
     }
 }

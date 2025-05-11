@@ -14,12 +14,12 @@ public class Node {
         this.trip = trip;
         this.stop = tds.getStop(stopId);
     }
-    Stop stop;
-    String stopId;
-    String arrivalTime;
+    public Stop stop;
+    public String stopId;
+    public String arrivalTime;
     double g;
     double h;
-    Node parent;
-    String mode;
-    Trip trip;
+    public Node parent;
+    public String mode;
+    public Trip trip;
 }

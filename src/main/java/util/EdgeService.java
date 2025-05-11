@@ -4,28 +4,28 @@ import db.TDSImplement;
 import models.Stop;
 import models.Trip;
 
+import java.sql.SQLOutput;
 import java.util.ArrayList;
 import java.util.List;
 
 public class EdgeService {
-    TDSImplement tds;
-    TimeUtil timeUtil;
+    TDSImplement tds = new TDSImplement();
+    TimeUtil timeUtil = new TimeUtil();
     public ArrayList<Edge> getEdges(Node node) {
         ArrayList<Edge> edges = new ArrayList<>();
         Stop startStop = tds.getStop(node.stopId);
 
         // add stops that can be reached by walking
-        List<Stop> walkingDistanceStops = NearbyStops.getNearbyStops(startStop.stopLat, startStop.stopLon, 200);
+        List<Stop> walkingDistanceStops = NearbyStops.getNearbyStops(startStop.stopLat, startStop.stopLon, 350);
         //create edges for each of these stops
         for (Stop stop : walkingDistanceStops) {
             if (!stop.stopId.equals(node.stopId)) {
-                double time = WalkingTime.getWalkingTime(startStop.stopLat, startStop.stopLon, stop.stopLat, stop.stopLon);
-                String timeInString = timeUtil.addTime(node.arrivalTime, time);
                 WalkingEdge edge = new WalkingEdge(
                         startStop.stopId,
                         stop.stopId,
-                        timeInString
+                        node.arrivalTime
                 );
+                System.out.println("Walking " + edge.fromStopId + " to " + edge.toStopId + " weight " +edge.weight +" at " + edge.departureTime+ " to " + edge.arrivalTime);
                 edges.add(edge);
             }
         }
@@ -37,11 +37,14 @@ public class EdgeService {
                     node.arrivalTime,
                     node.trip
             );
+            System.out.println("Trip " + tripEdge.fromStopId + " to " + tripEdge.toStopId + " weight " +tripEdge.weight +" by route "+ tripEdge.trip.getRoute().routeId + " at " + tripEdge.departureTime+ " to " + tripEdge.arrivalTime);
             edges.add(tripEdge);
         }
 
+        System.out.println("getting upcoming trips for " + node.stopId + " at " + node.arrivalTime);
         //add transfer edges
         List<Trip> upcomingTrips = tds.getUpcomingDistinctRouteTrips(node.stopId, node.arrivalTime);
+        System.out.println("upcoming trips: " + upcomingTrips.size());
         for (Trip trip : upcomingTrips) {
             String departureTime = node.arrivalTime;
             TransferEdge transferEdge = new TransferEdge(
@@ -49,8 +52,10 @@ public class EdgeService {
                     departureTime,
                     trip
             );
+            System.out.println("Transfer " + transferEdge.fromStopId + " to " + transferEdge.toStopId + " weight " +transferEdge.weight +" by route "+ transferEdge.trip.getRoute().routeId + " at " + transferEdge.departureTime+" waiting until " +transferEdge.rideStartTime+ " to " + transferEdge.arrivalTime);
             edges.add(transferEdge);
         }
+
         return edges;
     }
 }

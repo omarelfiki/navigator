@@ -1,15 +1,16 @@
 package com.navigator14;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.concurrent.Task;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.DatePicker;
-import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -23,34 +24,28 @@ import javafx.scene.image.ImageView;
 import javafx.scene.shape.Circle;
 import map.*;
 import db.*;
-import util.*;
-import ui.*;
 import org.jxmapviewer.JXMapViewer;
-import org.jxmapviewer.painter.CompoundPainter;
-import org.jxmapviewer.painter.Painter;
-import org.jxmapviewer.viewer.DefaultWaypoint;
 import org.jxmapviewer.viewer.GeoPosition;
-import org.jxmapviewer.viewer.Waypoint;
-import org.jxmapviewer.viewer.WaypointPainter;
+import ui.*;
+import java.awt.geom.Point2D;
 import java.util.*;
 
+import static util.NavUtil.parsePoint;
+import static ui.UiHelper.*;
+import static util.WeatherUtil.createWeatherTask;
+
 public class homeUI extends Application {
-    double[] romeCoords = {41.6558, 42.1233, 12.2453, 12.8558}; // {minLat, maxLat, minLng, maxLng}
     private final BooleanProperty isOn = new SimpleBooleanProperty(false);
     private Button hideSidePanel, showSidePanel;
-    public boolean isOnline;
-    private MapIntegration mapIntegration;
 
     @Override
     public void start(Stage primaryStage) {
         primaryStage.setTitle("Navigator");
-
-        initializeNetwork();
         DBaccess access = DBaccessProvider.getInstance();
 
         BorderPane root = new BorderPane();
 
-        mapIntegration = new MapIntegration(isOnline);
+        MapIntegration mapIntegration = MapProvider.getInstance();
         StackPane mapPane = mapIntegration.createMapPane();
         root.setCenter(mapPane);
 
@@ -59,13 +54,7 @@ public class homeUI extends Application {
         vbox_left.getChildren().add(leftPane);
         root.setLeft(vbox_left);
 
-        Rectangle leftBar = new Rectangle();
-        leftBar.widthProperty().bind(root.widthProperty().multiply(0.273)); // 350/1280
-        leftBar.heightProperty().bind(root.heightProperty()); // Full height
-        leftBar.setX(0);
-        leftBar.setY(0);
-        leftBar.setFill(Color.web("#5D5D5D"));
-        leftBar.setOpacity(0.95);
+        Rectangle leftBar = getLeftBar(root);
         leftPane.getChildren().add(leftBar);
 
         Text title = new Text("Navigator");
@@ -107,29 +96,6 @@ public class homeUI extends Application {
                 dateField.valueProperty()
         );
 
-        originField.textProperty().addListener((_, _, _) -> {
-            if (filled.get()) {
-                parsePoint(originField, destinationField, timeField, dateField);
-            }
-        });
-
-        destinationField.textProperty().addListener((_, _, _) -> {
-            if (filled.get()) {
-                parsePoint(originField, destinationField, timeField, dateField);
-            }
-        });
-
-        timeField.textProperty().addListener((_, _, _) -> {
-            if (filled.get()) {
-                parsePoint(originField, destinationField, timeField, dateField);
-            }
-        });
-
-        dateField.valueProperty().addListener((_, _, _) -> {
-            if (filled.get()) {
-                parsePoint(originField, destinationField, timeField, dateField);
-            }
-        });
 
         Text label = new Text("Navigate to see public transport \n options");
         label.setTextAlignment(TextAlignment.CENTER);
@@ -138,6 +104,25 @@ public class homeUI extends Application {
         label.xProperty().bind(root.widthProperty().multiply(0.061)); // 78/1280
         label.yProperty().bind(root.heightProperty().multiply(0.48)); // 400/832
         leftPane.getChildren().add(label);
+
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() {
+                if (filled.get()) {
+                    String origin = originField.getText();
+                    String destination = destinationField.getText();
+                    String time = timeField.getText();
+                    Date date = java.sql.Date.valueOf(dateField.getValue());
+                    label.setText("Finding routes...");
+                    String result = parsePoint(origin, destination, time, date);
+                    Platform.runLater(() -> label.setText(result));
+                }
+                return null;
+            }
+        };
+
+        // Handle errors
+        task.setOnFailed(_ -> Platform.runLater(() -> label.setText("Error finding routes.")));
 
         isOn.addListener((_, _, _) -> {
             if (isOn.get()) {
@@ -149,12 +134,7 @@ public class homeUI extends Application {
             }
         });
 
-        Line line = new Line();
-        line.startXProperty().bind(root.widthProperty().multiply(0)); // 0/1280
-        line.startYProperty().bind(root.heightProperty().multiply(0.89).add(20)); // 740/832 + 20
-        line.endXProperty().bind(root.widthProperty().multiply(0.273)); // 350/1280
-        line.endYProperty().bind(root.heightProperty().multiply(0.89).add(20)); // 740/832 + 20
-        line.setStroke(Color.WHITE);
+        Line line = getLine(root);
         leftPane.getChildren().add(line);
 
         // Background rectangle (toggle track)
@@ -235,6 +215,40 @@ public class homeUI extends Application {
         });
         leftPane.getChildren().add(settings);
 
+        dateField.valueProperty().addListener((_, _, _) -> new Thread(task).start()); // start task when date changes
+
+        Text temperatureLabel = new Text("0°C");
+        temperatureLabel.setFill(Color.WHITE);
+        temperatureLabel.setStyle("-fx-font: 20 Ubuntu; -fx-font-weight: normal;");
+        temperatureLabel.xProperty().bind(root.widthProperty().multiply(0.215)); // Positioning
+        temperatureLabel.yProperty().bind(root.heightProperty().multiply(0.06)); // Positioning
+        leftPane.getChildren().add(temperatureLabel);
+
+        ImageView weatherIcon = new ImageView();
+        weatherIcon.setFitWidth(40); // Set icon size
+        weatherIcon.setFitHeight(40);
+        weatherIcon.xProperty().bind(root.widthProperty().multiply(0.18)); // Positioning
+        weatherIcon.yProperty().bind(root.heightProperty().multiply(0.025)); // Positioning
+        leftPane.getChildren().add(weatherIcon);
+
+        Task<Void> weatherTask = createWeatherTask(41.9028, 12.4964, temperatureLabel, weatherIcon);
+        new Thread(weatherTask).start();
+
+        JXMapViewer map = mapIntegration.getMap();
+
+        map.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                Point2D point = e.getPoint();
+                GeoPosition geoPosition = map.convertPointToGeoPosition(point);
+                double lat = geoPosition.getLatitude();
+                double lon = geoPosition.getLongitude();
+
+                Task<Void> weatherTask = createWeatherTask(lat, lon, temperatureLabel, weatherIcon);
+                new Thread(weatherTask).start();
+            }
+        });
+
         Scene scene = new Scene(root, 1280, 832);
         scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/styles.css")).toExternalForm());
         primaryStage.setScene(scene);
@@ -245,173 +259,14 @@ public class homeUI extends Application {
         }
     }
 
-    private static void bindDateTime(StackPane timeContainer, StackPane dateContainer, TextField originField, TextField destinationField) {
-        timeContainer.visibleProperty().bind(
-                Bindings.createBooleanBinding(
-                        () -> !originField.getText().isEmpty() && !destinationField.getText().isEmpty(),
-                        originField.textProperty(),
-                        destinationField.textProperty()
-                )
-        );
-
-        dateContainer.visibleProperty().bind(
-                Bindings.createBooleanBinding(
-                        () -> !originField.getText().isEmpty() && !destinationField.getText().isEmpty(),
-                        originField.textProperty(),
-                        destinationField.textProperty()
-                )
-        );
-    }
-
-    private void initializeNetwork() {
-        if (NetworkUtil.isNetworkAvailable()) {
-            isOnline = true;
-        } else {
-            System.out.println("Network is not available. Switching to offline mode.");
-            isOnline = false;
-        }
-    }
-
-    private void parsePoint(TextField origin, TextField destination, TextField time, DatePicker date) {
-        JXMapViewer map = mapIntegration.getMap();
-        String oaddress = origin.getText();
-        String daddress = destination.getText();
-//        String otime = time.getText();
-//        Date selectedDate = java.sql.Date.valueOf(date.getValue());
-        if (oaddress.isEmpty() || daddress.isEmpty()) {
-            System.out.println("Please enter both origin and destination addresses.");
-            return;
-        }
-
-        double[] ocoords = GeoUtil.getCoordinatesFromAddress(oaddress);
-        double[] dcoords = GeoUtil.getCoordinatesFromAddress(daddress);
-
-        if (ocoords != null && dcoords != null) {
-            if (ocoords[0] < romeCoords[0] || ocoords[0] > romeCoords[1] || ocoords[1] < romeCoords[2] || ocoords[1] > romeCoords[3]) {
-                System.out.println("origin coordinates out of bounds");
-                return;
-            } else if (dcoords[0] < romeCoords[0] || dcoords[0] > romeCoords[1] || dcoords[1] < romeCoords[2] || dcoords[1] > romeCoords[3]) {
-                System.out.println("destination coordinates out of bounds");
-                return;
-            }
-
-            System.out.println("Origin Coordinates: " + ocoords[0] + ", " + ocoords[1]);
-            System.out.println("Destination Coordinates: " + dcoords[0] + ", " + dcoords[1]);
-            GeoPosition op = new GeoPosition(ocoords[0], ocoords[1]);
-            GeoPosition dp = new GeoPosition(dcoords[0], dcoords[1]);
-            List<GeoPosition> track = Arrays.asList(op, dp);
-            RoutePainter routePainter = new RoutePainter(track);
-
-            map.zoomToBestFit(new HashSet<>(track), 0.7);
-            Set<Waypoint> waypoints = new HashSet<>(Arrays.asList(
-                    new DefaultWaypoint(op),
-                    new DefaultWaypoint(dp)
-            ));
-
-            WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<>();
-            waypointPainter.setWaypoints(waypoints);
-
-            List<Painter<JXMapViewer>> painters = new ArrayList<>();
-            painters.add(routePainter);
-            painters.add(waypointPainter);
-
-            CompoundPainter<JXMapViewer> painter = new CompoundPainter<>(painters);
-            map.setOverlayPainter(painter);
-        } else {
-            System.out.println("Address not found");
-        }
-    }
-
     private void toggleSwitch(Rectangle background) {
         if (isOn.get()) {
             background.setFill(Color.LIGHTGRAY); // Off state
         } else {
             background.setFill(Color.LIMEGREEN); // On state
         }
-
         isOn.set(!isOn.get()); // Toggle the state
     }
-
-    private StackPane createTextFieldWithIcon(String icon, String prompt) {
-        StackPane container = new StackPane();
-        container.getStyleClass().add("input-container");
-
-        HBox inner = new HBox(10);
-        inner.setStyle("-fx-padding: 10;");
-
-        StackPane iconCircle = new StackPane();
-        iconCircle.getStyleClass().add("circle-icon");
-
-        Label iconLabel = new Label(icon);
-        iconLabel.getStyleClass().add("icon-label");
-        iconCircle.getChildren().add(iconLabel);
-
-        TextField textField = new TextField();
-        textField.setPromptText(prompt);
-        textField.getStyleClass().add("rounded-textfield");
-
-        HBox.setHgrow(textField, Priority.ALWAYS);
-        inner.getChildren().addAll(iconCircle, textField);
-
-        container.getChildren().add(inner);
-        return container;
-    }
-
-    private StackPane createDateTimeContainer(String iconText, String promptText, double layoutXMultiplier, double widthMultiplier, double heightMultiplier, Pane root, int type) {
-        StackPane container = new StackPane();
-        container.getStyleClass().add("input-container-small");
-        HBox inner = new HBox(5);
-        inner.setStyle("-fx-padding: 5;");
-        inner.setAlignment(Pos.CENTER);
-        switch (type) {
-            case 0:
-                DatePicker dateField = new DatePicker();
-                dateField.setPromptText(promptText);
-                dateField.getStyleClass().add("small-date-picker");
-                HBox.setHgrow(dateField, Priority.ALWAYS);
-                inner.getChildren().add(dateField);
-                break;
-            case 1:
-                StackPane iconCircle = new StackPane();
-                iconCircle.getStyleClass().add("circle-icon-small");
-                Label iconLabel = new Label(iconText);
-                iconLabel.getStyleClass().add("icon-label");
-                iconCircle.getChildren().add(iconLabel);
-                TextField timeField = new TextField();
-                timeField.setPromptText(promptText);
-                timeField.getStyleClass().add("rounded-textfield");
-                HBox.setHgrow(timeField, Priority.ALWAYS);
-                inner.getChildren().addAll(iconCircle, timeField);
-                break;
-        }
-        container.getChildren().add(inner);
-        container.layoutXProperty().bind(root.widthProperty().multiply(layoutXMultiplier));
-        container.layoutYProperty().bind(root.heightProperty().multiply(0.276));
-        container.prefWidthProperty().bind(root.widthProperty().multiply(widthMultiplier));
-        container.prefHeightProperty().bind(root.heightProperty().multiply(heightMultiplier));
-        container.setStyle("-fx-background-color: #FFFFFF; -fx-text-fill: gray;");
-        return container;
-    }
-
-    private void toggleLeftBar(Pane leftPane) {
-        boolean isVisible = leftPane.isVisible();
-        leftPane.setVisible(!isVisible);
-        leftPane.setManaged(!isVisible);
-    }
-
-    private void bindPosition(Region node, Pane root, double yRatio) {
-        node.layoutXProperty().bind(root.widthProperty().multiply(0.017));
-        node.layoutYProperty().bind(root.heightProperty().multiply(yRatio));
-        node.prefWidthProperty().bind(root.widthProperty().multiply(0.24));
-        node.prefHeightProperty().bind(root.heightProperty().multiply(0.035));
-    }
-
-    private void showSettingsMenu(BorderPane root, Pane leftPane, VBox vbox_left) {
-        settingsUI settingsUI = new settingsUI(root, leftPane);
-        Pane settingsPane = settingsUI.createSettingsMenu();
-        vbox_left.getChildren().add(settingsPane);
-    }
-
 
     public static void main(String[] args) {
         System.setProperty("GTFS_DIR", System.getenv("GTFS_DIR"));
