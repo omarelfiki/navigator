@@ -24,12 +24,15 @@ import javafx.scene.image.ImageView;
 import javafx.scene.shape.Circle;
 import map.*;
 import db.*;
+import org.jxmapviewer.JXMapViewer;
+import org.jxmapviewer.viewer.GeoPosition;
 import ui.*;
-
+import java.awt.geom.Point2D;
 import java.util.*;
 
 import static util.NavUtil.parsePoint;
 import static ui.UiHelper.*;
+import static util.WeatherUtil.createWeatherTask;
 
 public class homeUI extends Application {
     private final BooleanProperty isOn = new SimpleBooleanProperty(false);
@@ -213,6 +216,38 @@ public class homeUI extends Application {
         leftPane.getChildren().add(settings);
 
         dateField.valueProperty().addListener((_, _, _) -> new Thread(task).start()); // start task when date changes
+
+        Text temperatureLabel = new Text("0°C");
+        temperatureLabel.setFill(Color.WHITE);
+        temperatureLabel.setStyle("-fx-font: 20 Ubuntu; -fx-font-weight: normal;");
+        temperatureLabel.xProperty().bind(root.widthProperty().multiply(0.215)); // Positioning
+        temperatureLabel.yProperty().bind(root.heightProperty().multiply(0.06)); // Positioning
+        leftPane.getChildren().add(temperatureLabel);
+
+        ImageView weatherIcon = new ImageView();
+        weatherIcon.setFitWidth(40); // Set icon size
+        weatherIcon.setFitHeight(40);
+        weatherIcon.xProperty().bind(root.widthProperty().multiply(0.18)); // Positioning
+        weatherIcon.yProperty().bind(root.heightProperty().multiply(0.025)); // Positioning
+        leftPane.getChildren().add(weatherIcon);
+
+        Task<Void> weatherTask = createWeatherTask(41.9028, 12.4964, temperatureLabel, weatherIcon);
+        new Thread(weatherTask).start();
+
+        JXMapViewer map = mapIntegration.getMap();
+
+        map.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                Point2D point = e.getPoint();
+                GeoPosition geoPosition = map.convertPointToGeoPosition(point);
+                double lat = geoPosition.getLatitude();
+                double lon = geoPosition.getLongitude();
+
+                Task<Void> weatherTask = createWeatherTask(lat, lon, temperatureLabel, weatherIcon);
+                new Thread(weatherTask).start();
+            }
+        });
 
         Scene scene = new Scene(root, 1280, 832);
         scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/styles.css")).toExternalForm());

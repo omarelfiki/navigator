@@ -64,7 +64,7 @@ public class RoutingEngine {
                         sendError("No path found");
                         break;
                     }
-                    List<Map<String, Object>> result = parseResult(path);
+                    List<Map<String, Object>> result = parseResult(path, requestR);
                     sendOk(result);
                     continue;
                 }
@@ -98,7 +98,7 @@ public class RoutingEngine {
         responseWriter.getWriter().flush();
     }
 
-    private List<Map<String, Object>> parseResult(List<Node> path) {
+    private List<Map<String, Object>> parseResult(List<Node> path, Request request) {
         return path.stream().map(node -> {
             if (Objects.equals(node.mode, "WALK")) {
                 if(node.parent == null) {
@@ -106,7 +106,7 @@ public class RoutingEngine {
                             "mode", "walk",
                             "to", Map.of("lat", 12.123, "lon", 12.123),
                             "duration", 0,
-                            "startTime", "startTimeWillBeHere"
+                            "startTime", request.time()
                     );
                 }
                 return Map.of(
@@ -123,10 +123,10 @@ public class RoutingEngine {
                         "startTime", node.arrivalTime,
                         "stop", node.stop.getStopName(),
                         "route", Map.of(
-                                "operator", node.trip.route.getAgency().getAgencyName(),
-                                "shortName", node.trip.route.getRouteShortName(),
-                                "longName", node.trip.route.getRouteLongName(),
-                                "headSign", node.trip.getHeadSign()
+                                "operator", node.trip.route.getAgency() != null ? node.trip.route.getAgency().getAgencyName() : "N/A",
+                                "shortName", node.trip.route != null ? node.trip.route.getRouteShortName() : "N/A",
+                                "longName", node.trip.route != null ? node.trip.route.getRouteLongName() : "N/A",
+                                "headSign", node.trip.getHeadSign() == null ? "N/A" : node.trip.getHeadSign()
                         )
                 );
             } else if (Objects.equals(node.mode, "TRANSFER")) {
