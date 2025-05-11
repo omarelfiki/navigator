@@ -105,24 +105,27 @@ public class homeUI extends Application {
         label.yProperty().bind(root.heightProperty().multiply(0.48)); // 400/832
         leftPane.getChildren().add(label);
 
-        Task<Void> task = new Task<>() {
-            @Override
-            protected Void call() {
-                if (filled.get()) {
-                    String origin = originField.getText();
-                    String destination = destinationField.getText();
-                    String time = timeField.getText();
-                    Date date = java.sql.Date.valueOf(dateField.getValue());
-                    label.setText("Finding routes...");
+Task<Void> task = new Task<>() {
+    @Override
+    protected Void call() {
+        Platform.runLater(() -> {
+            if (filled.get()) {
+                String origin = originField.getText();
+                String destination = destinationField.getText();
+                String time = timeField.getText();
+                Date date = java.sql.Date.valueOf(dateField.getValue());
+                label.setText("Finding routes...");
+
+                // Perform the parsing and update the label with the result
+                new Thread(() -> {
                     String result = parsePoint(origin, destination, time, date);
                     Platform.runLater(() -> label.setText(result));
-                }
-                return null;
+                }).start();
             }
-        };
-
-        // Handle errors
-        task.setOnFailed(_ -> Platform.runLater(() -> label.setText("Error finding routes.")));
+        });
+        return null;
+    }
+};
 
         isOn.addListener((_, _, _) -> {
             if (isOn.get()) {

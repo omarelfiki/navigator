@@ -4,6 +4,12 @@ import map.WayPoint;
 
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeoutException;
+
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class NavUtil {
     static double[] romeCoords = {41.6558, 42.1233, 12.2453, 12.8558}; // {minLat, maxLat, minLng, maxLng}
@@ -20,24 +26,34 @@ public class NavUtil {
             dcoords = parseCoords(destination);
         }
         time = parseTime(time);
-        if (ocoords != null && dcoords != null && time != null) {
-            if (!checkBounds(ocoords, dcoords)) return "Address out of bounds";
-            System.out.println("Origin Coordinates: " + ocoords[0] + ", " + ocoords[1]);
-            System.out.println("Destination Coordinates: " + dcoords[0] + ", " + dcoords[1]);
-            AStarRouterV router = new AStarRouterV();
-            List<Node> path = router.findFastestPath(ocoords[0], ocoords[1], dcoords[0], dcoords[1], time);
-            System.out.println(path.size());
-            if (path == null) {
-                WayPoint.addWaypoint(ocoords, dcoords, "");
-                return "No path found.";
-            } else {
-                WayPoint.addWaypoint(path);
-                return "Found path.";
+        AStarRouterV router = new AStarRouterV();
+       ExecutorService executor = Executors.newSingleThreadExecutor();
+        String finalTime = time;
+        Future<List<Node>> future = executor.submit(() ->
+                router.findFastestPath(ocoords[0], ocoords[1], dcoords[0], dcoords[1], finalTime)
+            );
+
+            try {
+                List<Node> path = future.get(10, SECONDS); // Timeout after 10 seconds
+                if (path == null) {
+                    System.out.println("No path found.");
+                    WayPoint.addWaypoint(ocoords, dcoords, "");
+                    return "No path found.";
+                } else {
+                    WayPoint.addWaypoint(path);
+                    return "Found path.";
+                }
+            } catch (TimeoutException e) {
+                System.out.println("findFastestPath timed out.");
+                return "Routing timed out.";
+            } catch (Exception e) {
+                e.printStackTrace();
+                return "An error occurred.";
+            } finally {
+                executor.shutdown();
             }
-        } else {
-            return "Address not found or invalid time format";
-        }
     }
+
 
     private static boolean checkBounds(double[] ocoords, double[] dcoords) {
         if (ocoords[0] < romeCoords[0] || ocoords[0] > romeCoords[1] || ocoords[1] < romeCoords[2] || ocoords[1] > romeCoords[3]) {
@@ -66,6 +82,7 @@ public class NavUtil {
         }
         return String.format("%02d:%02d:%02d", hours, minutes, seconds);
     }
+
 
     private static double[] parseCoords(String coords) {
         String[] parts = coords.split(",");
