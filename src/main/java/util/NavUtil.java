@@ -26,6 +26,7 @@ public class NavUtil {
             System.out.println("Destination Coordinates: " + dcoords[0] + ", " + dcoords[1]);
             AStarRouterV router = new AStarRouterV();
             List<Node> path = router.findFastestPath(ocoords[0], ocoords[1], dcoords[0], dcoords[1], time);
+            System.out.println(path.size());
             if (path == null) {
                 WayPoint.addWaypoint(ocoords, dcoords, "");
                 return "No path found.";

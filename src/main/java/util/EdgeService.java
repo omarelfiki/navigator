@@ -16,7 +16,7 @@ public class EdgeService {
         Stop startStop = tds.getStop(node.stopId);
 
         // add stops that can be reached by walking
-        List<Stop> walkingDistanceStops = NearbyStops.getNearbyStops(startStop.stopLat, startStop.stopLon, 350);
+        List<Stop> walkingDistanceStops = NearbyStops.getNearbyStops(startStop.stopLat, startStop.stopLon, 250);
         //create edges for each of these stops
         for (Stop stop : walkingDistanceStops) {
             if (!stop.stopId.equals(node.stopId)) {
@@ -25,36 +25,47 @@ public class EdgeService {
                         stop.stopId,
                         node.arrivalTime
                 );
-                System.out.println("Walking " + edge.fromStopId + " to " + edge.toStopId + " weight " +edge.weight +" at " + edge.departureTime+ " to " + edge.arrivalTime);
+//                System.out.println("Walking " + edge.fromStopId + " to " + edge.toStopId + " weight " +edge.weight +" at " + edge.departureTime+ " to " + edge.arrivalTime);
                 edges.add(edge);
             }
         }
 
         // add the stop that can be reached directly by following the same route
-        if(node.trip!=null) {
-            TripEdge tripEdge = new TripEdge(
-                    startStop.stopId,
-                    node.arrivalTime,
-                    node.trip
-            );
-            System.out.println("Trip " + tripEdge.fromStopId + " to " + tripEdge.toStopId + " weight " +tripEdge.weight +" by route "+ tripEdge.trip.getRoute().routeId + " at " + tripEdge.departureTime+ " to " + tripEdge.arrivalTime);
-            edges.add(tripEdge);
+        if (node.trip != null ) {
+            try {
+                TripEdge tripEdge = new TripEdge(
+                        startStop.stopId,
+                        node.arrivalTime,
+                        node.trip
+                );
+                edges.add(tripEdge);
+            } catch (IllegalArgumentException e) {
+                boolean isDebugMode=false;
+                if (isDebugMode) System.err.println("Skipping trip continuation: " + e.getMessage());
+            }
+
         }
 
-        System.out.println("getting upcoming trips for " + node.stopId + " at " + node.arrivalTime);
+
         //add transfer edges
         List<Trip> upcomingTrips = tds.getUpcomingDistinctRouteTrips(node.stopId, node.arrivalTime);
         System.out.println("upcoming trips: " + upcomingTrips.size());
         for (Trip trip : upcomingTrips) {
-            String departureTime = node.arrivalTime;
-            TransferEdge transferEdge = new TransferEdge(
-                    startStop.stopId,
-                    departureTime,
-                    trip
-            );
-            System.out.println("Transfer " + transferEdge.fromStopId + " to " + transferEdge.toStopId + " weight " +transferEdge.weight +" by route "+ transferEdge.trip.getRoute().routeId + " at " + transferEdge.departureTime+" waiting until " +transferEdge.rideStartTime+ " to " + transferEdge.arrivalTime);
-            edges.add(transferEdge);
+            try {
+                TransferEdge transferEdge = new TransferEdge(startStop.stopId, node.arrivalTime, trip);
+                edges.add(transferEdge);
+                System.out.println("Transfer " + transferEdge.fromStopId + " to " + transferEdge.toStopId +
+                        " weight " + transferEdge.weight + " by route " + transferEdge.trip.getRoute().routeId +
+                        " at " + transferEdge.departureTime + " waiting until " + transferEdge.rideStartTime +
+                        " to " + transferEdge.arrivalTime);
+            } catch (IllegalArgumentException e) {
+                boolean isDebugMode = true;
+                if (isDebugMode) {
+                    System.err.println("Skipping trip " + trip.tripId + ": " + e.getMessage());
+                }
+            }
         }
+
 
         return edges;
     }

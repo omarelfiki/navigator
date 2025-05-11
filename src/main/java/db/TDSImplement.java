@@ -44,6 +44,38 @@ public class TDSImplement implements TransitDataService
         return null;
     }
 
+    public StopTime getFutureStopTime(StopTime currentStopTime, int stepsAhead) {
+        if (db == null) {
+            System.err.println("Error: Database access instance is null.");
+            return null;
+        }
+
+        String sql = """
+        SELECT trip_id, stop_id, arrival_time, departure_time, stop_sequence 
+        FROM stop_times 
+        WHERE trip_id = ? AND stop_sequence = ?
+    """;
+
+        try (PreparedStatement ps = db.conn.prepareStatement(sql)) {
+            ps.setString(1, currentStopTime.trip.tripId);
+            ps.setInt(2, currentStopTime.stopSequence + stepsAhead);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                StopTime next = new StopTime();
+                next.trip = currentStopTime.trip;
+                next.stop = getStop(rs.getString("stop_id"));
+                next.arrivalTime = rs.getString("arrival_time");
+                next.departureTime = rs.getString("departure_time");
+                next.stopSequence = rs.getInt("stop_sequence");
+                return next;
+            }
+        } catch (SQLException e) {
+            if (isDebugMode) System.err.println("SQL Error in getFutureStopTime: " + e.getMessage());
+        }
+        return null;
+    }
+
+
     @Override
     public List<Stop> getAllStops() {
         String sql = "SELECT stop_id, stop_name, stop_lat, stop_lon FROM stops";
@@ -102,16 +134,23 @@ public class TDSImplement implements TransitDataService
         return null;
     }
 
-    public StopTime getStopTime(Trip trip, Stop stop) {
+    public StopTime getCurrentStopTime(Trip trip, Stop stop, String departureTime) {
         if (db == null) {
             System.err.println("Error: Database access instance is null.");
             return null;
         }
-        String sql = "SELECT trip_id, stop_id, arrival_time, departure_time, stop_sequence FROM stop_times WHERE trip_id = ? AND stop_id = ?";
+        String sql = """
+        SELECT trip_id, stop_id, arrival_time, departure_time, stop_sequence
+        FROM stop_times
+        WHERE trip_id = ? AND stop_id = ? AND departure_time >= ?
+        ORDER BY departure_time ASC
+        LIMIT 1
+    """;
         try (
-             PreparedStatement ps = db.conn.prepareStatement(sql)) {
+                PreparedStatement ps = db.conn.prepareStatement(sql)) {
             ps.setString(1, trip.tripId);
             ps.setString(2, stop.stopId);
+            ps.setString(3, departureTime);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
                 StopTime st = new StopTime();
@@ -123,7 +162,7 @@ public class TDSImplement implements TransitDataService
                 return st;
             }
         } catch (SQLException e) {
-            if(isDebugMode)System.err.println("SQL Error in getStopTime: " + e.getMessage());
+            if (isDebugMode) System.err.println("SQL Error in getStopTime: " + e.getMessage());
         }
         return null;
     }
@@ -138,32 +177,24 @@ public class TDSImplement implements TransitDataService
         List<Trip> trips = new ArrayList<>();
 
         String sql = """
-        SELECT DISTINCT st.trip_id, st.arrival_time
+        SELECT t.route_id, MIN(st.trip_id) AS trip_id  -- Select MIN(trip_id) as tie-breaker
         FROM stop_times st
         JOIN trips t ON st.trip_id = t.trip_id
-        JOIN (
-            SELECT t.route_id, MIN(st.arrival_time) AS earliest_time
-            FROM stop_times st
-            JOIN trips t ON st.trip_id = t.trip_id
-            WHERE st.stop_id = ?
-              AND TIME(st.arrival_time) > TIME(?)
-              AND TIME(st.arrival_time) <= ADDTIME(TIME(?), '00:15:00')
-            GROUP BY t.route_id
-        ) AS earliest
-        ON t.route_id = earliest.route_id AND st.arrival_time = earliest.earliest_time
         WHERE st.stop_id = ?
-        """;
+          AND TIME(st.arrival_time) > TIME(?)
+          AND TIME(st.arrival_time) <= ADDTIME(TIME(?), '00:15:00')
+        GROUP BY t.route_id
+    """;
 
         try (PreparedStatement ps = db.conn.prepareStatement(sql)) {
-            ps.setString(1, stopId);       // subquery stop_id
-            ps.setString(2, arrivalTime);  // subquery time lower bound
-            ps.setString(3, arrivalTime);  // subquery time upper bound
-            ps.setString(4, stopId);       // outer query stop_id
+            ps.setString(1, stopId);       // WHERE st.stop_id = ?
+            ps.setString(2, arrivalTime);  // TIME window lower bound
+            ps.setString(3, arrivalTime);  // TIME window upper bound
 
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 String tripId = rs.getString("trip_id");
-                Trip trip = getTrip(tripId); // Your method to fetch full Trip info
+                Trip trip = getTrip(tripId); // your method to fetch full Trip object
                 if (trip != null) {
                     trips.add(trip);
                 }
@@ -174,6 +205,7 @@ public class TDSImplement implements TransitDataService
 
         return trips;
     }
+
 
 
 

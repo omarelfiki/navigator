@@ -8,10 +8,10 @@ public class AStarRouterV {
     public List<Node> findFastestPath(double latStart, double lonStart, double latStop, double lonStop, String startTime) {
         System.out.println("Starting point" + latStart + " " + lonStart);
         Node STARTING_NODE = new Node("start", startTime, null, "WALK", null);
-
-        ArrayList<Stop> startStops = NearbyStops.getNearbyStops(latStart, lonStart, 500);
+        STARTING_NODE.stop = new Stop("start","STARTING POINT", latStart, lonStart);
+        ArrayList<Stop> startStops = NearbyStops.getNearbyStops(latStart, lonStart, 300);
         System.out.println("Start stops: " + startStops.size());
-        ArrayList<Stop> stopStops = NearbyStops.getNearbyStops(latStop, lonStop, 500);
+        ArrayList<Stop> stopStops = NearbyStops.getNearbyStops(latStop, lonStop, 300);
         System.out.println("Stop stops: " + stopStops.size());
         EdgeService edgeService = new EdgeService();
         TimeUtil timeUtil = new TimeUtil();
@@ -47,9 +47,11 @@ public class AStarRouterV {
                     double latitude = nextNode.stop.getStopLat();
                     double longitude = nextNode.stop.getStopLon();
                     nextNode.g = current.g + weight;
-                    nextNode.h = WalkingTime.getWalkingTime(latitude, longitude, latStop, lonStop);
+
+                    nextNode.h = HaversineUtil.calculateDistance(latitude, longitude, latStop, lonStop)/2.8;
                     pq.add(nextNode);
                     updateBestCost(toStopId, nextNode.g);
+//                    System.out.println("new best cost for " + toStopId + " is " + nextNode.g);
                 }
             }
         }

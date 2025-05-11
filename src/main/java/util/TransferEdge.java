@@ -30,12 +30,14 @@ class TransferEdge implements Edge {
         this.trip = trip;
 
         this.startStop = tds.getStop(fromStopId);
-        this.currentStopTime = tds.getStopTime(trip, startStop);
+        this.currentStopTime = tds.getCurrentStopTime(trip, startStop, departureTime);
         this.nextStopTime = tds.getNextStopTime(currentStopTime);
 
         if (nextStopTime == null) {
-            throw new IllegalArgumentException("No next stop time found for transfer.");
+            throw new IllegalArgumentException("No next stop time found for trip " + trip.tripId +
+                    " at stop " + fromStopId + " after time " + departureTime);
         }
+
 
         this.toStopId = nextStopTime.getStop().getStopId();
         this.endStop = nextStopTime.getStop();
@@ -48,7 +50,8 @@ class TransferEdge implements Edge {
         this.rideTime = timeUtil.calculateDifference(currentStopTime.getDepartureTime(), nextStopTime.getArrivalTime());
 
         // WEIGHT = total cost
-        this.weight = timeUtil.calculateDifference(this.departureTime, this.arrivalTime); // or waitingTime + rideTime
+        //this.weight = timeUtil.calculateDifference(this.departureTime, this.arrivalTime); // or waitingTime + rideTime
+        this.weight =  0.6*waitingTime + rideTime;  // encourage transfers
 
         this.mode = "TRANSFER";
     }

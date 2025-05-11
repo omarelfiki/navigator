@@ -13,6 +13,7 @@ public class Node {
         this.mode = mode;
         this.trip = trip;
         this.stop = tds.getStop(stopId);
+
     }
     public Stop stop;
     public String stopId;

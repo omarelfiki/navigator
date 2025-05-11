@@ -41,6 +41,7 @@ public class WayPoint {
         for (Node node : path) {
             double[] ocoords = {node.parent.stop.stopLat, node.parent.stop.stopLon};
             double[] dcoords = {node.stop.stopLat, node.stop.stopLon};
+            System.out.println("added waypoint: " + ocoords[0] + ", " + ocoords[1]);
             addWaypoint(ocoords, dcoords, node.mode);
         }
     }
