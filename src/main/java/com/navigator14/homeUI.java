@@ -272,7 +272,12 @@ Task<Void> task = new Task<>() {
     }
 
     public static void main(String[] args) {
-        System.setProperty("GTFS_DIR", System.getenv("GTFS_DIR"));
+        String gtfsDir = System.getenv("GTFS_DIR");
+        if (gtfsDir != null) {
+            System.setProperty("GTFS_DIR", gtfsDir);
+        } else {
+            System.err.println("Environment variable 'GTFS_DIR' is not set. Set the path manually in the settings panel.");
+        }
         launch(args);
     }
 }

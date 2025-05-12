@@ -148,4 +148,4 @@ public class RoutingEngine {
         }).filter(Objects::nonNull).toList();
     }
 }
-// {"routeFrom":{"lat":41.8298,"lon":12.5563},"to":{"lat":41.8258,"lon":12.5623},"startingAt":"08:00:00"} - test case
+// {"routeFrom":{"lat":41.904,"lon":12.5004},"to":{"lat":41.8791,"lon":12.5221},"startingAt":"09:30:00"} - test case
