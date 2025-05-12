@@ -40,7 +40,7 @@ public class TDSImplement implements TransitDataService
         } catch (SQLException e) {
             if(isDebugMode)System.err.println("SQL Error in getStop: " + e.getMessage());
         }
-        System.out.println("Stop not found: " + stopId);
+        System.err.println("Stop not found: " + stopId);
         return null;
     }
 
