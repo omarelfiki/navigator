@@ -48,10 +48,6 @@ public class RoutingEngine {
 
                 if (request.containsKey("routeFrom") && request.containsKey("to") && request.containsKey("startingAt")) {
                     Request requestR = parseRequest(request);
-                    if (requestR.latStart() == 0 || requestR.lonStart() == 0 || requestR.latEnd() == 0 || requestR.lonEnd() == 0) {
-                        sendError("Invalid coordinates");
-                        return;
-                    }
                     if (requestR.time() == null || requestR.time().isEmpty()) {
                         sendError("Invalid time format");
                         return;

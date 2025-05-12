@@ -101,8 +101,4 @@ public class NavUtil {
             return null;
         }
     }
-
-    public static void main(String[] args) {
-        System.out.println(parseTime("09:30"));
-    }
 }
