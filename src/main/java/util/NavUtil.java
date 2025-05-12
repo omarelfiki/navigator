@@ -33,8 +33,9 @@ public class NavUtil {
             return "Invalid coordinates";
         }
         Future<List<Node>> future = executor.submit(() -> router.findFastestPath(ocoords[0], ocoords[1], dcoords[0], dcoords[1], finalTime));
+
         try {
-            List<Node> path = future.get(10, SECONDS);
+            List<Node> path = future.get(30, SECONDS);
             if (path == null) {
                 System.err.println("No path found.");
                 return "No path found.";

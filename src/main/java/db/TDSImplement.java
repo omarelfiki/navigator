@@ -182,7 +182,7 @@ public class TDSImplement implements TransitDataService
         JOIN trips t ON st.trip_id = t.trip_id
         WHERE st.stop_id = ?
           AND TIME(st.arrival_time) > TIME(?)
-          AND TIME(st.arrival_time) <= ADDTIME(TIME(?), '00:25:00')
+          AND TIME(st.arrival_time) <= ADDTIME(TIME(?), '00:15:00')
         GROUP BY t.route_id
     """;
 
