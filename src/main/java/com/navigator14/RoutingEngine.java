@@ -14,6 +14,7 @@ import util.AStarRouterV;
 import util.Node;
 
 import static util.NavUtil.parseTime;
+import static util.PathCompressor.compressPath;
 
 public class RoutingEngine {
     private final JSONReader requestReader =
@@ -111,6 +112,9 @@ public class RoutingEngine {
     }
 
     private List<Map<String, Object>> parseResult(List<Node> path, Request request) {
+        System.out.println(path.size());
+        path = compressPath(path);
+        System.out.println(path.size());
         return path.stream().map(node -> {
             if (Objects.equals(node.mode, "WALK")) {
                 if(node.parent == null) {
@@ -161,3 +165,5 @@ public class RoutingEngine {
     }
 }
 // {"routeFrom":{"lat":41.904,"lon":12.5004},"to":{"lat":41.8791,"lon":12.5221},"startingAt":"09:30:00"} - test case
+//  Roma Termini - Vatican test case below
+// {"routeFrom":{"lat":41.900496398,"lon":12.501164662},"to":{"lat":41.906487,"lon":12.453641},"startingAt":"09:30:00"}
