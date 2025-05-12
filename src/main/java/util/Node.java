@@ -23,4 +23,16 @@ public class Node {
     public Node parent;
     public String mode;
     public Trip trip;
+
+    @Override
+    public String toString() {
+        return "Node{" +
+                "stopId='" + stopId + '\'' +
+                ", arrivalTime='" + arrivalTime + '\'' +
+                ", g=" + g +
+                ", h=" + h +
+                ", mode='" + mode + '\'' +
+                ", trip=" + trip +
+                '}';
+    }
 }
