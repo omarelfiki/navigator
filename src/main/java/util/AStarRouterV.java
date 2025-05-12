@@ -1,6 +1,9 @@
 package util;
 
+import java.sql.Time;
 import java.util.*;
+
+import db.TDSImplement;
 import models.*;
 public class AStarRouterV {
     Map<String, Double> bestCosts = new HashMap<>();
@@ -12,6 +15,8 @@ public class AStarRouterV {
         ArrayList<Stop> startStops = NearbyStops.getNearbyStops(latStart, lonStart, 500);
         System.err.println("Start stops: " + startStops.size());
         ArrayList<Stop> stopStops = NearbyStops.getNearbyStops(latStop, lonStop, 500);
+        Node STOP_NODE = new Node("stop","12:00:00",null,"WALK",null);
+        STOP_NODE.stop = new Stop("stop","END_POINT", latStop, lonStop);
         System.err.println("Stop stops: " + stopStops.size());
         EdgeService edgeService = new EdgeService();
         TimeUtil timeUtil = new TimeUtil();
@@ -31,7 +36,13 @@ public class AStarRouterV {
         while (!pq.isEmpty()) {
             Node current = pq.poll();
             if (isAtGoal(current, stopStops)) {
-                return reconstructPath(current);
+                STOP_NODE.parent = current;
+                TDSImplement tds = new TDSImplement();
+                Stop currentStop = tds.getStop(current.stopId);
+
+                double walking_time_to_end = WalkingTime.getWalkingTime(currentStop.getStopLat(),currentStop.getStopLon(),STOP_NODE.stop.getStopLat(),STOP_NODE.stop.getStopLon());
+                STOP_NODE.arrivalTime = timeUtil.addTime(current.arrivalTime, walking_time_to_end);
+                return reconstructPath(STOP_NODE);
             }
 
             List<Edge> edges = edgeService.getEdges(current);
