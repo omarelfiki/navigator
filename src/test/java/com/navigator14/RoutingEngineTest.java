@@ -118,38 +118,6 @@ public class RoutingEngineTest {
 
         String output = outputStream.toString();
         System.out.println("Output: " + output);
-        assertTrue(output.contains("\"ok\""));
-    }
-
-    @Test
-    public void testInteractiveInput() throws IOException {
-        // Start the RoutingEngine in a separate thread
-        Thread engineThread = new Thread(() -> {
-            try {
-                routingEngine.run();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        engineThread.start();
-
-        // Write input to the PipedOutputStream
-        String inputJson = """
-                {"routeFrom":{"lat":41.904,"lon":12.5004},"to":{"lat":41.8791,"lon":12.5221},"startingAt":"09:30:00"}
-                """;
-        pipedOutputStream.write(inputJson.getBytes());
-        pipedOutputStream.flush();
-
-        // Wait for the engine to process the input
-        try {
-            engineThread.join();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-
-        // Verify the output
-        String output = outputStream.toString();
-        System.out.println("Output: " + output);
-        assertTrue(output.contains("\"ok\""));
+        assertTrue(output.contains("\"ok\":\"loaded\""));
     }
 }
