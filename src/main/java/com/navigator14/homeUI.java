@@ -123,14 +123,15 @@ public class homeUI extends Application {
                                 Platform.runLater(() -> label.setText("No route found."));
                             } else {
                                 Platform.runLater(() -> {
-                                    label.setVisible(false);
-                                    StackPane resultPane = new StackPane();
-                                    resultPane.layoutXProperty().bind(root.widthProperty().multiply(0.026));
-                                    resultPane.layoutYProperty().bind(root.heightProperty().multiply(0.4));
-                                    resultPane.setMaxWidth(300);
-                                    resultPane.setMaxHeight(700);
-                                    displayResult(result, resultPane);
-                                    leftPane.getChildren().add(resultPane);
+//                                    label.setVisible(false);
+//                                    StackPane resultPane = new StackPane();
+//                                    resultPane.layoutXProperty().bind(root.widthProperty().multiply(0.026));
+//                                    resultPane.layoutYProperty().bind(root.heightProperty().multiply(0.4));
+//                                    resultPane.setMaxWidth(300);
+//                                    resultPane.setMaxHeight(700);
+//                                    displayResult(result, resultPane);
+//                                    leftPane.getChildren().add(resultPane);
+                                    label.setText("Found " + result.size() + " stops along route.");
                                 });
                             }
                         }).start();
