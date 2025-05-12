@@ -1,10 +1,13 @@
 package util;
 
-import java.sql.Time;
 import java.util.*;
 
+import db.NearbyStops;
 import db.TDSImplement;
 import models.*;
+
+import static util.TimeUtil.*;
+
 public class AStarRouterV {
     Map<String, Double> bestCosts = new HashMap<>();
 
@@ -19,14 +22,13 @@ public class AStarRouterV {
         STOP_NODE.stop = new Stop("stop","END_POINT", latStop, lonStop);
         System.err.println("Stop stops: " + stopStops.size());
         EdgeService edgeService = new EdgeService();
-        TimeUtil timeUtil = new TimeUtil();
 
         PriorityQueue<Node> pq = new PriorityQueue<>(Comparator.comparingDouble(n -> n.g + n.h));
 
         for (Stop stop : startStops) {
             double walkTime = WalkingTime.getWalkingTime(latStart, lonStart, stop.getStopLat(), stop.getStopLon());
             System.err.println("Walking time to stop: " + stop.getStopId() + " " + walkTime);
-            String arrivalTime = timeUtil.addTime(startTime, walkTime);
+            String arrivalTime = addTime(startTime, walkTime);
             Node node = new Node(stop.stopId, arrivalTime, STARTING_NODE, "WALK", null);
             node.g = walkTime;
             updateBestCost(stop.stopId, node.g);
@@ -41,7 +43,7 @@ public class AStarRouterV {
                 Stop currentStop = tds.getStop(current.stopId);
 
                 double walking_time_to_end = WalkingTime.getWalkingTime(currentStop.getStopLat(),currentStop.getStopLon(),STOP_NODE.stop.getStopLat(),STOP_NODE.stop.getStopLon());
-                STOP_NODE.arrivalTime = timeUtil.addTime(current.arrivalTime, walking_time_to_end);
+                STOP_NODE.arrivalTime = addTime(current.arrivalTime, walking_time_to_end);
                 return reconstructPath(STOP_NODE);
             }
 
@@ -59,7 +61,7 @@ public class AStarRouterV {
                     double longitude = nextNode.stop.getStopLon();
                     nextNode.g = current.g + weight;
 
-                    nextNode.h = HaversineUtil.calculateDistance(latitude, longitude, latStop, lonStop)/2.8;
+                    nextNode.h = GeoUtil.distance(latitude, longitude, latStop, lonStop)/2.8;
                     pq.add(nextNode);
                     updateBestCost(toStopId, nextNode.g);
 //                    System.err.println("new best cost for " + toStopId + " is " + nextNode.g);

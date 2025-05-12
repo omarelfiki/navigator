@@ -10,6 +10,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static util.GeoUtil.parseCoords;
+import static util.TimeUtil.parseTime;
 
 public class NavUtil {
     static double[] romeCoords = {41.6558, 42.1233, 12.2453, 12.8558}; // {minLat, maxLat, minLng, maxLng}
@@ -66,36 +68,4 @@ public class NavUtil {
         return true;
     }
 
-    public static String parseTime(String time) {
-        String[] parts = time.split(":");
-        if (parts.length > 3) {
-            System.out.println("Invalid time format");
-            return null;
-        }
-        int hours = Integer.parseInt(parts[0]);
-        int minutes = Integer.parseInt(parts[1]);
-        int seconds = (parts.length == 3) ? Integer.parseInt(parts[2]) : 0;
-
-        if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59 || seconds < 0 || seconds > 59) {
-            return null;
-        }
-        return String.format("%02d:%02d:%02d", hours, minutes, seconds);
-    }
-
-
-    private static double[] parseCoords(String coords) {
-        String[] parts = coords.split(",");
-        if (parts.length != 2) {
-            System.out.println("Invalid coordinates format");
-            return null;
-        }
-        try {
-            double lat = Double.parseDouble(parts[0].trim());
-            double lng = Double.parseDouble(parts[1].trim());
-            return new double[]{lat, lng};
-        } catch (NumberFormatException e) {
-            System.out.println("Invalid coordinates format");
-            return null;
-        }
-    }
 }

@@ -76,6 +76,22 @@ public class GeoUtil {
                         Math.sin(dLon / 2) * Math.sin(dLon / 2);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-        return R * c;
+        return R * c * 1000; // Convert to meters
+    }
+
+    public static double[] parseCoords(String coords) {
+        String[] parts = coords.split(",");
+        if (parts.length != 2) {
+            System.out.println("Invalid coordinates format");
+            return null;
+        }
+        try {
+            double lat = Double.parseDouble(parts[0].trim());
+            double lng = Double.parseDouble(parts[1].trim());
+            return new double[]{lat, lng};
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid coordinates format");
+            return null;
+        }
     }
 }

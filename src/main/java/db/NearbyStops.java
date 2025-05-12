@@ -1,7 +1,5 @@
-package util;
+package db;
 
-import db.DBaccess;
-import db.DBaccessProvider;
 import models.Stop;
 
 import java.sql.*;

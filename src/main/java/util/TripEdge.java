@@ -5,6 +5,8 @@ import models.Stop;
 import models.StopTime;
 import models.Trip;
 
+import static util.TimeUtil.calculateDifference;
+
 class TripEdge implements Edge {
     String fromStopId;
     String toStopId;
@@ -17,9 +19,7 @@ class TripEdge implements Edge {
     String mode;
     StopTime nextStopTime;
     StopTime currentStopTime;
-
     TDSImplement tds = new TDSImplement();
-    TimeUtil timeUtil = new TimeUtil();
 
     public TripEdge(String fromStopId, String departureTime, Trip trip) {
         this.fromStopId = fromStopId;
@@ -43,7 +43,7 @@ class TripEdge implements Edge {
         this.endStop = nextStopTime.getStop();
         this.toStopId = endStop.getStopId();
         this.arrivalTime = nextStopTime.getArrivalTime();
-        this.weight = timeUtil.calculateDifference(this.departureTime, this.arrivalTime) ;
+        this.weight = calculateDifference(this.departureTime, this.arrivalTime) ;
     }
 
 

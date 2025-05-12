@@ -12,8 +12,7 @@ import db.DBconfig;
 import models.Request;
 import util.AStarRouterV;
 import util.Node;
-
-import static util.NavUtil.parseTime;
+import static util.TimeUtil.parseTime;
 
 public class RoutingEngine {
     private final JSONReader requestReader;

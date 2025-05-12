@@ -4,19 +4,19 @@ import db.TDSImplement;
 import models.Stop;
 import models.Trip;
 
-import java.sql.SQLOutput;
 import java.util.ArrayList;
 import java.util.List;
+import static db.NearbyStops.getNearbyStops;
 
 public class EdgeService {
     TDSImplement tds = new TDSImplement();
-    TimeUtil timeUtil = new TimeUtil();
+
     public ArrayList<Edge> getEdges(Node node) {
         ArrayList<Edge> edges = new ArrayList<>();
         Stop startStop = tds.getStop(node.stopId);
 
         // add stops that can be reached by walking
-        List<Stop> walkingDistanceStops = NearbyStops.getNearbyStops(startStop.stopLat, startStop.stopLon, 250);
+        List<Stop> walkingDistanceStops = getNearbyStops(startStop.stopLat, startStop.stopLon, 250);
         //create edges for each of these stops
         for (Stop stop : walkingDistanceStops) {
             if (!stop.stopId.equals(node.stopId)) {

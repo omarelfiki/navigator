@@ -57,7 +57,6 @@ public class TileUtil {
 
         for (File file : files) {
             if (file.isDirectory()) {
-                // Skip the "tile.openstreetmap.org" folder and only include its contents
                 if (parentFolder.isEmpty() && file.getName().equals("tile.openstreetmap.org")) {
                     zipDirectory(file, "", zos);
                 } else {
