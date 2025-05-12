@@ -27,8 +27,11 @@ public class NavUtil {
         }
         time = parseTime(time);
         AStarRouterV router = new AStarRouterV();
-       ExecutorService executor = Executors.newSingleThreadExecutor();
+        ExecutorService executor = Executors.newSingleThreadExecutor();
         String finalTime = time;
+        if (ocoords == null || dcoords == null) {
+            return "Invalid coordinates";
+        }
         Future<List<Node>> future = executor.submit(() ->
                 router.findFastestPath(ocoords[0], ocoords[1], dcoords[0], dcoords[1], finalTime)
             );
@@ -44,7 +47,7 @@ public class NavUtil {
                     return "Found path.";
                 }
             } catch (TimeoutException e) {
-                System.out.println("findFastestPath timed out.");
+                System.err.println("findFastestPath timed out.");
                 return "Routing timed out.";
             } catch (Exception e) {
                 e.printStackTrace();
@@ -66,7 +69,7 @@ public class NavUtil {
         return true;
     }
 
-    private static String parseTime(String time) {
+    public static String parseTime(String time) {
         String[] parts = time.split(":");
         if (parts.length > 3) {
             System.out.println("Invalid time format");
@@ -77,7 +80,6 @@ public class NavUtil {
         int seconds = (parts.length == 3) ? Integer.parseInt(parts[2]) : 0;
 
         if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59 || seconds < 0 || seconds > 59) {
-            System.out.println("Invalid time format");
             return null;
         }
         return String.format("%02d:%02d:%02d", hours, minutes, seconds);
@@ -98,5 +100,9 @@ public class NavUtil {
             System.out.println("Invalid coordinates format");
             return null;
         }
+    }
+
+    public static void main(String[] args) {
+        System.out.println(parseTime("09:30"));
     }
 }

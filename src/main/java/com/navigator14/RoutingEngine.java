@@ -13,6 +13,8 @@ import models.Request;
 import util.AStarRouterV;
 import util.Node;
 
+import static util.NavUtil.parseTime;
+
 public class RoutingEngine {
     private final JSONReader requestReader =
             new JSONReader(new InputStreamReader(System.in));
@@ -92,6 +94,7 @@ public class RoutingEngine {
         Map<String, Object> routeFrom = (Map<String, Object>) request.get("routeFrom");
         Map<String, Object> to = (Map<String, Object>) request.get("to");
         String time = (String) request.get("startingAt");
+        time = parseTime(time);
         double latStart = ((Number) routeFrom.get("lat")).doubleValue();
         double lonStart = ((Number) routeFrom.get("lon")).doubleValue();
         double latEnd = ((Number) to.get("lat")).doubleValue();
