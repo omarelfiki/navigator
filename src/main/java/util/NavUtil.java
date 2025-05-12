@@ -32,31 +32,26 @@ public class NavUtil {
         if (ocoords == null || dcoords == null) {
             return "Invalid coordinates";
         }
-        Future<List<Node>> future = executor.submit(() ->
-                router.findFastestPath(ocoords[0], ocoords[1], dcoords[0], dcoords[1], finalTime)
-            );
-
-            try {
-                List<Node> path = future.get(10, SECONDS); // Timeout after 10 seconds
-                if (path == null) {
-                    System.out.println("No path found.");
-                    WayPoint.addWaypoint(ocoords, dcoords, "");
-                    return "No path found.";
-                } else {
-                    WayPoint.addWaypoint(path);
-                    return "Found path.";
-                }
-            } catch (TimeoutException e) {
-                System.err.println("findFastestPath timed out.");
-                return "Routing timed out.";
-            } catch (Exception e) {
-                e.printStackTrace();
-                return "An error occurred.";
-            } finally {
-                executor.shutdown();
+        Future<List<Node>> future = executor.submit(() -> router.findFastestPath(ocoords[0], ocoords[1], dcoords[0], dcoords[1], finalTime));
+        try {
+            List<Node> path = future.get(10, SECONDS);
+            if (path == null) {
+                System.err.println("No path found.");
+                return "No path found.";
+            } else {
+                WayPoint.addWaypoint(path);
+                return "Found path.";
             }
+        } catch (TimeoutException e) {
+            System.err.println("findFastestPath timed out.");
+            return "Routing timed out.";
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "An error occurred.";
+        } finally {
+            executor.shutdown();
+        }
     }
-
 
     private static boolean checkBounds(double[] ocoords, double[] dcoords) {
         if (ocoords[0] < romeCoords[0] || ocoords[0] > romeCoords[1] || ocoords[1] < romeCoords[2] || ocoords[1] > romeCoords[3]) {

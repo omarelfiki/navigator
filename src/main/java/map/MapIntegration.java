@@ -13,6 +13,7 @@ import org.jxmapviewer.input.PanMouseInputListener;
 import org.jxmapviewer.input.ZoomMouseWheelListenerCursor;
 import org.jxmapviewer.viewer.GeoPosition;
 import org.jxmapviewer.viewer.TileFactory;
+
 import javax.swing.event.MouseInputListener;
 import java.io.File;
 import java.io.IOException;
@@ -40,9 +41,9 @@ public class MapIntegration {
         map.setZoom(6);
         map.setAddressLocation(new GeoPosition(41.9028, 12.4964)); // Rome
 
-        MouseInputListener mia = new PanMouseInputListener(map);
-        map.addMouseListener(mia);
-        map.addMouseMotionListener(mia);
+        MouseInputListener panListener = new PanMouseInputListener(map);
+        map.addMouseListener(panListener);
+        map.addMouseMotionListener(panListener);
         map.addMouseListener(new CenterMapListener(map));
         map.addMouseWheelListener(new ZoomMouseWheelListenerCursor(map));
         map.addKeyListener(new PanKeyListener(map));
