@@ -14,7 +14,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 public class NavUtil {
     static double[] romeCoords = {41.6558, 42.1233, 12.2453, 12.8558}; // {minLat, maxLat, minLng, maxLng}
 
-    public static String parsePoint(String origin, String destination, String time, Date date) {
+    public static List<Node> parsePoint(String origin, String destination, String time, Date date) {
         boolean isOnline = NetworkUtil.isNetworkAvailable();
         double[] ocoords;
         double[] dcoords;
@@ -30,7 +30,8 @@ public class NavUtil {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         String finalTime = time;
         if (ocoords == null || dcoords == null) {
-            return "Invalid coordinates";
+            System.err.println("Invalid coordinates");
+            return null;
         }
         Future<List<Node>> future = executor.submit(() -> router.findFastestPath(ocoords[0], ocoords[1], dcoords[0], dcoords[1], finalTime));
 
@@ -38,17 +39,17 @@ public class NavUtil {
             List<Node> path = future.get(30, SECONDS);
             if (path == null) {
                 System.err.println("No path found.");
-                return "No path found.";
+                return null;
             } else {
                 WayPoint.addWaypoint(path);
-                return "Found path.";
+                return path;
             }
         } catch (TimeoutException e) {
             System.err.println("findFastestPath timed out.");
-            return "Routing timed out.";
+            return null;
         } catch (Exception e) {
             e.printStackTrace();
-            return "An error occurred.";
+            return null;
         } finally {
             executor.shutdown();
         }
