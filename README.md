@@ -23,11 +23,14 @@ Designed for public transit systems, it enables real-time route discovery using 
     ├── pom.xml                                 
     ├── src/                                
     │   ├── main/                                                   
-    │   │   └── java/                           
-    │   │       ├── model/              # Data Models (Stop, Trip, Route, etc.)                                             
-    │   │       ├── service/            # Business Logic (Routing, Graph Building)                                                      
-    │   │       ├── ui/                 # JavaFX GUI Components                                                         
-    │   │       └── InitDatabase.java   # Database Setup Utility                                                  
+    │   │   ├── java/
+    │   │   │   ├── com.navigator14/    # Main Java Package (UI + CLI)
+    │   │   │   ├── models/             # Data Models (Stop, Trip, Route, etc.)                                             
+    │   │   │   ├── db/                 # Database Classes                                                      
+    │   │   │   ├── ui/                 # JavaFX GUI Components
+    │   │   │   ├── map/                # GUI Map Classes
+    │   │   │   └── util/               # Utility Classes + Routing Engine 
+    │   │   └── resources/              # JavaFX and SQL Resources (.sql, .css, Images)
     ├── oldGraphStuff/                  # Early Prototype (for reference)                                       
     └── README.md                                   
 
