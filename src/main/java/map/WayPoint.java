@@ -21,21 +21,19 @@ public static void addWaypoint(List<Node> path) {
 
     List<Painter<JXMapViewer>> painters = new ArrayList<>();
     Set<Waypoint> waypoints = new HashSet<>();
-    List<GeoPosition> track = new ArrayList<>();
 
     for (int i = 0; i < path.size(); i++) {
         Node node = path.get(i);
         double[] coords = {node.stop.stopLat, node.stop.stopLon};
         GeoPosition position = new GeoPosition(coords[0], coords[1]);
-        track.add(position);
 
         if (i == 0 || i == path.size() - 1) {
             waypoints.add(new DefaultWaypoint(position)); //default marker for start and end
         } else {
-            painters.add((g, map1, w, h) -> {
+            painters.add((g, map1, _, _) -> {
                 Point2D pt = map1.getTileFactory().geoToPixel(position, map1.getZoom());
-                g.setColor(Color.RED); // Ensure a visible color
-                g.fillOval((int) pt.getX() - 5, (int) pt.getY() - 5, 20, 20);
+                g.setColor(Color.YELLOW); // Ensure a visible color
+                g.fillOval((int) pt.getX() - 5, (int) pt.getY() - 5, 30, 30);
             });
         }
     }
@@ -56,7 +54,7 @@ public static void addWaypoint(List<Node> path) {
     Set<GeoPosition> geoPositions = new HashSet<>();
     for (Waypoint waypoint : waypoints) {
         if (waypoint instanceof DefaultWaypoint) {
-            geoPositions.add(((DefaultWaypoint) waypoint).getPosition());
+            geoPositions.add(waypoint.getPosition());
         }
     }
     map.zoomToBestFit(geoPositions, 0.7);

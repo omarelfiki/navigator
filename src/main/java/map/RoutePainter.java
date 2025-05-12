@@ -48,10 +48,14 @@ public class RoutePainter implements Painter<JXMapViewer> {
             } else {
                 if ("WALK".equals(node.mode)) {
                     g.setStroke(new BasicStroke(2, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{5, 5}, 0)); // Dashed line
+                    g.setColor(Color.BLUE); // Color for walking
+                } else if ("TRANSFER".equals(node.mode)) {
+                    g.setStroke(new BasicStroke(5)); // Solid line
+                    g.setColor(Color.RED); // Color for transfers
                 } else {
-                    g.setStroke(new BasicStroke(2)); // Solid line
+                    g.setStroke(new BasicStroke(5)); // Solid line
+                    g.setColor(Color.RED); // Default color for other modes
                 }
-                g.setColor(Color.BLACK);
                 g.drawLine(lastX, lastY, (int) pt.getX(), (int) pt.getY());
             }
 
