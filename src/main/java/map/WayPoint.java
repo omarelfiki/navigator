@@ -30,14 +30,12 @@ public static void addWaypoint(List<Node> path) {
         track.add(position);
 
         if (i == 0 || i == path.size() - 1) {
-            // Add markers for the first and last nodes
-            waypoints.add(new DefaultWaypoint(position));
+            waypoints.add(new DefaultWaypoint(position)); //default marker for start and end
         } else {
-            // Draw bullet points for intermediate nodes
             painters.add((g, map1, w, h) -> {
                 Point2D pt = map1.getTileFactory().geoToPixel(position, map1.getZoom());
                 g.setColor(Color.RED); // Ensure a visible color
-                g.fillOval((int) pt.getX() - 5, (int) pt.getY() - 5, 12, 12); // Increase size
+                g.fillOval((int) pt.getX() - 5, (int) pt.getY() - 5, 20, 20);
             });
         }
     }
