@@ -19,7 +19,7 @@ public class WalkingEdge implements Edge {
     TimeUtil timeUtil = new TimeUtil();
 
 
-    public WalkingEdge( String fromStopId,String toStopId, String departureTime) {
+    public WalkingEdge(String fromStopId,String toStopId, String departureTime) {
         this.toStopId = toStopId;
         this.fromStopId = fromStopId;
         this.startStop = tds.getStop(fromStopId);
@@ -29,7 +29,7 @@ public class WalkingEdge implements Edge {
         this.arrivalTime = computeArrivalTime();
         this.mode = "WALK";
         this.trip = null;
-        this.weight = walkTime;
+        this.weight = walkTime *1.8 ;
     }
 
 

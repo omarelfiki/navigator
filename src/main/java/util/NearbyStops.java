@@ -15,7 +15,6 @@ public class NearbyStops {
             System.err.println("Error: Database access instance is null.");
             return stopsWithinRadius;
         }
-        db.connect();
         String useDbQuery = "USE " + db.dbName;
         try (Statement stmt = db.conn.createStatement()) {
             stmt.execute(useDbQuery);

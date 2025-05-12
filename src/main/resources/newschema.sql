@@ -38,7 +38,7 @@ CREATE TABLE agency
     agency_id       NVARCHAR(255) PRIMARY KEY,
     agency_name     NVARCHAR(255) NOT NULL,
     agency_url      NVARCHAR(255) NOT NULL,
-    agency_lang     NVARCHAR(50)  NOT NULL,
+    agency_lang     NVARCHAR(50),
     agency_phone    NVARCHAR(50),
     agency_timezone NVARCHAR(50)  NOT NULL,
     agency_fare_url NVARCHAR(255),

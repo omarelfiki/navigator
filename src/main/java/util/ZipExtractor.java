@@ -7,6 +7,11 @@ import java.util.zip.*;
 
 public class ZipExtractor {
     public static void extractZipToDirectory(String zipFilePath, String destinationDir) throws IOException {
+        File zipFile = new File(zipFilePath);
+        if (!zipFile.exists()) {
+            throw new FileNotFoundException("Zip file not found: " + zipFilePath);
+        }
+
         Path destDirPath = Paths.get(destinationDir);
 
         // Clear the directory if it exists

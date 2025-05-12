@@ -12,38 +12,45 @@ class TripEdge implements Edge {
     String arrivalTime;
     Trip trip;
     double weight;
-    Stop endStop;
     Stop startStop;
-    TDSImplement tds;
-    TimeUtil timeUtil = new TimeUtil();
+    Stop endStop;
     String mode;
+    StopTime nextStopTime;
+    StopTime currentStopTime;
 
-    public TripEdge(String fromStopId,String departureTime, Trip trip) {
+    TDSImplement tds = new TDSImplement();
+    TimeUtil timeUtil = new TimeUtil();
+
+    public TripEdge(String fromStopId, String departureTime, Trip trip) {
         this.fromStopId = fromStopId;
         this.departureTime = departureTime;
         this.trip = trip;
-        this.startStop = tds.getStop(fromStopId);
-        this.arrivalTime = calculateArrival();
-        this.weight = calculateDuration(departureTime,arrivalTime);
         this.mode = "SAME_TRIP";
-    }
 
-    public String calculateArrival() {
-        StopTime currentStopTime = tds.getStopTime(trip,startStop);
-        StopTime nextStopTime = tds.getNextStopTime(currentStopTime);
+        this.startStop = tds.getStop(fromStopId);
+        this.currentStopTime = tds.getCurrentStopTime(trip, startStop, departureTime);
+
+        if (currentStopTime == null) {
+            throw new IllegalArgumentException("No stop time at stop " + fromStopId + " for trip " + trip.tripId);
+        }
+
+        this.nextStopTime = tds.getNextStopTime(currentStopTime);
+
+        if (nextStopTime == null) {
+            throw new IllegalArgumentException("No next stop after stop " + fromStopId + " on trip " + trip.tripId + " (possibly the last stop).");
+        }
+
         this.endStop = nextStopTime.getStop();
         this.toStopId = endStop.getStopId();
-        return nextStopTime.getArrivalTime();
+        this.arrivalTime = nextStopTime.getArrivalTime();
+        this.weight = timeUtil.calculateDifference(this.departureTime, this.arrivalTime) ;
     }
 
-    private double calculateDuration(String start, String end) {
-        return timeUtil.calculateDifference(start, end);
-    }
+
     public String getToStopId() { return toStopId; }
     public String getDepartureTime() { return departureTime; }
     public String getArrivalTime() { return arrivalTime; }
     public String getMode() { return mode; }
     public Trip getTrip() { return trip; }
     public double getWeight() { return weight; }
-
 }
