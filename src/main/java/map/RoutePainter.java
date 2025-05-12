@@ -23,7 +23,6 @@ public class RoutePainter implements Painter<JXMapViewer> {
     public void paint(Graphics2D g, JXMapViewer map, int w, int h) {
         g = (Graphics2D) g.create();
 
-        // Convert from viewport to world bitmap
         Rectangle rect = map.getViewportBounds();
         g.translate(-rect.x, -rect.y);
 

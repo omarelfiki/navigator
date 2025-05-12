@@ -16,24 +16,20 @@ public class HomeUITest extends ApplicationTest {
 
     @Override
     public void start(Stage stage) {
-        new homeUI().start(stage); // Launch the application
+        new homeUI().start(stage);
     }
 
     @Test
     public void testFillFields() {
-        // Simulate entering text into the origin field
         TextField originField = lookup("#originField").query();
         clickOn(originField).write("Roma Termini");
 
-        // Simulate entering text into the destination field
         TextField destinationField = lookup("#destinationField").query();
         clickOn(destinationField).write("Vatican");
 
-        // Simulate entering text into the time field
         TextField timeField = lookup("#timeField").query();
         clickOn(timeField).write("09:30");
 
-        // Simulate selecting a date in the date picker
         DatePicker dateField = lookup("#dateField").query();
         interact(() -> dateField.setValue(LocalDate.of(2024, 5, 12)));
 
@@ -43,6 +39,6 @@ public class HomeUITest extends ApplicationTest {
         assertThat(timeField.getText()).isEqualTo("09:30");
         assertThat(dateField.getValue()).isEqualTo(LocalDate.of(2024, 5, 12));
 
-        WaitForAsyncUtils.sleep(30, TimeUnit.SECONDS);
+        WaitForAsyncUtils.sleep(20, TimeUnit.SECONDS);
     }
 }

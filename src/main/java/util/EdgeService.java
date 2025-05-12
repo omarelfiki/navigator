@@ -4,19 +4,19 @@ import db.TDSImplement;
 import models.Stop;
 import models.Trip;
 
-import java.sql.SQLOutput;
 import java.util.ArrayList;
 import java.util.List;
+import static db.NearbyStops.getNearbyStops;
 
 public class EdgeService {
     TDSImplement tds = new TDSImplement();
-    TimeUtil timeUtil = new TimeUtil();
+
     public ArrayList<Edge> getEdges(Node node) {
         ArrayList<Edge> edges = new ArrayList<>();
         Stop startStop = tds.getStop(node.stopId);
 
         // add stops that can be reached by walking
-        List<Stop> walkingDistanceStops = NearbyStops.getNearbyStops(startStop.stopLat, startStop.stopLon, 250);
+        List<Stop> walkingDistanceStops = getNearbyStops(startStop.stopLat, startStop.stopLon, 250);
         //create edges for each of these stops
         for (Stop stop : walkingDistanceStops) {
             if (!stop.stopId.equals(node.stopId)) {
@@ -49,12 +49,12 @@ public class EdgeService {
 
         //add transfer edges
         List<Trip> upcomingTrips = tds.getUpcomingDistinctRouteTrips(node.stopId, node.arrivalTime);
-        System.out.println("upcoming trips: " + upcomingTrips.size());
+        System.err.println("upcoming trips: " + upcomingTrips.size());
         for (Trip trip : upcomingTrips) {
             try {
                 TransferEdge transferEdge = new TransferEdge(startStop.stopId, node.arrivalTime, trip);
                 edges.add(transferEdge);
-                System.out.println("Transfer " + transferEdge.fromStopId + " to " + transferEdge.toStopId +
+                System.err.println("Transfer " + transferEdge.fromStopId + " to " + transferEdge.toStopId +
                         " weight " + transferEdge.weight + " by route " + transferEdge.trip.getRoute().routeId +
                         " at " + transferEdge.departureTime + " waiting until " + transferEdge.rideStartTime +
                         " to " + transferEdge.arrivalTime);

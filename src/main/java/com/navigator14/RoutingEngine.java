@@ -12,15 +12,20 @@ import db.DBconfig;
 import models.Request;
 import util.AStarRouterV;
 import util.Node;
-
-import static util.NavUtil.parseTime;
-import static util.PathCompressor.compressPath;
+import static util.TimeUtil.parseTime;
 
 public class RoutingEngine {
-    private final JSONReader requestReader =
-            new JSONReader(new InputStreamReader(System.in));
-    private final JSONWriter<OutputStreamWriter> responseWriter =
-            new JSONWriter<>(new OutputStreamWriter(System.out));
+    private final JSONReader requestReader;
+    private final JSONWriter<OutputStreamWriter> responseWriter;
+
+    public RoutingEngine(JSONReader requestReader, JSONWriter<OutputStreamWriter> responseWriter) {
+        this.requestReader = requestReader;
+        this.responseWriter = responseWriter;
+    }
+
+    public RoutingEngine() {
+        this(new JSONReader(new InputStreamReader(System.in)), new JSONWriter<>(new OutputStreamWriter(System.out)));
+    }
 
     public static void main(String[] args) throws IOException {
         new RoutingEngine().run();
@@ -44,27 +49,26 @@ public class RoutingEngine {
                 if (request.containsKey("load")) {
                     if (initDB(request)) return;
                     sendOk("loaded");
-                    return;
+                    continue;
                 }
 
                 if (request.containsKey("routeFrom") && request.containsKey("to") && request.containsKey("startingAt")) {
                     Request requestR = parseRequest(request);
                     if (requestR.time() == null || requestR.time().isEmpty()) {
                         sendError("Invalid time format");
-                        return;
+                        continue;
                     }
                     AStarRouterV router = new AStarRouterV();
                     List<Node> path = router.findFastestPath(requestR.latStart(), requestR.lonStart(), requestR.latEnd(), requestR.lonEnd(), requestR.time());
                     if (path == null) {
                         sendError("No path found");
-                        return;
+                        continue;
                     }
                     List<Map<String, Object>> result = parseResult(path, requestR);
                     sendOk(result);
-                    return;
+                    continue;
                 }
                 sendError("Bad request");
-                return;
             }
 
         }
@@ -112,9 +116,6 @@ public class RoutingEngine {
     }
 
     private List<Map<String, Object>> parseResult(List<Node> path, Request request) {
-        System.out.println(path.size());
-        path = compressPath(path);
-        System.out.println(path.size());
         return path.stream().map(node -> {
             if (Objects.equals(node.mode, "WALK")) {
                 if(node.parent == null) {

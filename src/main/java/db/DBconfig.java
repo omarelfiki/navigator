@@ -29,7 +29,7 @@ public class DBconfig {
         this.access = DBaccessProvider.getInstance();
         GTFS_PATH = filePath;
         filetype = 1;
-        isDebugMode = false;
+        isDebugMode = true;
     }
 
     public void initializeDB() {
