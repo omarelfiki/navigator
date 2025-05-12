@@ -1,9 +1,6 @@
 package com.navigator14;
 
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -42,37 +39,53 @@ public class RoutingEngine {
 
             if (json instanceof Map<?, ?> request) {
                 if (request.containsKey("load")) {
-                    DBconfig dbConfig = new DBconfig((String) request.get("load"));
-                    dbConfig.initializeDB();
+                    if (initDB(request)) return;
                     sendOk("loaded");
-                    continue;
+                    return;
                 }
 
                 if (request.containsKey("routeFrom") && request.containsKey("to") && request.containsKey("startingAt")) {
                     Request requestR = parseRequest(request);
                     if (requestR.latStart() == 0 || requestR.lonStart() == 0 || requestR.latEnd() == 0 || requestR.lonEnd() == 0) {
                         sendError("Invalid coordinates");
-                        break;
+                        return;
                     }
                     if (requestR.time() == null || requestR.time().isEmpty()) {
                         sendError("Invalid time format");
-                        break;
+                        return;
                     }
                     AStarRouterV router = new AStarRouterV();
                     List<Node> path = router.findFastestPath(requestR.latStart(), requestR.lonStart(), requestR.latEnd(), requestR.lonEnd(), requestR.time());
                     if (path == null) {
                         sendError("No path found");
-                        break;
+                        return;
                     }
                     List<Map<String, Object>> result = parseResult(path, requestR);
                     sendOk(result);
-                    continue;
+                    return;
                 }
                 sendError("Bad request");
+                return;
             }
 
         }
 
+    }
+
+    private boolean initDB(Map<?, ?> request) throws IOException {
+        String load = (String) request.get("load");
+        if (load == null || load.isEmpty()) {
+            sendError("Invalid load path");
+            return true;
+        }
+        File file = new File(load);
+        if (!file.exists()) {
+            sendError("File does not exist");
+            return true;
+        }
+        DBconfig dbConfig = new DBconfig(load);
+        dbConfig.initializeDB();
+        return false;
     }
 
     private static Request parseRequest(Map<?, ?> request) {
