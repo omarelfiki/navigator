@@ -4,6 +4,9 @@ import db.TDSImplement;
 import models.Stop;
 import models.Trip;
 
+import static util.TimeUtil.addTime;
+import static util.WalkingTime.getWalkingTime;
+
 public class WalkingEdge implements Edge {
     String toStopId;
     String fromStopId;
@@ -16,10 +19,8 @@ public class WalkingEdge implements Edge {
     Stop endStop;
     Stop startStop;
     TDSImplement tds = new TDSImplement();
-    TimeUtil timeUtil = new TimeUtil();
 
-
-    public WalkingEdge(String fromStopId,String toStopId, String departureTime) {
+    public WalkingEdge(String fromStopId, String toStopId, String departureTime) {
         this.toStopId = toStopId;
         this.fromStopId = fromStopId;
         this.startStop = tds.getStop(fromStopId);
@@ -29,33 +30,39 @@ public class WalkingEdge implements Edge {
         this.arrivalTime = computeArrivalTime();
         this.mode = "WALK";
         this.trip = null;
-        this.weight = walkTime *1.8 ;
+        this.weight = walkTime * 1.8;
     }
 
 
-    public String computeArrivalTime(){
-        return timeUtil.addTime(departureTime, walkTime);
+    public String computeArrivalTime() {
+        return addTime(departureTime, walkTime);
     }
-    public double computeWalkingTime(){
-        return WalkingTime.getWalkingTime(startStop.stopLat,startStop.stopLon, endStop.stopLat,endStop.stopLon);
+
+    public double computeWalkingTime() {
+        return getWalkingTime(startStop.stopLat, startStop.stopLon, endStop.stopLat, endStop.stopLon);
     }
-    public String getToStopId(){
+
+    public String getToStopId() {
         return toStopId;
     }
-    public String getDepartureTime(){
+
+    public String getDepartureTime() {
         return departureTime;
     }
-    public String getArrivalTime(){
+
+    public String getArrivalTime() {
         return arrivalTime;
     }
-    public String getMode()
-    {
+
+    public String getMode() {
         return mode;
     }
-    public Trip getTrip(){
+
+    public Trip getTrip() {
         return trip;
     }
-    public double getWeight(){
+
+    public double getWeight() {
         return weight;
     }
 }

@@ -5,8 +5,8 @@ import models.*;
 import java.sql.*;
 import java.util.*;
 import java.util.List;
-public class TDSImplement implements TransitDataService
-{
+
+public class TDSImplement implements TransitDataService {
     private final boolean isDebugMode = true;
     private final DBaccess db;
 
@@ -21,12 +21,12 @@ public class TDSImplement implements TransitDataService
     public Stop getStop(String stopId) {
         if (db == null) {
 
-            if(isDebugMode)System.err.println("Error: Database access instance is null.");
+            if (isDebugMode) System.err.println("Error: Database access instance is null.");
             return null;
         }
         String sql = "SELECT stop_id, stop_name, stop_lat, stop_lon FROM stops WHERE stop_id = ?";
         try (
-             PreparedStatement ps = db.conn.prepareStatement(sql)){
+                PreparedStatement ps = db.conn.prepareStatement(sql)) {
             ps.setString(1, stopId);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
@@ -38,9 +38,9 @@ public class TDSImplement implements TransitDataService
                 return stop;
             }
         } catch (SQLException e) {
-            if(isDebugMode)System.err.println("SQL Error in getStop: " + e.getMessage());
+            if (isDebugMode) System.err.println("SQL Error in getStop: " + e.getMessage());
         }
-        System.out.println("Stop not found: " + stopId);
+        System.err.println("Stop not found: " + stopId);
         return null;
     }
 
@@ -51,10 +51,10 @@ public class TDSImplement implements TransitDataService
         }
 
         String sql = """
-        SELECT trip_id, stop_id, arrival_time, departure_time, stop_sequence 
-        FROM stop_times 
-        WHERE trip_id = ? AND stop_sequence = ?
-    """;
+                    SELECT trip_id, stop_id, arrival_time, departure_time, stop_sequence\s
+                    FROM stop_times\s
+                    WHERE trip_id = ? AND stop_sequence = ?
+               \s""";
 
         try (PreparedStatement ps = db.conn.prepareStatement(sql)) {
             ps.setString(1, currentStopTime.trip.tripId);
@@ -81,8 +81,8 @@ public class TDSImplement implements TransitDataService
         String sql = "SELECT stop_id, stop_name, stop_lat, stop_lon FROM stops";
         List<Stop> stops = new ArrayList<>();
         try (
-             PreparedStatement ps = db.conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+                PreparedStatement ps = db.conn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 Stop stop = new Stop();
                 stop.stopId = rs.getString("stop_id");
@@ -92,7 +92,7 @@ public class TDSImplement implements TransitDataService
                 stops.add(stop);
             }
         } catch (SQLException e) {
-            if(isDebugMode)System.err.println("SQL Error in getAllStops: " + e.getMessage());
+            if (isDebugMode) System.err.println("SQL Error in getAllStops: " + e.getMessage());
         }
         return stops;
     }
@@ -129,7 +129,7 @@ public class TDSImplement implements TransitDataService
                 return next;
             }
         } catch (SQLException e) {
-            if(isDebugMode)System.err.println("SQL Error in getNextStopTime: " + e.getMessage());
+            if (isDebugMode) System.err.println("SQL Error in getNextStopTime: " + e.getMessage());
         }
         return null;
     }
@@ -140,12 +140,12 @@ public class TDSImplement implements TransitDataService
             return null;
         }
         String sql = """
-        SELECT trip_id, stop_id, arrival_time, departure_time, stop_sequence
-        FROM stop_times
-        WHERE trip_id = ? AND stop_id = ? AND departure_time >= ?
-        ORDER BY departure_time ASC
-        LIMIT 1
-    """;
+                    SELECT trip_id, stop_id, arrival_time, departure_time, stop_sequence
+                    FROM stop_times
+                    WHERE trip_id = ? AND stop_id = ? AND departure_time >= ?
+                    ORDER BY departure_time
+                    LIMIT 1
+                """;
         try (
                 PreparedStatement ps = db.conn.prepareStatement(sql)) {
             ps.setString(1, trip.tripId);
@@ -177,14 +177,14 @@ public class TDSImplement implements TransitDataService
         List<Trip> trips = new ArrayList<>();
 
         String sql = """
-        SELECT t.route_id, MIN(st.trip_id) AS trip_id  -- Select MIN(trip_id) as tie-breaker
-        FROM stop_times st
-        JOIN trips t ON st.trip_id = t.trip_id
-        WHERE st.stop_id = ?
-          AND TIME(st.arrival_time) > TIME(?)
-          AND TIME(st.arrival_time) <= ADDTIME(TIME(?), '00:25:00')
-        GROUP BY t.route_id
-    """;
+                    SELECT t.route_id, MIN(st.trip_id) AS trip_id  -- Select MIN(trip_id) as tie-breaker
+                    FROM stop_times st
+                    JOIN trips t ON st.trip_id = t.trip_id
+                    WHERE st.stop_id = ?
+                      AND TIME(st.arrival_time) > TIME(?)
+                      AND TIME(st.arrival_time) <= ADDTIME(TIME(?), '00:15:00')
+                    GROUP BY t.route_id
+                """;
 
         try (PreparedStatement ps = db.conn.prepareStatement(sql)) {
             ps.setString(1, stopId);       // WHERE st.stop_id = ?
@@ -207,16 +207,14 @@ public class TDSImplement implements TransitDataService
     }
 
 
-
-
     @Override
     public List<StopTime> getFutureDepartures(String stopId, Time afterTime) {
         String sql = "SELECT trip_id, stop_id, arrival_time, departure_time, stop_sequence FROM stop_times WHERE stop_id = ? AND departure_time > ? ORDER BY departure_time";
         List<StopTime> futureDepartures = new ArrayList<>();
         try (
-             PreparedStatement ps = db.conn.prepareStatement(sql)) {
+                PreparedStatement ps = db.conn.prepareStatement(sql)) {
             ps.setString(1, stopId);
-            ps.setTime(2,afterTime);
+            ps.setTime(2, afterTime);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 StopTime st = new StopTime();
@@ -228,7 +226,7 @@ public class TDSImplement implements TransitDataService
                 futureDepartures.add(st);
             }
         } catch (SQLException e) {
-            if(isDebugMode)System.err.println("SQL Error in getFutureDepartures: " + e.getMessage());
+            if (isDebugMode) System.err.println("SQL Error in getFutureDepartures: " + e.getMessage());
         }
         return futureDepartures;
     }
@@ -236,12 +234,12 @@ public class TDSImplement implements TransitDataService
     @Override
     public Trip getTrip(String tripId) {
         if (db == null) {
-            if(isDebugMode)System.err.println("Error: Database access instance is null.");
+            if (isDebugMode) System.err.println("Error: Database access instance is null.");
             return null;
         }
         String sql = "SELECT trip_id, route_id, trip_headsign FROM trips WHERE trip_id = ?";
         try (
-             PreparedStatement ps = db.conn.prepareStatement(sql)) {
+                PreparedStatement ps = db.conn.prepareStatement(sql)) {
             ps.setString(1, tripId);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
@@ -252,7 +250,7 @@ public class TDSImplement implements TransitDataService
                 return trip;
             }
         } catch (SQLException e) {
-            if(isDebugMode)System.err.println("SQL Error in getTrip: " + e.getMessage());
+            if (isDebugMode) System.err.println("SQL Error in getTrip: " + e.getMessage());
         }
         return null;
     }
@@ -260,12 +258,12 @@ public class TDSImplement implements TransitDataService
     @Override
     public Route getRoute(String routeId) {
         if (db == null) {
-            if(isDebugMode)System.err.println("Error: Database access instance is null.");
+            if (isDebugMode) System.err.println("Error: Database access instance is null.");
             return null;
         }
         String sql = "SELECT route_id, route_short_name, route_long_name FROM routes WHERE route_id = ?";
         try (
-             PreparedStatement ps = db.conn.prepareStatement(sql)) {
+                PreparedStatement ps = db.conn.prepareStatement(sql)) {
             ps.setString(1, routeId);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
@@ -276,19 +274,19 @@ public class TDSImplement implements TransitDataService
                 return route;
             }
         } catch (SQLException e) {
-            if(isDebugMode)System.err.println("SQL Error in getRoute: " + e.getMessage());
+            if (isDebugMode) System.err.println("SQL Error in getRoute: " + e.getMessage());
         }
         return null;
     }
 
     private List<StopTime> queryStopTimes(String sql, String p) {
         if (db == null) {
-            if(isDebugMode)System.err.println("Error: Database access instance is null.");
+            if (isDebugMode) System.err.println("Error: Database access instance is null.");
             return null;
         }
         List<StopTime> stopTimes = new ArrayList<>();
         try (
-             PreparedStatement ps = db.conn.prepareStatement(sql)) {
+                PreparedStatement ps = db.conn.prepareStatement(sql)) {
             ps.setString(1, p);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
@@ -301,7 +299,7 @@ public class TDSImplement implements TransitDataService
                 stopTimes.add(st);
             }
         } catch (SQLException e) {
-            if(isDebugMode)System.err.println("SQL Error in getStopTimesForStop: " + e.getMessage());
+            if (isDebugMode) System.err.println("SQL Error in getStopTimesForStop: " + e.getMessage());
         }
         return stopTimes;
     }

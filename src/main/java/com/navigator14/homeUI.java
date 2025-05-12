@@ -27,6 +27,8 @@ import db.*;
 import org.jxmapviewer.JXMapViewer;
 import org.jxmapviewer.viewer.GeoPosition;
 import ui.*;
+import util.Node;
+
 import java.awt.geom.Point2D;
 import java.util.*;
 
@@ -96,7 +98,6 @@ public class homeUI extends Application {
                 dateField.valueProperty()
         );
 
-
         Text label = new Text("Navigate to see public transport \n options");
         label.setTextAlignment(TextAlignment.CENTER);
         label.setFill(Color.WHITE);
@@ -105,27 +106,40 @@ public class homeUI extends Application {
         label.yProperty().bind(root.heightProperty().multiply(0.48)); // 400/832
         leftPane.getChildren().add(label);
 
-Task<Void> task = new Task<>() {
-    @Override
-    protected Void call() {
-        Platform.runLater(() -> {
-            if (filled.get()) {
-                String origin = originField.getText();
-                String destination = destinationField.getText();
-                String time = timeField.getText();
-                Date date = java.sql.Date.valueOf(dateField.getValue());
-                label.setText("Finding routes...");
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() {
+                Platform.runLater(() -> {
+                    if (filled.get()) {
+                        String origin = originField.getText();
+                        String destination = destinationField.getText();
+                        String time = timeField.getText();
+                        Date date = java.sql.Date.valueOf(dateField.getValue());
+                        label.setText("Finding routes...");
 
-                // Perform the parsing and update the label with the result
-                new Thread(() -> {
-                    String result = parsePoint(origin, destination, time, date);
-                    Platform.runLater(() -> label.setText(result));
-                }).start();
+                        new Thread(() -> {
+                            List<Node> result = parsePoint(origin, destination, time, date);
+                            if (result == null) {
+                                Platform.runLater(() -> label.setText("No route found."));
+                            } else {
+                                Platform.runLater(() -> {
+//                                    label.setVisible(false);
+//                                    StackPane resultPane = new StackPane();
+//                                    resultPane.layoutXProperty().bind(root.widthProperty().multiply(0.026));
+//                                    resultPane.layoutYProperty().bind(root.heightProperty().multiply(0.4));
+//                                    resultPane.setMaxWidth(300);
+//                                    resultPane.setMaxHeight(700);
+//                                    displayResult(result, resultPane);
+//                                    leftPane.getChildren().add(resultPane);
+                                    label.setText("Found " + result.size() + " stops along route.");
+                                });
+                            }
+                        }).start();
+                    }
+                });
+                return null;
             }
-        });
-        return null;
-    }
-};
+        };
 
         isOn.addListener((_, _, _) -> {
             if (isOn.get()) {
@@ -260,6 +274,11 @@ Task<Void> task = new Task<>() {
         if (access == null) {
             ErrorPopup.showError("SQL Error", "Database connection failed. Please check your configuration.");
         }
+
+        originField.setId("originField");
+        destinationField.setId("destinationField");
+        timeField.setId("timeField");
+        dateField.setId("dateField");
     }
 
     private void toggleSwitch(Rectangle background) {
@@ -269,6 +288,15 @@ Task<Void> task = new Task<>() {
             background.setFill(Color.LIMEGREEN); // On state
         }
         isOn.set(!isOn.get()); // Toggle the state
+    }
+
+    public void displayResult(List<Node> result, StackPane pane) {
+        for (Node node : result) {
+            Text text = new Text(node.stop.stopName);
+            text.setFill(Color.WHITE);
+            text.setStyle("-fx-font: 14 Ubuntu;");
+            pane.getChildren().add(text);
+        }
     }
 
     public static void main(String[] args) {

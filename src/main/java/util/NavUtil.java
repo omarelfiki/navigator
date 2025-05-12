@@ -10,11 +10,13 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static util.GeoUtil.parseCoords;
+import static util.TimeUtil.parseTime;
 
 public class NavUtil {
     static double[] romeCoords = {41.6558, 42.1233, 12.2453, 12.8558}; // {minLat, maxLat, minLng, maxLng}
 
-    public static String parsePoint(String origin, String destination, String time, Date date) {
+    public static List<Node> parsePoint(String origin, String destination, String time, Date date) {
         boolean isOnline = NetworkUtil.isNetworkAvailable();
         double[] ocoords;
         double[] dcoords;
@@ -30,24 +32,26 @@ public class NavUtil {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         String finalTime = time;
         if (ocoords == null || dcoords == null) {
-            return "Invalid coordinates";
+            System.err.println("Invalid coordinates");
+            return null;
         }
         Future<List<Node>> future = executor.submit(() -> router.findFastestPath(ocoords[0], ocoords[1], dcoords[0], dcoords[1], finalTime));
+
         try {
-            List<Node> path = future.get(10, SECONDS);
+            List<Node> path = future.get(30, SECONDS);
             if (path == null) {
                 System.err.println("No path found.");
-                return "No path found.";
+                return null;
             } else {
                 WayPoint.addWaypoint(path);
-                return "Found path.";
+                return path;
             }
         } catch (TimeoutException e) {
             System.err.println("findFastestPath timed out.");
-            return "Routing timed out.";
+            return null;
         } catch (Exception e) {
             e.printStackTrace();
-            return "An error occurred.";
+            return null;
         } finally {
             executor.shutdown();
         }
@@ -64,36 +68,4 @@ public class NavUtil {
         return true;
     }
 
-    public static String parseTime(String time) {
-        String[] parts = time.split(":");
-        if (parts.length > 3) {
-            System.out.println("Invalid time format");
-            return null;
-        }
-        int hours = Integer.parseInt(parts[0]);
-        int minutes = Integer.parseInt(parts[1]);
-        int seconds = (parts.length == 3) ? Integer.parseInt(parts[2]) : 0;
-
-        if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59 || seconds < 0 || seconds > 59) {
-            return null;
-        }
-        return String.format("%02d:%02d:%02d", hours, minutes, seconds);
-    }
-
-
-    private static double[] parseCoords(String coords) {
-        String[] parts = coords.split(",");
-        if (parts.length != 2) {
-            System.out.println("Invalid coordinates format");
-            return null;
-        }
-        try {
-            double lat = Double.parseDouble(parts[0].trim());
-            double lng = Double.parseDouble(parts[1].trim());
-            return new double[]{lat, lng};
-        } catch (NumberFormatException e) {
-            System.out.println("Invalid coordinates format");
-            return null;
-        }
-    }
 }

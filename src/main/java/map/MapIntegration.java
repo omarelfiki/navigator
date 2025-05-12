@@ -82,7 +82,6 @@ public class MapIntegration {
                 int width = map.getWidth();
                 int height = map.getHeight();
 
-                // Calculate new positions based on the initial ratio
                 double xRatio = 430.0 / 929.0; // Initial X position ratio
                 double yRatio = 350.0 / 816.0; // Initial Y position ratio
 
