@@ -49,12 +49,12 @@ public class EdgeService {
 
         //add transfer edges
         List<Trip> upcomingTrips = tds.getUpcomingDistinctRouteTrips(node.stopId, node.arrivalTime);
-        System.out.println("upcoming trips: " + upcomingTrips.size());
+        System.err.println("upcoming trips: " + upcomingTrips.size());
         for (Trip trip : upcomingTrips) {
             try {
                 TransferEdge transferEdge = new TransferEdge(startStop.stopId, node.arrivalTime, trip);
                 edges.add(transferEdge);
-                System.out.println("Transfer " + transferEdge.fromStopId + " to " + transferEdge.toStopId +
+                System.err.println("Transfer " + transferEdge.fromStopId + " to " + transferEdge.toStopId +
                         " weight " + transferEdge.weight + " by route " + transferEdge.trip.getRoute().routeId +
                         " at " + transferEdge.departureTime + " waiting until " + transferEdge.rideStartTime +
                         " to " + transferEdge.arrivalTime);

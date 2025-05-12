@@ -19,7 +19,7 @@ public class NearbyStops {
         try (Statement stmt = db.conn.createStatement()) {
             stmt.execute(useDbQuery);
         } catch (SQLException e) {
-            System.out.println("SQL Error: " + e.getMessage());
+            System.err.println("SQL Error: " + e.getMessage());
         }
         String procedureCall = "{CALL get_closest_stops(?, ?, ?)}";
         try (CallableStatement stmt = db.conn.prepareCall(procedureCall)) {
@@ -36,7 +36,7 @@ public class NearbyStops {
                 stopsWithinRadius.add(new Stop(stopID, stopName, stopLat, stopLon));
             }
         } catch (SQLException e) {
-            System.out.println("SQL Error: " + e.getMessage());
+            System.err.println("SQL Error: " + e.getMessage());
         }
         return stopsWithinRadius;
     }

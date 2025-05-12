@@ -18,7 +18,7 @@ public class GeoUtil {
         try {
 
             if(!NetworkUtil.isNetworkAvailable()) {
-                System.out.println("Geocode Error: Network is not available.");
+                System.err.println("Geocode Error: Network is not available.");
                 return null;
             }
 
