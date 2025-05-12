@@ -44,7 +44,7 @@ public class RoutingEngine {
                 if (request.containsKey("load")) {
                     DBconfig dbConfig = new DBconfig((String) request.get("load"));
                     dbConfig.initializeDB();
-                    sendOk("Database and GTFS dataset loaded");
+                    sendOk("loaded");
                     continue;
                 }
 
