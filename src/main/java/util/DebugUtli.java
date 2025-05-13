@@ -3,6 +3,8 @@ package util;
 import java.util.List;
 
 public class DebugUtli {
+
+    @SuppressWarnings("unused")
     public static void printHeapSize() {
         long initialHeap = Runtime.getRuntime().totalMemory() / (1024 * 1024);
         long maxHeap = Runtime.getRuntime().maxMemory() / (1024 * 1024);
@@ -11,18 +13,25 @@ public class DebugUtli {
         System.out.println("Maximum Heap Size: " + maxHeap + " MB");
     }
 
+    @SuppressWarnings("unused")
     public static void printNode(Node node) {
         System.out.println(node.toString());
     }
 
+    @SuppressWarnings("unused")
     public static void printPath(List<Node> path) {
         for (Node node : path) {
             System.out.println(node.toString());
         }
     }
 
+    @SuppressWarnings("unused")
     public static boolean getDebugMode() {
         String debug = System.getProperty("debug");
-        return debug != null && debug.equals("true");
+        if (debug == null) {
+            return true;
+        } else {
+            return Boolean.parseBoolean(debug);
+        }
     }
 }
