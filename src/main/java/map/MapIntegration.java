@@ -18,13 +18,18 @@ import javax.swing.event.MouseInputListener;
 import java.io.File;
 import java.io.IOException;
 
+import static util.DebugUtli.getDebugMode;
+
 public class MapIntegration {
     JXMapViewer map;
 
-    Boolean isOnline;
+    boolean isOnline;
 
-    public MapIntegration(Boolean isOnline) {
+    boolean isDebugMode;
+
+    public MapIntegration(boolean isOnline) {
         this.isOnline = isOnline;
+        this.isDebugMode = getDebugMode();
     }
 
     public StackPane createMapPane() {
@@ -98,9 +103,9 @@ public class MapIntegration {
             File cacheDir = new File(System.getProperty("user.home") + File.separator + ".jxmapviewer2");
             if (!cacheDir.exists()) {
                 if (cacheDir.mkdirs()) {
-                    System.out.println("Cache directory created: " + cacheDir.getAbsolutePath());
+                    if (isDebugMode) System.out.println("Cache directory created: " + cacheDir.getAbsolutePath());
                 } else {
-                    System.err.println("Failed to create cache directory: " + cacheDir.getAbsolutePath());
+                    if (isDebugMode) System.err.println("Failed to create cache directory: " + cacheDir.getAbsolutePath());
                 }
             }
             tileFactory.setLocalCache(new FileBasedLocalCache(cacheDir, false));
@@ -108,9 +113,9 @@ public class MapIntegration {
             String zipFilePath = System.getProperty("user.home") + File.separator + "Archive.zip";
             try {
                 tileUtil.createZip(cacheDirPath, zipFilePath);
-                System.out.println("Cache created at: " + zipFilePath);
+                if (isDebugMode) System.out.println("Cache created at: " + zipFilePath);
             } catch (IOException e) {
-                System.err.println("Failed to create map cache zip file: " + e);
+                if (isDebugMode) System.err.println("Failed to create map cache zip file: " + e);
             }
         }
     }

@@ -12,11 +12,14 @@ import javafx.scene.image.ImageView;
 import javafx.scene.text.Text;
 import org.json.JSONObject;
 
+import static util.DebugUtli.getDebugMode;
+
 public class WeatherUtil {
     private static final String API_KEY = "d398b5c0a8091474dacc1edbab7b736e";
     private static final String BASE_URL = "https://api.openweathermap.org/data/3.0/onecall";
 
     public static Object[] getWeather(String lat, String lon) {
+        boolean isDebugMode = getDebugMode();
         try {
             String urlString = BASE_URL + "?lat=" + lat + "&lon=" + lon + "&units=metric" + "&appid=" + API_KEY;
             URL url = new URL(urlString);
@@ -41,11 +44,11 @@ public class WeatherUtil {
 
                 return new Object[]{temperature, icon};
             } else {
-                System.out.println("Error: Unable to fetch weather data. Response code: " + responseCode);
+                if (isDebugMode) System.out.println("Error: Unable to fetch weather data. Response code: " + responseCode);
                 return null;
             }
         } catch (Exception e) {
-            System.out.println("Error: " + e.getMessage());
+            if (isDebugMode) System.out.println("Error: " + e.getMessage());
             return null;
         }
     }

@@ -12,6 +12,7 @@ import db.DBconfig;
 import models.Request;
 import util.AStarRouterV;
 import util.Node;
+
 import static util.TimeUtil.parseTime;
 
 public class RoutingEngine {
@@ -28,6 +29,7 @@ public class RoutingEngine {
     }
 
     public static void main(String[] args) throws IOException {
+        System.setProperty("debug", System.getenv("debug"));
         new RoutingEngine().run();
     }
 
@@ -46,6 +48,11 @@ public class RoutingEngine {
             }
 
             if (json instanceof Map<?, ?> request) {
+                if (request.containsKey("exit")) {
+                    System.err.println("Exit command received");
+                    break; // Exit the loop
+                }
+
                 if (request.containsKey("load")) {
                     if (initDB(request)) return;
                     sendOk("loaded");
@@ -166,3 +173,5 @@ public class RoutingEngine {
     }
 }
 // {"routeFrom":{"lat":41.904,"lon":12.5004},"to":{"lat":41.8791,"lon":12.5221},"startingAt":"09:30:00"} - test case
+// {"routeFrom":{"lat":30.146273,"lon":31.421091},"to":{"lat":30.052291,"lon":31.246768},"startingAt":"09:30:00"} - test case
+// 30.052291, 31.246768

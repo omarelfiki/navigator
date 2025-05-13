@@ -32,6 +32,7 @@ import util.Node;
 import java.awt.geom.Point2D;
 import java.util.*;
 
+import static util.DebugUtli.getDebugMode;
 import static util.NavUtil.parsePoint;
 import static ui.UiHelper.*;
 import static util.WeatherUtil.createWeatherTask;
@@ -301,10 +302,12 @@ public class homeUI extends Application {
 
     public static void main(String[] args) {
         String gtfsDir = System.getenv("GTFS_DIR");
+        System.setProperty("debug", System.getenv("debug"));
+        boolean isDebugMode = getDebugMode();
         if (gtfsDir != null) {
             System.setProperty("GTFS_DIR", gtfsDir);
         } else {
-            System.err.println("Environment variable 'GTFS_DIR' is not set. Set the path manually in the settings panel.");
+            if (isDebugMode) System.err.println("Environment variable 'GTFS_DIR' is not set. Set the path manually in the settings panel.");
         }
         launch(args);
     }

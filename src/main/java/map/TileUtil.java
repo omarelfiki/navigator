@@ -12,11 +12,16 @@ import org.jxmapviewer.viewer.DefaultTileFactory;
 import org.jxmapviewer.viewer.TileFactory;
 import org.jxmapviewer.viewer.TileFactoryInfo;
 
-public class TileUtil {
-    Boolean isOnline;
+import static util.DebugUtli.getDebugMode;
 
-    public TileUtil(Boolean isOnline) {
+public class TileUtil {
+    boolean isOnline;
+
+    boolean isDebugMode;
+
+    public TileUtil(boolean isOnline) {
         this.isOnline = isOnline;
+        this.isDebugMode = getDebugMode();
     }
 
     public TileFactory getTileFactory() {

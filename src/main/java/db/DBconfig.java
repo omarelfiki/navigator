@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Objects;
 
+import static util.DebugUtli.getDebugMode;
+
 public class DBconfig {
     private final DBaccess access;
 
@@ -21,7 +23,7 @@ public class DBconfig {
         this.access = access;
         this.GTFS_PATH = System.getenv("GTFS_DIR");
         filetype = 0;
-        isDebugMode = true;
+        isDebugMode = getDebugMode();
     }
 
     //routing engine constructor
@@ -29,7 +31,7 @@ public class DBconfig {
         this.access = DBaccessProvider.getInstance();
         GTFS_PATH = filePath;
         filetype = 1;
-        isDebugMode = true;
+        isDebugMode = getDebugMode();
     }
 
     public void initializeDB() {
@@ -51,14 +53,14 @@ public class DBconfig {
                 switch (filetype) {
                     case 0 -> {
                         if (isDebugMode) System.err.println("Loading GTFS data from directory: " + GTFS_PATH);
-                        GTFSImporter importer = new GTFSImporter(GTFS_PATH, isDebugMode);
+                        GTFSImporter importer = new GTFSImporter(GTFS_PATH);
                         importer.importGTFS();
                     }
                     case 1 -> {
                         if (isDebugMode) System.err.println("Loading GTFS data from zip file: " + GTFS_PATH);
                         String tempDir = System.getenv("ROUTING_ENGINE_STORAGE_DIRECTORY");
                         ZipExtractor.extractZipToDirectory(GTFS_PATH, tempDir);
-                        GTFSImporter importer = new GTFSImporter(tempDir, isDebugMode);
+                        GTFSImporter importer = new GTFSImporter(tempDir);
                         importer.importGTFS();
                     }
                 }

@@ -175,11 +175,11 @@ public class settingsUI {
             if (textField.getText().isEmpty()) {
                 testLabel.setText("Please check GTFS Path.");
             } else if (!Files.isDirectory(Path.of(textField.getText()))) {
-                testLabel.setText("Please check GTFS Path.");
+                testLabel.setText("Not a directory.");
             } else if (!Files.exists(Path.of(textField.getText()))) {
-                testLabel.setText("Please check GTFS Path.");
+                testLabel.setText("File does not exist.");
             } else if (!Files.isReadable(Path.of(textField.getText()))) {
-                testLabel.setText("Please check GTFS Path.");
+                testLabel.setText("File is not readable.");
             } else {
                 System.setProperty("GTFS_DIR", textField.getText());
                 ConsolePopup consolePopup = new ConsolePopup();

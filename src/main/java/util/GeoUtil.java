@@ -11,14 +11,16 @@ import java.nio.charset.StandardCharsets;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import static util.DebugUtli.getDebugMode;
+
 public class GeoUtil {
     private static final String API_KEY = "AIzaSyDWUFIdOzWZeq2BsFfTMMif-VdY2YSqmKg";
 
     public static double[] getCoordinatesFromAddress(String address) {
+        boolean isDebugMode = getDebugMode();
         try {
-
             if(!NetworkUtil.isNetworkAvailable()) {
-                System.err.println("Geocode Error: Network is not available.");
+                if (isDebugMode) System.err.println("Geocode Error: Network is not available.");
                 return null;
             }
 
@@ -80,9 +82,10 @@ public class GeoUtil {
     }
 
     public static double[] parseCoords(String coords) {
+        boolean isDebugMode = getDebugMode();
         String[] parts = coords.split(",");
         if (parts.length != 2) {
-            System.out.println("Invalid coordinates format");
+            if (isDebugMode) System.out.println("Invalid coordinates format");
             return null;
         }
         try {
@@ -90,7 +93,7 @@ public class GeoUtil {
             double lng = Double.parseDouble(parts[1].trim());
             return new double[]{lat, lng};
         } catch (NumberFormatException e) {
-            System.out.println("Invalid coordinates format");
+            if (isDebugMode) System.out.println("Invalid coordinates format");
             return null;
         }
     }

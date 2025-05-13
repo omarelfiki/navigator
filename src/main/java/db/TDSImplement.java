@@ -6,21 +6,23 @@ import java.sql.*;
 import java.util.*;
 import java.util.List;
 
+import static util.DebugUtli.getDebugMode;
+
 public class TDSImplement implements TransitDataService {
-    private final boolean isDebugMode = true;
+    private final boolean isDebugMode;
     private final DBaccess db;
 
     public TDSImplement() {
+        this.isDebugMode = getDebugMode();
         this.db = DBaccessProvider.getInstance();
         if (db == null) {
-            System.err.println("Error: Database access instance is null.");
+            if (isDebugMode) System.err.println("Error: Database access instance is null.");
         }
     }
 
     @Override
     public Stop getStop(String stopId) {
         if (db == null) {
-
             if (isDebugMode) System.err.println("Error: Database access instance is null.");
             return null;
         }
@@ -46,7 +48,7 @@ public class TDSImplement implements TransitDataService {
 
     public StopTime getFutureStopTime(StopTime currentStopTime, int stepsAhead) {
         if (db == null) {
-            System.err.println("Error: Database access instance is null.");
+            if (isDebugMode) System.err.println("Error: Database access instance is null.");
             return null;
         }
 
@@ -109,7 +111,7 @@ public class TDSImplement implements TransitDataService {
 
     public StopTime getNextStopTime(StopTime currentStopTime) {
         if (db == null) {
-            System.err.println("Error: Database access instance is null.");
+            if (isDebugMode) System.err.println("Error: Database access instance is null.");
             return null;
         }
         String sql = "SELECT trip_id, stop_id, arrival_time, departure_time, stop_sequence " +
@@ -136,7 +138,7 @@ public class TDSImplement implements TransitDataService {
 
     public StopTime getCurrentStopTime(Trip trip, Stop stop, String departureTime) {
         if (db == null) {
-            System.err.println("Error: Database access instance is null.");
+            if (isDebugMode) System.err.println("Error: Database access instance is null.");
             return null;
         }
         String sql = """

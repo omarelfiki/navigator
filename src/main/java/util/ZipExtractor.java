@@ -7,6 +7,7 @@ import java.util.zip.*;
 
 public class ZipExtractor {
     public static void extractZipToDirectory(String zipFilePath, String destinationDir) throws IOException {
+        boolean isDebugMode = DebugUtli.getDebugMode();
         File zipFile = new File(zipFilePath);
         if (!zipFile.exists()) {
             throw new FileNotFoundException("Zip file not found: " + zipFilePath);
@@ -22,7 +23,7 @@ public class ZipExtractor {
                         try {
                             Files.delete(path);
                         } catch (IOException e) {
-                            System.err.println("Error deleting file: " + path + " - " + e.getMessage());
+                            if (isDebugMode) System.err.println("Error deleting file: " + path + " - " + e.getMessage());
                         }
                     });
         } else {

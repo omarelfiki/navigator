@@ -5,19 +5,22 @@ import models.Stop;
 import java.sql.*;
 import java.util.ArrayList;
 
+import static util.DebugUtli.getDebugMode;
+
 public class NearbyStops {
     public static ArrayList<Stop> getNearbyStops(double lat, double lon, double radiusMeters) {
         ArrayList<Stop> stopsWithinRadius = new ArrayList<>();
         DBaccess db = DBaccessProvider.getInstance();
+        boolean isDebugMode = getDebugMode();
         if (db == null) {
-            System.err.println("Error: Database access instance is null.");
+            if (isDebugMode) System.err.println("Error: Database access instance is null.");
             return stopsWithinRadius;
         }
         String useDbQuery = "USE " + db.dbName;
         try (Statement stmt = db.conn.createStatement()) {
             stmt.execute(useDbQuery);
         } catch (SQLException e) {
-            System.err.println("SQL Error: " + e.getMessage());
+            if (isDebugMode) System.err.println("SQL Error: " + e.getMessage());
         }
         String procedureCall = "{CALL get_closest_stops(?, ?, ?)}";
         try (CallableStatement stmt = db.conn.prepareCall(procedureCall)) {
@@ -34,7 +37,7 @@ public class NearbyStops {
                 stopsWithinRadius.add(new Stop(stopID, stopName, stopLat, stopLon));
             }
         } catch (SQLException e) {
-            System.err.println("SQL Error: " + e.getMessage());
+            if (isDebugMode) System.err.println("SQL Error: " + e.getMessage());
         }
         return stopsWithinRadius;
     }

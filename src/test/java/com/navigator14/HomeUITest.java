@@ -39,6 +39,8 @@ public class HomeUITest extends ApplicationTest {
         assertThat(timeField.getText()).isEqualTo("09:30");
         assertThat(dateField.getValue()).isEqualTo(LocalDate.of(2024, 5, 12));
 
-        WaitForAsyncUtils.sleep(20, TimeUnit.SECONDS);
+        WaitForAsyncUtils.sleep(10, TimeUnit.SECONDS);
+
+        assertThat(lookup(".text").queryText().getText()).doesNotContain("No route found");
     }
 }

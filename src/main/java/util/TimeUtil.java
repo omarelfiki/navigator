@@ -2,6 +2,8 @@ package util;
 
 import java.time.LocalTime;
 
+import static util.DebugUtli.getDebugMode;
+
 public class TimeUtil {
     public static double calculateTimePastMidnight(String s){
         // calculate the seconds past midnight from format hh::mm:ss
@@ -19,9 +21,10 @@ public class TimeUtil {
     }
 
     public static String parseTime(String time) {
+        boolean isDebugMode = getDebugMode();
         String[] parts = time.split(":");
         if (parts.length > 3) {
-            System.out.println("Invalid time format");
+            if (isDebugMode) System.out.println("Invalid time format");
             return null;
         }
         int hours = Integer.parseInt(parts[0]);
