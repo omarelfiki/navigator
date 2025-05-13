@@ -82,7 +82,7 @@ public class GTFSImporter {
         }
         if (isDebugMode) System.err.println("GTFS import complete.");
     }
-
+    @SuppressWarnings("SqlResolve")
     private void insertUniqueServices(Connection conn) throws IOException, SQLException {
 
         Set<String> serviceIds = new HashSet<>();
@@ -115,6 +115,7 @@ public class GTFSImporter {
     // This method imports trip records from a txt file into the 'trips' table using LOAD DATA LOCAL INFILE.
     //It handles column mismatches, empty integer values, and temporarily disables foreign key checks
     //to avoid constraint violations during bulk insert.
+    @SuppressWarnings("SqlResolve")
     private void importTripsWithLoadData(Path filePath, Connection conn) throws SQLException {
         String absolutePath = filePath.toAbsolutePath().toString().replace("\\", "/");
 
@@ -154,6 +155,7 @@ public class GTFSImporter {
     }
 
     //  this method works same as importTripsWithLoadData
+    @SuppressWarnings("SqlResolve")
     private void importStopTimesWithLoadData(Path filePath, Connection conn) throws SQLException {
         String absolutePath = filePath.toAbsolutePath().toString().replace("\\", "/");
 
@@ -185,6 +187,7 @@ public class GTFSImporter {
         }
     }
 
+    @SuppressWarnings("SqlResolve")
     private void insertShapeIndex(List<CSVRecord> shapeRecords, Connection conn) throws SQLException {
         Set<String> shapeIds = shapeRecords.stream()
                 .map(record -> record.get("shape_id"))
@@ -203,7 +206,8 @@ public class GTFSImporter {
         if (isDebugMode) System.err.println("Inserted " + insertedCount + " unique shape_id(s) into shape_index table.");
     }
 
-    // sane as importTimesWithLoadData
+    // same as importTimesWithLoadData
+    @SuppressWarnings("SqlResolve")
     private void importShapesWithLoadData(Path filePath, Connection conn) throws SQLException {
         String absolutePath = filePath.toAbsolutePath().toString().replace("\\", "/");
         try (Statement stmt = conn.createStatement()) {
@@ -229,7 +233,7 @@ public class GTFSImporter {
 
         }
     }
-
+    @SuppressWarnings("SqlResolve")
     private void uploadToTable(List<CSVRecord> records, String tableName, Connection conn) throws SQLException {
         if (records.isEmpty()) return;
 
@@ -277,6 +281,7 @@ public class GTFSImporter {
         return integerColumns.getOrDefault(tableName, Collections.emptySet()).contains(columnName);
     }
 
+    @SuppressWarnings("deprecation")
     private static List<CSVRecord> readCSV(Path filePath) throws IOException {
         try (FileReader reader = new FileReader(filePath.toFile())) {
             return CSVFormat.DEFAULT.withFirstRecordAsHeader().parse(reader).getRecords();

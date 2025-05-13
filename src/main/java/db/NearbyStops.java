@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import static util.DebugUtli.getDebugMode;
 
 public class NearbyStops {
+    @SuppressWarnings("SqlInjection")
     public static ArrayList<Stop> getNearbyStops(double lat, double lon, double radiusMeters) {
         ArrayList<Stop> stopsWithinRadius = new ArrayList<>();
         DBaccess db = DBaccessProvider.getInstance();

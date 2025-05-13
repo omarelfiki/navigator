@@ -11,6 +11,7 @@ public class DBaccess {
     private boolean isDebugMode;
 
 
+    @SuppressWarnings("unused")
     public DBaccess(String host, String port, String user, String password, String dbName) {
         this("jdbc:mysql://" + user + ":" + password + "@" + host + ":" + port + "/" + dbName);
         this.isDebugMode = getDebugMode();

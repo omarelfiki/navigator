@@ -18,6 +18,7 @@ public class WeatherUtil {
     private static final String API_KEY = "d398b5c0a8091474dacc1edbab7b736e";
     private static final String BASE_URL = "https://api.openweathermap.org/data/3.0/onecall";
 
+    @SuppressWarnings("deprecation")
     public static Object[] getWeather(String lat, String lon) {
         boolean isDebugMode = getDebugMode();
         try {

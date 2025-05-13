@@ -34,6 +34,7 @@ public class DBconfig {
         isDebugMode = getDebugMode();
     }
 
+    @SuppressWarnings("SqlInjection")
     public void initializeDB() {
         try {
             if (isDebugMode) System.err.println("Starting database initialization...");
