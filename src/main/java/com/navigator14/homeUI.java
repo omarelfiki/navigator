@@ -302,12 +302,17 @@ public class homeUI extends Application {
 
     public static void main(String[] args) {
         String gtfsDir = System.getenv("GTFS_DIR");
-        System.setProperty("debug", System.getenv("debug"));
+        String debug = System.getenv("debug");
         boolean isDebugMode = getDebugMode();
         if (gtfsDir != null) {
             System.setProperty("GTFS_DIR", gtfsDir);
         } else {
             if (isDebugMode) System.err.println("Environment variable 'GTFS_DIR' is not set. Set the path manually in the settings panel.");
+        }
+        if (debug != null) {
+            System.setProperty("debug", debug);
+        } else {
+            if (isDebugMode) System.err.println("Environment variable 'debug' is not set. Debug mode is enabled by default.");
         }
         launch(args);
     }
