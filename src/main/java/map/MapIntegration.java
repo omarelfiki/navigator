@@ -103,7 +103,7 @@ public class MapIntegration {
             File cacheDir = new File(System.getProperty("user.home") + File.separator + ".jxmapviewer2");
             if (!cacheDir.exists()) {
                 if (cacheDir.mkdirs()) {
-                    if (isDebugMode) System.out.println("Cache directory created: " + cacheDir.getAbsolutePath());
+                    if (isDebugMode) System.err.println("Cache directory created: " + cacheDir.getAbsolutePath());
                 } else {
                     if (isDebugMode) System.err.println("Failed to create cache directory: " + cacheDir.getAbsolutePath());
                 }
@@ -113,7 +113,7 @@ public class MapIntegration {
             String zipFilePath = System.getProperty("user.home") + File.separator + "Archive.zip";
             try {
                 tileUtil.createZip(cacheDirPath, zipFilePath);
-                if (isDebugMode) System.out.println("Cache created at: " + zipFilePath);
+                if (isDebugMode) System.err.println("Cache created at: " + zipFilePath);
             } catch (IOException e) {
                 if (isDebugMode) System.err.println("Failed to create map cache zip file: " + e);
             }

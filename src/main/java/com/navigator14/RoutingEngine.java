@@ -13,6 +13,7 @@ import models.Request;
 import util.AStarRouterV;
 import util.Node;
 
+import static util.DebugUtli.getDebugMode;
 import static util.TimeUtil.parseTime;
 
 public class RoutingEngine {
@@ -29,7 +30,13 @@ public class RoutingEngine {
     }
 
     public static void main(String[] args) throws IOException {
-        System.setProperty("debug", System.getenv("debug"));
+        String debug = System.getenv("debug");
+        boolean isDebugMode = getDebugMode();
+        if (debug != null) {
+            System.setProperty("debug", debug);
+        } else {
+            if (isDebugMode) System.err.println("Environment variable 'debug' is not set. Debug mode is enabled by default.");
+        }
         new RoutingEngine().run();
     }
 
@@ -173,5 +180,3 @@ public class RoutingEngine {
     }
 }
 // {"routeFrom":{"lat":41.904,"lon":12.5004},"to":{"lat":41.8791,"lon":12.5221},"startingAt":"09:30:00"} - test case
-// {"routeFrom":{"lat":30.146273,"lon":31.421091},"to":{"lat":30.052291,"lon":31.246768},"startingAt":"09:30:00"} - test case
-// 30.052291, 31.246768

@@ -52,7 +52,7 @@ public class EdgeService {
 
         //add transfer edges
         List<Trip> upcomingTrips = tds.getUpcomingDistinctRouteTrips(node.stopId, node.arrivalTime);
-        System.err.println("upcoming trips: " + upcomingTrips.size());
+        if (isDebugMode) System.err.println("upcoming trips: " + upcomingTrips.size());
         for (Trip trip : upcomingTrips) {
             try {
                 TransferEdge transferEdge = new TransferEdge(startStop.stopId, node.arrivalTime, trip);
