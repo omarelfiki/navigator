@@ -20,7 +20,7 @@ public class HomeUITest extends ApplicationTest {
     }
 
     @Test
-    public void testFillFields() {
+    public void test1() {
         TextField originField = lookup("#originField").query();
         clickOn(originField).write("Roma Termini");
 
@@ -36,6 +36,32 @@ public class HomeUITest extends ApplicationTest {
         // Assertions to verify the fields are filled correctly
         assertThat(originField.getText()).isEqualTo("Roma Termini");
         assertThat(destinationField.getText()).isEqualTo("Vatican");
+        assertThat(timeField.getText()).isEqualTo("09:30");
+        assertThat(dateField.getValue()).isEqualTo(LocalDate.of(2024, 5, 12));
+        assertThat(lookup(".text").queryText().getText()).doesNotContain("No route found");
+
+        WaitForAsyncUtils.sleep(15, TimeUnit.SECONDS);
+
+
+    }
+
+    @Test
+    public void test2(){
+        TextField originField = lookup("#originField").query();
+        clickOn(originField).write("Roma Termini");
+
+        TextField destinationField = lookup("#destinationField").query();
+        clickOn(destinationField).write("Colloseum");
+
+        TextField timeField = lookup("#timeField").query();
+        clickOn(timeField).write("09:30");
+
+        DatePicker dateField = lookup("#dateField").query();
+        interact(() -> dateField.setValue(LocalDate.of(2024, 5, 12)));
+
+        // Assertions to verify the fields are filled correctly
+        assertThat(originField.getText()).isEqualTo("Roma Termini");
+        assertThat(destinationField.getText()).isEqualTo("Colloseum");
         assertThat(timeField.getText()).isEqualTo("09:30");
         assertThat(dateField.getValue()).isEqualTo(LocalDate.of(2024, 5, 12));
 

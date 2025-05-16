@@ -141,7 +141,7 @@ public class GTFSImporter {
                     // special cases for empty field, if the fild is a number insert it, else insert as NULL
                     "direction_id = IF(@direction_id REGEXP '^[0-9]+$', @direction_id, NULL), " +
                     // special cases for empty field, if the fild is a number insert it, else insert as NULL
-                    "block_id = IF(@block_id REGEXP '^[0-9]+$', @direction_id, NULL), " +
+                    "block_id = IF(@block_id REGEXP '^[0-9]+$', @block_id, NULL), " +
                     // special cases for empty field, if the fild is a number insert it, else insert as NULL
                     "wheelchair_accessible = IF(@wheelchair_accessible REGEXP '^[0-9]+$', @wheelchair_accessible, NULL), " +
                     // special cases for empty field, if the fild is a number insert it, else insert as NULL
