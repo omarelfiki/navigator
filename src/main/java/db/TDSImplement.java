@@ -6,21 +6,24 @@ import java.sql.*;
 import java.util.*;
 import java.util.List;
 
+import static util.DebugUtli.getDebugMode;
+
 public class TDSImplement implements TransitDataService {
-    private final boolean isDebugMode = true;
+    private final boolean isDebugMode;
     private final DBaccess db;
 
     public TDSImplement() {
+        this.isDebugMode = getDebugMode();
         this.db = DBaccessProvider.getInstance();
         if (db == null) {
-            System.err.println("Error: Database access instance is null.");
+            if (isDebugMode) System.err.println("Error: Database access instance is null.");
         }
     }
 
     @Override
+    @SuppressWarnings("SqlResolve")
     public Stop getStop(String stopId) {
         if (db == null) {
-
             if (isDebugMode) System.err.println("Error: Database access instance is null.");
             return null;
         }
@@ -40,13 +43,13 @@ public class TDSImplement implements TransitDataService {
         } catch (SQLException e) {
             if (isDebugMode) System.err.println("SQL Error in getStop: " + e.getMessage());
         }
-        System.err.println("Stop not found: " + stopId);
+        if (isDebugMode) System.err.println("Stop not found: " + stopId);
         return null;
     }
-
+    @SuppressWarnings("SqlResolve")
     public StopTime getFutureStopTime(StopTime currentStopTime, int stepsAhead) {
         if (db == null) {
-            System.err.println("Error: Database access instance is null.");
+            if (isDebugMode) System.err.println("Error: Database access instance is null.");
             return null;
         }
 
@@ -61,12 +64,8 @@ public class TDSImplement implements TransitDataService {
             ps.setInt(2, currentStopTime.stopSequence + stepsAhead);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
-                StopTime next = new StopTime();
+                StopTime next = getStopTime(rs);
                 next.trip = currentStopTime.trip;
-                next.stop = getStop(rs.getString("stop_id"));
-                next.arrivalTime = rs.getString("arrival_time");
-                next.departureTime = rs.getString("departure_time");
-                next.stopSequence = rs.getInt("stop_sequence");
                 return next;
             }
         } catch (SQLException e) {
@@ -75,7 +74,7 @@ public class TDSImplement implements TransitDataService {
         return null;
     }
 
-
+    @SuppressWarnings("SqlResolve")
     @Override
     public List<Stop> getAllStops() {
         String sql = "SELECT stop_id, stop_name, stop_lat, stop_lon FROM stops";
@@ -107,9 +106,10 @@ public class TDSImplement implements TransitDataService {
         return queryStopTimes("SELECT trip_id, stop_id, arrival_time, departure_time, stop_sequence FROM stop_times WHERE stop_id = ? ORDER BY arrival_time", stopId);
     }
 
+    @SuppressWarnings("SqlResolve")
     public StopTime getNextStopTime(StopTime currentStopTime) {
         if (db == null) {
-            System.err.println("Error: Database access instance is null.");
+            if (isDebugMode) System.err.println("Error: Database access instance is null.");
             return null;
         }
         String sql = "SELECT trip_id, stop_id, arrival_time, departure_time, stop_sequence " +
@@ -134,9 +134,10 @@ public class TDSImplement implements TransitDataService {
         return null;
     }
 
+    @SuppressWarnings("SqlResolve")
     public StopTime getCurrentStopTime(Trip trip, Stop stop, String departureTime) {
         if (db == null) {
-            System.err.println("Error: Database access instance is null.");
+            if (isDebugMode) System.err.println("Error: Database access instance is null.");
             return null;
         }
         String sql = """
@@ -167,7 +168,7 @@ public class TDSImplement implements TransitDataService {
         return null;
     }
 
-
+    @SuppressWarnings("SqlResolve")
     public List<Trip> getUpcomingDistinctRouteTrips(String stopId, String arrivalTime) {
         if (db == null) {
             if (isDebugMode) System.err.println("Error: Database access instance is null.");
@@ -206,7 +207,7 @@ public class TDSImplement implements TransitDataService {
         return trips;
     }
 
-
+    @SuppressWarnings("SqlResolve")
     @Override
     public List<StopTime> getFutureDepartures(String stopId, Time afterTime) {
         String sql = "SELECT trip_id, stop_id, arrival_time, departure_time, stop_sequence FROM stop_times WHERE stop_id = ? AND departure_time > ? ORDER BY departure_time";
@@ -217,12 +218,7 @@ public class TDSImplement implements TransitDataService {
             ps.setTime(2, afterTime);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                StopTime st = new StopTime();
-                st.trip = getTrip(rs.getString("trip_id"));
-                st.stop = getStop(rs.getString("stop_id"));
-                st.arrivalTime = rs.getString("arrival_time");
-                st.departureTime = rs.getString("departure_time");
-                st.stopSequence = rs.getInt("stop_sequence");
+                StopTime st = getStopTime(rs);
                 futureDepartures.add(st);
             }
         } catch (SQLException e) {
@@ -231,6 +227,7 @@ public class TDSImplement implements TransitDataService {
         return futureDepartures;
     }
 
+    @SuppressWarnings("SqlResolve")
     @Override
     public Trip getTrip(String tripId) {
         if (db == null) {
@@ -255,6 +252,7 @@ public class TDSImplement implements TransitDataService {
         return null;
     }
 
+    @SuppressWarnings("SqlResolve")
     @Override
     public Route getRoute(String routeId) {
         if (db == null) {
@@ -279,6 +277,7 @@ public class TDSImplement implements TransitDataService {
         return null;
     }
 
+    @SuppressWarnings("SqlResolve")
     private List<StopTime> queryStopTimes(String sql, String p) {
         if (db == null) {
             if (isDebugMode) System.err.println("Error: Database access instance is null.");
@@ -290,17 +289,22 @@ public class TDSImplement implements TransitDataService {
             ps.setString(1, p);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                StopTime st = new StopTime();
-                st.trip = getTrip(rs.getString("trip_id"));
-                st.stop = getStop(rs.getString("stop_id"));
-                st.arrivalTime = rs.getString("arrival_time");
-                st.departureTime = rs.getString("departure_time");
-                st.stopSequence = rs.getInt("stop_sequence");
+                StopTime st = getStopTime(rs);
                 stopTimes.add(st);
             }
         } catch (SQLException e) {
             if (isDebugMode) System.err.println("SQL Error in getStopTimesForStop: " + e.getMessage());
         }
         return stopTimes;
+    }
+
+    private StopTime getStopTime(ResultSet rs) throws SQLException {
+        StopTime stopTime = new StopTime();
+        stopTime.trip = getTrip(rs.getString("trip_id"));
+        stopTime.stop = getStop(rs.getString("stop_id"));
+        stopTime.arrivalTime = rs.getString("arrival_time");
+        stopTime.departureTime = rs.getString("departure_time");
+        stopTime.stopSequence = rs.getInt("stop_sequence");
+        return stopTime;
     }
 }

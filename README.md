@@ -31,6 +31,9 @@ Designed for public transit systems, it enables real-time route discovery using 
     │   │   │   ├── map/                # GUI Map Classes
     │   │   │   └── util/               # Utility Classes + Routing Engine 
     │   │   └── resources/              # JavaFX and SQL Resources (.sql, .css, Images)
+    │   ├── test/                       # Test Classes
+    │   │   └── java/
+    │   │       └── com.navigator14/    
     ├── oldGraphStuff/                  # Early Prototype (for reference)                                       
     └── README.md                                   
 

@@ -5,6 +5,8 @@ import models.Stop;
 import models.StopTime;
 import models.Trip;
 
+import static util.TimeUtil.calculateDifference;
+
 class TransferEdge implements Edge {
     String toStopId;
     String fromStopId;
@@ -22,7 +24,6 @@ class TransferEdge implements Edge {
     String rideStartTime;
 
     TDSImplement tds = new TDSImplement();
-    TimeUtil timeUtil = new TimeUtil();
 
     public TransferEdge(String fromStopId, String departureTime, Trip trip) {
         this.fromStopId = fromStopId;
@@ -44,10 +45,10 @@ class TransferEdge implements Edge {
         this.arrivalTime = nextStopTime.getArrivalTime();
 
         // WAIT = time between my arrival at stop and trip's departure
-        this.waitingTime = timeUtil.calculateDifference(this.departureTime, currentStopTime.getDepartureTime());
+        this.waitingTime = calculateDifference(this.departureTime, currentStopTime.getDepartureTime());
         this.rideStartTime = currentStopTime.getDepartureTime();
         // RIDE = time from bus departure to bus arrival at next stop
-        this.rideTime = timeUtil.calculateDifference(currentStopTime.getDepartureTime(), nextStopTime.getArrivalTime());
+        this.rideTime = calculateDifference(currentStopTime.getDepartureTime(), nextStopTime.getArrivalTime());
 
         // WEIGHT = total cost
         //this.weight = timeUtil.calculateDifference(this.departureTime, this.arrivalTime); // or waitingTime + rideTime

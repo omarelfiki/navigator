@@ -138,8 +138,6 @@ public class UiHelper {
             passwordField.setText(password);
             hostField.setText(host);
             portField.setText(port);
-        } else {
-            System.out.println("Invalid connection string format.");
         }
     }
 

@@ -12,6 +12,8 @@ import db.DBconfig;
 import models.Request;
 import util.AStarRouterV;
 import util.Node;
+
+import static util.DebugUtli.getDebugMode;
 import static util.TimeUtil.parseTime;
 
 public class RoutingEngine {
@@ -28,6 +30,13 @@ public class RoutingEngine {
     }
 
     public static void main(String[] args) throws IOException {
+        String debug = System.getenv("debug");
+        boolean isDebugMode = getDebugMode();
+        if (debug != null) {
+            System.setProperty("debug", debug);
+        } else {
+            if (isDebugMode) System.err.println("Environment variable 'debug' is not set. Debug mode is enabled by default.");
+        }
         new RoutingEngine().run();
     }
 
@@ -46,6 +55,11 @@ public class RoutingEngine {
             }
 
             if (json instanceof Map<?, ?> request) {
+                if (request.containsKey("exit")) {
+                    System.err.println("Exit command received");
+                    break; // Exit the loop
+                }
+
                 if (request.containsKey("load")) {
                     if (initDB(request)) return;
                     sendOk("loaded");
