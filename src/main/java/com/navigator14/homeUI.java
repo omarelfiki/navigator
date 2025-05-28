@@ -29,6 +29,7 @@ import org.jxmapviewer.viewer.GeoPosition;
 import ui.*;
 import util.Node;
 
+import java.awt.event.MouseAdapter;
 import java.awt.geom.Point2D;
 import java.util.*;
 
@@ -40,6 +41,7 @@ import static util.WeatherUtil.createWeatherTask;
 public class homeUI extends Application {
     private final BooleanProperty isOn = new SimpleBooleanProperty(false);
     private Button hideSidePanel, showSidePanel;
+    private boolean firstClick = true;
 
     @Override
     public void start(Stage primaryStage) {
@@ -262,6 +264,8 @@ public class homeUI extends Application {
                 double lat = geoPosition.getLatitude();
                 double lon = geoPosition.getLongitude();
 
+                updateCoordinateFields(lat, lon, originField, destinationField);
+
                 Task<Void> weatherTask = createWeatherTask(lat, lon, temperatureLabel, weatherIcon);
                 new Thread(weatherTask).start();
             }
@@ -300,6 +304,23 @@ public class homeUI extends Application {
         }
     }
 
+    private void updateCoordinateFields(double lat, double lon, TextField originField, TextField destinationField) {
+        // formate the coordinates
+        String coordinateText = String.format("%.6f, %.6f", lat, lon);
+
+        if (firstClick && originField.getText().isEmpty()) {
+            Platform.runLater(() -> {
+                originField.setText(coordinateText);
+                firstClick = false;
+            });
+        } else if (!firstClick && destinationField.getText().isEmpty()) {
+            Platform.runLater(() -> {
+                destinationField.setText(coordinateText);
+                firstClick = true;
+            });
+        }
+    }
+
     public static void main(String[] args) {
         String gtfsDir = System.getenv("GTFS_DIR");
         String debug = System.getenv("debug");
@@ -307,12 +328,14 @@ public class homeUI extends Application {
         if (gtfsDir != null) {
             System.setProperty("GTFS_DIR", gtfsDir);
         } else {
-            if (isDebugMode) System.err.println("Environment variable 'GTFS_DIR' is not set. Set the path manually in the settings panel.");
+            if (isDebugMode)
+                System.err.println("Environment variable 'GTFS_DIR' is not set. Set the path manually in the settings panel.");
         }
         if (debug != null) {
             System.setProperty("debug", debug);
         } else {
-            if (isDebugMode) System.err.println("Environment variable 'debug' is not set. Debug mode is enabled by default.");
+            if (isDebugMode)
+                System.err.println("Environment variable 'debug' is not set. Debug mode is enabled by default.");
         }
         launch(args);
     }
