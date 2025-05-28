@@ -1,8 +1,27 @@
 package map;
 
-import java.awt.Color;
+import java.awt.*;
+import java.awt.image.BufferedImage;
 
 public class ColorUtil {
+    public static BufferedImage getColorTile(String color) {
+        if (color == null || color.isEmpty()) {
+            return null;
+        }
+        try {
+            Color c = Color.decode(color);
+            BufferedImage image = new BufferedImage(256, 256, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g2d = (Graphics2D) image.getGraphics();
+            g2d.setColor(new Color(c.getRed(), c.getGreen(), c.getBlue(), 128)); // Semi-transparent color
+            g2d.fillRect(0, 0, 256, 256);
+            g2d.dispose();
+            return image;
+        } catch (NumberFormatException e) {
+            System.err.println("Invalid color format: " + color);
+            return null;
+        }
+    }
+
     public static String getColorFromGradient(double time) {
         if (time < 0) {
             return null;
