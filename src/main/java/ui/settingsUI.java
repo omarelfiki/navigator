@@ -4,6 +4,7 @@ import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
@@ -108,7 +109,7 @@ public class settingsUI {
         password.yProperty().bind(root.heightProperty().multiply(0.48)); // 400/832
         settingsMenu.getChildren().add(password);
 
-        TextField passwordField = new TextField();
+        PasswordField passwordField = new PasswordField();
         passwordField.setPromptText("Password");
         passwordField.layoutXProperty().bind(root.widthProperty().multiply(0.017)); // 78/1280
         passwordField.layoutYProperty().bind(root.heightProperty().multiply(0.5)); // 420/832
