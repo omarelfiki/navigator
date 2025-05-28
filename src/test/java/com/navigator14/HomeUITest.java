@@ -65,6 +65,31 @@ public class HomeUITest extends ApplicationTest {
         assertThat(timeField.getText()).isEqualTo("09:30");
         assertThat(dateField.getValue()).isEqualTo(LocalDate.of(2024, 5, 12));
 
+        WaitForAsyncUtils.sleep(15, TimeUnit.SECONDS);
+
+        assertThat(lookup(".text").queryText().getText()).doesNotContain("No route found");
+    }
+
+    @Test
+    public void test3(){
+        TextField originField = lookup("#originField").query();
+        clickOn(originField).write("41.904, 12.5004");
+
+        TextField destinationField = lookup("#destinationField").query();
+        clickOn(destinationField).write("41.8791, 12.5221");
+
+        TextField timeField = lookup("#timeField").query();
+        clickOn(timeField).write("09:30");
+
+        DatePicker dateField = lookup("#dateField").query();
+        interact(() -> dateField.setValue(LocalDate.of(2024, 5, 12)));
+
+        // Assertions to verify the fields are filled correctly
+        assertThat(originField.getText()).isEqualTo("41.904, 12.5004");
+        assertThat(destinationField.getText()).isEqualTo("41.8791, 12.5221");
+        assertThat(timeField.getText()).isEqualTo("09:30");
+        assertThat(dateField.getValue()).isEqualTo(LocalDate.of(2024, 5, 12));
+
         WaitForAsyncUtils.sleep(20, TimeUnit.SECONDS);
 
         assertThat(lookup(".text").queryText().getText()).doesNotContain("No route found");
