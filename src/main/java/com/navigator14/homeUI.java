@@ -1,5 +1,6 @@
 package com.navigator14;
 
+import map.WayPoint;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -25,7 +26,12 @@ import javafx.scene.shape.Circle;
 import map.*;
 import db.*;
 import org.jxmapviewer.JXMapViewer;
+import org.jxmapviewer.painter.CompoundPainter;
+import org.jxmapviewer.painter.Painter;
+import org.jxmapviewer.viewer.DefaultWaypoint;
 import org.jxmapviewer.viewer.GeoPosition;
+import org.jxmapviewer.viewer.Waypoint;
+import org.jxmapviewer.viewer.WaypointPainter;
 import ui.*;
 import util.AStarRouterV;
 import util.Node;
@@ -42,6 +48,10 @@ public class homeUI extends Application {
     private final BooleanProperty isOn = new SimpleBooleanProperty(false);
     private Button hideSidePanel, showSidePanel;
     private boolean firstClick = true;
+    private Set<Waypoint> waypoints = new HashSet<>();
+    private DefaultWaypoint originWaypoint;
+    private DefaultWaypoint destinationWaypoint;
+    private WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<>();
 
     @Override
     public void start(Stage primaryStage) {
@@ -246,6 +256,9 @@ public class homeUI extends Application {
             AStarRouterV router = new AStarRouterV();
             router.reset();
             label.setText("Navigate to see public transport \n options");
+            originWaypoint = null;
+            destinationWaypoint = null;
+            waypoints.clear();
         });
         leftPane.getChildren().add(clearButton);
         clearButton.setVisible(false);
@@ -271,7 +284,7 @@ public class homeUI extends Application {
 
         JXMapViewer map = mapIntegration.getMap();
 
-        map.addMouseListener(new java.awt.event.MouseAdapter() {
+    /*    map.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent e) {
                 Point2D point = e.getPoint();
@@ -279,10 +292,18 @@ public class homeUI extends Application {
                 double lat = geoPosition.getLatitude();
                 double lon = geoPosition.getLongitude();
 
-                updateCoordinateFields(lat, lon, originField, destinationField);
-
                 Task<Void> weatherTask = createWeatherTask(lat, lon, temperatureLabel, weatherIcon);
                 new Thread(weatherTask).start();
+            }
+        });*/
+        map.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                Point2D point = e.getPoint();
+                GeoPosition geoPosition = map.convertPointToGeoPosition(point);
+                double lat = geoPosition.getLatitude();
+                double lon = geoPosition.getLongitude();
+                updateCoordinateFields(lat, lon, originField, destinationField);
             }
         });
 
@@ -302,24 +323,69 @@ public class homeUI extends Application {
     }
 
     private void toggleSwitch(Rectangle background) {
+        isOn.set(!isOn.get());
         if (isOn.get()) {
-            background.setFill(Color.LIGHTGRAY); // Off state
+            background.setFill(Color.LIMEGREEN);
+            if(originWaypoint != null) {
+                waypoints.clear();
+                waypoints.add(originWaypoint);
+                waypointPainter.setWaypoints(waypoints);
+                JXMapViewer map = MapProvider.getInstance().getMap();
+                map.setOverlayPainter(waypointPainter);
+            }
+            firstClick = true;
         } else {
-            background.setFill(Color.LIMEGREEN); // On state
+            background.setFill(Color.LIGHTGRAY);
+            if(destinationWaypoint != null&&originWaypoint!=null) {
+                waypoints.clear();
+                waypoints.add(originWaypoint);
+                waypoints.add(destinationWaypoint);
+                waypointPainter.setWaypoints(waypoints);
+                JXMapViewer map = MapProvider.getInstance().getMap();
+                map.setOverlayPainter(waypointPainter);
+            }
+
         }
-        isOn.set(!isOn.get()); // Toggle the state
     }
 
+    public void displayResult(List<Node> result, StackPane pane) {
+        for (Node node : result) {
+            Text text = new Text(node.stop.stopName);
+            text.setFill(Color.WHITE);
+            text.setStyle("-fx-font: 14 Ubuntu;");
+            pane.getChildren().add(text);
+        }
+    }
+// this method to add the markers on the clicks
+    private void addMarkerOnClicks(double lat, double lon, boolean isOrigin) {
+        MapIntegration mapIntegration = MapProvider.getInstance();
+        JXMapViewer map = mapIntegration.getMap();
+        GeoPosition geoPosition = new GeoPosition(lat, lon);
+        if (isOrigin) {
+            waypoints.clear();
+            WayPoint.clearRoute();
+            originWaypoint = new DefaultWaypoint(geoPosition);
+            waypoints.add(originWaypoint);
+        } else {
+            destinationWaypoint = new DefaultWaypoint(geoPosition);
+            waypoints.add(destinationWaypoint);
+        }
+        waypointPainter.setWaypoints(waypoints);
+        map.setOverlayPainter(waypointPainter);
+    }
+// this method to update the fileds
     private void updateCoordinateFields(double lat, double lon, TextField originField, TextField destinationField) {
-        // formate the coordinates
+        // Format the coordinates
         String coordinateText = String.format("%.6f, %.6f", lat, lon);
 
         if (firstClick && originField.getText().isEmpty()) {
+            addMarkerOnClicks(lat, lon, true);
             Platform.runLater(() -> {
                 originField.setText(coordinateText);
                 firstClick = false;
             });
         } else if (!firstClick && destinationField.getText().isEmpty()) {
+            addMarkerOnClicks(lat, lon, false);
             Platform.runLater(() -> {
                 destinationField.setText(coordinateText);
                 firstClick = true;

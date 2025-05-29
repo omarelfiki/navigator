@@ -15,7 +15,7 @@ import java.util.*;
 import java.util.List;
 
 public class WayPoint {
-public static void addWaypoint(List<Node> path) {
+    public static void addWaypoint(List<Node> path) {
     MapIntegration mapIntegration = MapProvider.getInstance();
     JXMapViewer map = mapIntegration.getMap();
 
