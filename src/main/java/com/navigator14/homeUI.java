@@ -108,7 +108,7 @@ public class homeUI extends Application {
         label.yProperty().bind(root.heightProperty().multiply(0.48)); // 400/832
         leftPane.getChildren().add(label);
 
-        dateField.valueProperty().addListener((obs, oldVal, newVal) -> {
+        dateField.valueProperty().addListener((_, _, _) -> {
             if (filled.get()) {
                 Task<Void> task = new Task<>() {
                     @Override
@@ -308,15 +308,6 @@ public class homeUI extends Application {
             background.setFill(Color.LIMEGREEN); // On state
         }
         isOn.set(!isOn.get()); // Toggle the state
-    }
-
-    public void displayResult(List<Node> result, StackPane pane) {
-        for (Node node : result) {
-            Text text = new Text(node.stop.stopName);
-            text.setFill(Color.WHITE);
-            text.setStyle("-fx-font: 14 Ubuntu;");
-            pane.getChildren().add(text);
-        }
     }
 
     private void updateCoordinateFields(double lat, double lon, TextField originField, TextField destinationField) {
