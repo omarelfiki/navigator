@@ -108,7 +108,7 @@ public class DBconfig {
             if (access.conn != null && !access.conn.isClosed()) {
                 if (isDebugMode) System.err.println("Accessing GTFS schema SQL file");
                 try {
-                    String sqlFilePath = Objects.requireNonNull(getClass().getClassLoader().getResource("newschema.sql")).toURI().getPath();
+                    String sqlFilePath = Objects.requireNonNull(getClass().getClassLoader().getResource("newschema.sql")).getPath();
                     sqlFilePath = URLDecoder.decode(sqlFilePath, StandardCharsets.UTF_8);
                     if (sqlFilePath.startsWith("/") && System.getProperty("os.name").toLowerCase().contains("win")) {
                         sqlFilePath = sqlFilePath.substring(1);
@@ -123,8 +123,6 @@ public class DBconfig {
                     }
                 } catch (java.io.IOException e) {
                     System.err.println("Error reading SQL file: " + e.getMessage());
-                } catch (URISyntaxException e) {
-                    System.err.println("Error decoding SQL file path: " + e.getMessage());
                 }
                 if (isDebugMode) System.err.println("GTFS data model table created successfully.");
             } else {
