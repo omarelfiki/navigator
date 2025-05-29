@@ -34,4 +34,10 @@ public class DebugUtli {
             return Boolean.parseBoolean(debug);
         }
     }
+
+    public static String getOS() {
+        String os = System.getProperty("os.name").toLowerCase();
+        System.out.println("Operating System: " + os);
+        return os;
+    }
 }

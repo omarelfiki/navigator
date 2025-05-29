@@ -103,5 +103,10 @@ public class AStarRouterV {
         return path;
     }
 
+    public void reset() {
+        bestCosts.clear();
+    }
+
+
 
 }

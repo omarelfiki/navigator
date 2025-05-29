@@ -59,4 +59,11 @@ public static void addWaypoint(List<Node> path) {
     }
     map.zoomToBestFit(geoPositions, 0.7);
 }
+
+    public static void clearRoute() {
+        MapIntegration mapIntegration = MapProvider.getInstance();
+        JXMapViewer map = mapIntegration.getMap();
+        map.setOverlayPainter(null);
+    }
+
 }

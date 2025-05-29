@@ -27,6 +27,7 @@ import db.*;
 import org.jxmapviewer.JXMapViewer;
 import org.jxmapviewer.viewer.GeoPosition;
 import ui.*;
+import util.AStarRouterV;
 import util.Node;
 
 import java.awt.geom.Point2D;
@@ -40,6 +41,7 @@ import static util.WeatherUtil.createWeatherTask;
 public class homeUI extends Application {
     private final BooleanProperty isOn = new SimpleBooleanProperty(false);
     private Button hideSidePanel, showSidePanel;
+    private boolean firstClick = true;
 
     @Override
     public void start(Stage primaryStage) {
@@ -82,7 +84,6 @@ public class homeUI extends Application {
 
         StackPane timeContainer = createDateTimeContainer("⏰", "Time", 0.026, 0.12, 0.036, root, 1);
         StackPane dateContainer = createDateTimeContainer("🗓️", "Date", 0.11, 0.132, 0.061, root, 0);
-        bindDateTime(timeContainer, dateContainer, originField, destinationField);
         leftPane.getChildren().addAll(timeContainer, dateContainer);
 
         TextField timeField = (TextField) ((HBox) timeContainer.getChildren().getFirst()).getChildren().get(1);
@@ -107,40 +108,37 @@ public class homeUI extends Application {
         label.yProperty().bind(root.heightProperty().multiply(0.48)); // 400/832
         leftPane.getChildren().add(label);
 
-        Task<Void> task = new Task<>() {
-            @Override
-            protected Void call() {
-                Platform.runLater(() -> {
-                    if (filled.get()) {
+        dateField.valueProperty().addListener((_, _, _) -> {
+            if (filled.get()) {
+                Task<Void> task = new Task<>() {
+                    @Override
+                    protected Void call() {
                         String origin = originField.getText();
                         String destination = destinationField.getText();
                         String time = timeField.getText();
                         Date date = java.sql.Date.valueOf(dateField.getValue());
-                        label.setText("Finding routes...");
 
-                        new Thread(() -> {
-                            List<Node> result = parsePoint(origin, destination, time, date);
+                        Platform.runLater(() -> label.setText("Finding routes..."));
+
+                        List<Node> result = parsePoint(origin, destination, time, date);
+
+                        Platform.runLater(() -> {
                             if (result == null) {
-                                Platform.runLater(() -> label.setText("No route found."));
+                                label.setText("No route found.");
                             } else {
-                                Platform.runLater(() -> {
-//                                    label.setVisible(false);
-//                                    StackPane resultPane = new StackPane();
-//                                    resultPane.layoutXProperty().bind(root.widthProperty().multiply(0.026));
-//                                    resultPane.layoutYProperty().bind(root.heightProperty().multiply(0.4));
-//                                    resultPane.setMaxWidth(300);
-//                                    resultPane.setMaxHeight(700);
-//                                    displayResult(result, resultPane);
-//                                    leftPane.getChildren().add(resultPane);
-                                    label.setText("Found " + result.size() + " stops along route.");
-                                });
+                                label.setText("Found " + result.size() + " stops along route.");
                             }
-                        }).start();
+                        });
+
+                        return null;
                     }
-                });
-                return null;
+                };
+                new Thread(task).start();
+            } else {
+                Platform.runLater(() -> label.setText("Navigate to see public transport \n options"));
             }
-        };
+        });
+
 
         isOn.addListener((_, _, _) -> {
             if (isOn.get()) {
@@ -220,7 +218,6 @@ public class homeUI extends Application {
         imageView.fitWidthProperty().bind(root.widthProperty().multiply(0.02)); // 25/1280
         imageView.fitHeightProperty().bind(root.heightProperty().multiply(0.03)); // 25/832
 
-
         Button settings = new Button("", imageView);
         settings.layoutXProperty().bind(root.widthProperty().multiply(0.219)); // 280/1280
         settings.layoutYProperty().bind(root.heightProperty().multiply(0.913).add(20)); // 760/832 + 20
@@ -233,7 +230,27 @@ public class homeUI extends Application {
         });
         leftPane.getChildren().add(settings);
 
-        dateField.valueProperty().addListener((_, _, _) -> new Thread(task).start()); // start task when date changes
+        // Clear fields button
+        Button clearButton = new Button("Clear");
+        clearButton.prefWidthProperty().bind(root.widthProperty().multiply(0.07));
+        clearButton.prefHeightProperty().bind(root.heightProperty().multiply(0.04));
+        clearButton.layoutXProperty().bind(root.widthProperty().multiply(0.1));
+        clearButton.layoutYProperty().bind(root.heightProperty().multiply(0.85));
+        clearButton.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
+        clearButton.setOnAction(_ -> {
+            originField.clear();
+            destinationField.clear();
+            timeField.clear();
+            dateField.setValue(null);
+            WayPoint.clearRoute();
+            AStarRouterV router = new AStarRouterV();
+            router.reset();
+            label.setText("Navigate to see public transport \n options");
+        });
+        leftPane.getChildren().add(clearButton);
+        clearButton.setVisible(false);
+
+        bindElements(timeContainer, dateContainer, clearButton, originField, destinationField);
 
         Text temperatureLabel = new Text("0°C");
         temperatureLabel.setFill(Color.WHITE);
@@ -261,6 +278,8 @@ public class homeUI extends Application {
                 GeoPosition geoPosition = map.convertPointToGeoPosition(point);
                 double lat = geoPosition.getLatitude();
                 double lon = geoPosition.getLongitude();
+
+                updateCoordinateFields(lat, lon, originField, destinationField);
 
                 Task<Void> weatherTask = createWeatherTask(lat, lon, temperatureLabel, weatherIcon);
                 new Thread(weatherTask).start();
@@ -291,12 +310,20 @@ public class homeUI extends Application {
         isOn.set(!isOn.get()); // Toggle the state
     }
 
-    public void displayResult(List<Node> result, StackPane pane) {
-        for (Node node : result) {
-            Text text = new Text(node.stop.stopName);
-            text.setFill(Color.WHITE);
-            text.setStyle("-fx-font: 14 Ubuntu;");
-            pane.getChildren().add(text);
+    private void updateCoordinateFields(double lat, double lon, TextField originField, TextField destinationField) {
+        // formate the coordinates
+        String coordinateText = String.format("%.6f, %.6f", lat, lon);
+
+        if (firstClick && originField.getText().isEmpty()) {
+            Platform.runLater(() -> {
+                originField.setText(coordinateText);
+                firstClick = false;
+            });
+        } else if (!firstClick && destinationField.getText().isEmpty()) {
+            Platform.runLater(() -> {
+                destinationField.setText(coordinateText);
+                firstClick = true;
+            });
         }
     }
 
@@ -307,12 +334,14 @@ public class homeUI extends Application {
         if (gtfsDir != null) {
             System.setProperty("GTFS_DIR", gtfsDir);
         } else {
-            if (isDebugMode) System.err.println("Environment variable 'GTFS_DIR' is not set. Set the path manually in the settings panel.");
+            if (isDebugMode)
+                System.err.println("Environment variable 'GTFS_DIR' is not set. Set the path manually in the settings panel.");
         }
         if (debug != null) {
             System.setProperty("debug", debug);
         } else {
-            if (isDebugMode) System.err.println("Environment variable 'debug' is not set. Debug mode is enabled by default.");
+            if (isDebugMode)
+                System.err.println("Environment variable 'debug' is not set. Debug mode is enabled by default.");
         }
         launch(args);
     }
