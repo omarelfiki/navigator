@@ -3,13 +3,13 @@ package db;
 import util.ZipExtractor;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.Objects;
 
 import static util.DebugUtli.getDebugMode;
+import static util.DebugUtli.getOS;
 
 public class DBconfig {
     private final DBaccess access;
@@ -108,9 +108,10 @@ public class DBconfig {
             if (access.conn != null && !access.conn.isClosed()) {
                 if (isDebugMode) System.err.println("Accessing GTFS schema SQL file");
                 try {
+                    String os = getOS();
                     String sqlFilePath = Objects.requireNonNull(getClass().getClassLoader().getResource("newschema.sql")).getPath();
                     sqlFilePath = URLDecoder.decode(sqlFilePath, StandardCharsets.UTF_8);
-                    if (sqlFilePath.startsWith("/") && System.getProperty("os.name").toLowerCase().contains("win")) {
+                    if (sqlFilePath.startsWith("/") && os.contains("win")) {
                         sqlFilePath = sqlFilePath.substring(1);
                     }
                     String sql = new String(java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(sqlFilePath)));
