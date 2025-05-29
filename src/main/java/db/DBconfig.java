@@ -3,6 +3,8 @@ package db;
 import util.ZipExtractor;
 
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.Objects;
 
@@ -106,6 +108,7 @@ public class DBconfig {
                 if (isDebugMode) System.err.println("Accessing GTFS schema SQL file");
                 try {
                     String sqlFilePath = Objects.requireNonNull(getClass().getClassLoader().getResource("newschema.sql")).getPath();
+                    sqlFilePath = URLDecoder.decode(sqlFilePath, StandardCharsets.UTF_8);
                     String sql = new String(java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(sqlFilePath)));
                     try (java.sql.Statement statement = access.conn.createStatement()) {
                         for (String stmt : sql.split(";")) {
