@@ -3,7 +3,6 @@ package db;
 import util.ZipExtractor;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.sql.SQLException;
 import java.util.Objects;
 import static util.DebugUtli.getDebugMode;
@@ -106,9 +105,7 @@ public class DBconfig {
             if (access.conn != null && !access.conn.isClosed()) {
                 if (isDebugMode) System.err.println("Accessing GTFS schema SQL file");
                 try {
-                    String sqlFilePath = java.nio.file.Paths.get(
-                            Objects.requireNonNull(getClass().getClassLoader().getResource("newschema.sql")).toURI()
-                    ).toString();
+                    String sqlFilePath = Objects.requireNonNull(getClass().getClassLoader().getResource("newschema.sql")).getPath();
                     String sql = new String(java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(sqlFilePath)));
                     try (java.sql.Statement statement = access.conn.createStatement()) {
                         for (String stmt : sql.split(";")) {
@@ -119,8 +116,6 @@ public class DBconfig {
                     }
                 } catch (java.io.IOException e) {
                     System.err.println("Error reading SQL file: " + e.getMessage());
-                } catch (URISyntaxException e) {
-                    System.err.println("Error reading SQL pathfile: " + e.getMessage());
                 }
                 if (isDebugMode) System.err.println("GTFS data model table created successfully.");
             } else {
