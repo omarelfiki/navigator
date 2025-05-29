@@ -3,6 +3,7 @@ package db;
 import util.ZipExtractor;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
@@ -107,8 +108,11 @@ public class DBconfig {
             if (access.conn != null && !access.conn.isClosed()) {
                 if (isDebugMode) System.err.println("Accessing GTFS schema SQL file");
                 try {
-                    String sqlFilePath = Objects.requireNonNull(getClass().getClassLoader().getResource("newschema.sql")).getPath();
+                    String sqlFilePath = Objects.requireNonNull(getClass().getClassLoader().getResource("newschema.sql")).toURI().getPath();
                     sqlFilePath = URLDecoder.decode(sqlFilePath, StandardCharsets.UTF_8);
+                    if (sqlFilePath.startsWith("/") && System.getProperty("os.name").toLowerCase().contains("win")) {
+                        sqlFilePath = sqlFilePath.substring(1);
+                    }
                     String sql = new String(java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(sqlFilePath)));
                     try (java.sql.Statement statement = access.conn.createStatement()) {
                         for (String stmt : sql.split(";")) {
@@ -119,6 +123,8 @@ public class DBconfig {
                     }
                 } catch (java.io.IOException e) {
                     System.err.println("Error reading SQL file: " + e.getMessage());
+                } catch (URISyntaxException e) {
+                    System.err.println("Error decoding SQL file path: " + e.getMessage());
                 }
                 if (isDebugMode) System.err.println("GTFS data model table created successfully.");
             } else {
