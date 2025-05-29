@@ -27,6 +27,7 @@ import db.*;
 import org.jxmapviewer.JXMapViewer;
 import org.jxmapviewer.viewer.GeoPosition;
 import ui.*;
+import util.AStarRouterV;
 import util.Node;
 
 import java.awt.event.MouseAdapter;
@@ -109,40 +110,37 @@ public class homeUI extends Application {
         label.yProperty().bind(root.heightProperty().multiply(0.48)); // 400/832
         leftPane.getChildren().add(label);
 
-        Task<Void> task = new Task<>() {
-            @Override
-            protected Void call() {
-                Platform.runLater(() -> {
-                    if (filled.get()) {
+        dateField.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (filled.get()) {
+                Task<Void> task = new Task<>() {
+                    @Override
+                    protected Void call() {
                         String origin = originField.getText();
                         String destination = destinationField.getText();
                         String time = timeField.getText();
                         Date date = java.sql.Date.valueOf(dateField.getValue());
-                        label.setText("Finding routes...");
 
-                        new Thread(() -> {
-                            List<Node> result = parsePoint(origin, destination, time, date);
+                        Platform.runLater(() -> label.setText("Finding routes..."));
+
+                        List<Node> result = parsePoint(origin, destination, time, date);
+
+                        Platform.runLater(() -> {
                             if (result == null) {
-                                Platform.runLater(() -> label.setText("No route found."));
+                                label.setText("No route found.");
                             } else {
-                                Platform.runLater(() -> {
-//                                    label.setVisible(false);
-//                                    StackPane resultPane = new StackPane();
-//                                    resultPane.layoutXProperty().bind(root.widthProperty().multiply(0.026));
-//                                    resultPane.layoutYProperty().bind(root.heightProperty().multiply(0.4));
-//                                    resultPane.setMaxWidth(300);
-//                                    resultPane.setMaxHeight(700);
-//                                    displayResult(result, resultPane);
-//                                    leftPane.getChildren().add(resultPane);
-                                    label.setText("Found " + result.size() + " stops along route.");
-                                });
+                                label.setText("Found " + result.size() + " stops along route.");
                             }
-                        }).start();
+                        });
+
+                        return null;
                     }
-                });
-                return null;
+                };
+                new Thread(task).start();
+            } else {
+                Platform.runLater(() -> label.setText("Navigate to see public transport \n options"));
             }
-        };
+        });
+
 
         isOn.addListener((_, _, _) -> {
             if (isOn.get()) {
@@ -235,7 +233,25 @@ public class homeUI extends Application {
         });
         leftPane.getChildren().add(settings);
 
-        dateField.valueProperty().addListener((_, _, _) -> new Thread(task).start()); // start task when date changes
+        // Clear fields button
+        Button clearButton = new Button("Clear all fields");
+        clearButton.prefWidthProperty().bind(root.widthProperty().multiply(0.07));
+        clearButton.prefHeightProperty().bind(root.heightProperty().multiply(0.04));
+        clearButton.layoutXProperty().bind(root.widthProperty().multiply(0.02));
+        clearButton.layoutYProperty().bind(dateContainer.layoutYProperty().add(root.heightProperty().multiply(0.08)));
+        clearButton.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
+        clearButton.setOnAction(_ -> {
+            originField.clear();
+            destinationField.clear();
+            timeField.clear();
+            dateField.setValue(null);
+            WayPoint.clearRoute();
+            AStarRouterV router = new AStarRouterV();
+            router.reset();
+            label.setText("Navigate to see public transport \n options");
+        });
+        leftPane.getChildren().add(clearButton);
+
 
         Text temperatureLabel = new Text("0°C");
         temperatureLabel.setFill(Color.WHITE);
