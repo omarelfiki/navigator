@@ -39,8 +39,8 @@ public class ColorUtil {
         for (int i = 0; i < times.length - 1; i++) {
             if (time <= times[i + 1]) {
                 double ratio = (time - times[i]) / (times[i + 1] - times[i]);
-                Color interpolatedColor = combineColor(stopcolors[i], stopcolors[i + 1], ratio);
-                return String.format("#%02X%02X%02X", interpolatedColor.getRed(), interpolatedColor.getGreen(), interpolatedColor.getBlue());
+                Color combinedColor = combineColor(stopcolors[i], stopcolors[i + 1], ratio);
+                return String.format("#%02X%02X%02X", combinedColor.getRed(), combinedColor.getGreen(), combinedColor.getBlue());
             }
         }
 
