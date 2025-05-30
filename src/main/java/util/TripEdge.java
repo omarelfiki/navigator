@@ -51,6 +51,11 @@ class TripEdge implements Edge {
     public String getDepartureTime() { return departureTime; }
     public String getArrivalTime() { return arrivalTime; }
     public String getMode() { return mode; }
-    public Trip getTrip() { return trip; }
+    public Trip getTrip() {
+        if (trip == null) {
+        throw new IllegalStateException("Trip is not initialized.");
+        }
+        return trip;
+    }
     public double getWeight() { return weight; }
 }

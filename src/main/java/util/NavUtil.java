@@ -2,6 +2,7 @@ package util;
 
 import map.WayPoint;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -37,7 +38,10 @@ public class NavUtil {
             if (isDebugMode) System.err.println("Invalid coordinates");
             return null;
         }
-        Future<List<Node>> future = executor.submit(() -> router.findFastestPath(ocoords[0], ocoords[1], dcoords[0], dcoords[1], finalTime));
+
+        //to be changed when needed
+        List<String> avoidedStops = new ArrayList<String>();
+        Future<List<Node>> future = executor.submit(() -> router.findFastestPath(ocoords[0], ocoords[1], dcoords[0], dcoords[1], finalTime,avoidedStops));
 
         try {
             List<Node> path = future.get(30, SECONDS);

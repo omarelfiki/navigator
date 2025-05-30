@@ -108,6 +108,10 @@ public class TDSImplement implements TransitDataService {
 
     @SuppressWarnings("SqlResolve")
     public StopTime getNextStopTime(StopTime currentStopTime) {
+        if (currentStopTime == null) {
+            if (isDebugMode) System.err.println("Error: Provided StopTime is null.");
+            return null;
+        }
         if (db == null) {
             if (isDebugMode) System.err.println("Error: Database access instance is null.");
             return null;

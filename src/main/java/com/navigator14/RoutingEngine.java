@@ -1,6 +1,7 @@
 package com.navigator14;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -72,8 +73,9 @@ public class RoutingEngine {
                         sendError("Invalid time format");
                         continue;
                     }
+                    List<String> avoidedStops = new ArrayList<String>();
                     AStarRouterV router = new AStarRouterV();
-                    List<Node> path = router.findFastestPath(requestR.latStart(), requestR.lonStart(), requestR.latEnd(), requestR.lonEnd(), requestR.time());
+                    List<Node> path = router.findFastestPath(requestR.latStart(), requestR.lonStart(), requestR.latEnd(), requestR.lonEnd(), requestR.time(),avoidedStops);
                     if (path == null) {
                         sendError("No path found");
                         continue;
@@ -180,3 +182,5 @@ public class RoutingEngine {
     }
 }
 // {"routeFrom":{"lat":41.904,"lon":12.5004},"to":{"lat":41.8791,"lon":12.5221},"startingAt":"09:30:00"} - test case
+//  Roma Termini - Vatican test case below
+// {"routeFrom":{"lat":41.900496398,"lon":12.501164662},"to":{"lat":41.906487,"lon":12.453641},"startingAt":"09:30:00"}
