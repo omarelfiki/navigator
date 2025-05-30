@@ -52,17 +52,17 @@ public class EdgeService {
 
         //add transfer edges
         List<Trip> upcomingTrips = tds.getUpcomingDistinctRouteTrips(node.stopId, node.arrivalTime);
-        if (isDebugMode) System.err.println("upcoming trips: " + upcomingTrips.size());
+        //if (isDebugMode) System.err.println("upcoming trips: " + upcomingTrips.size());
         for (Trip trip : upcomingTrips) {
             try {
                 TransferEdge transferEdge = new TransferEdge(startStop.stopId, node.arrivalTime, trip);
                 edges.add(transferEdge);
-                if (isDebugMode) System.err.println("Transfer " + transferEdge.fromStopId + " to " + transferEdge.toStopId +
-                        " weight " + transferEdge.weight + " by route " + transferEdge.trip.getRoute().routeId +
-                        " at " + transferEdge.departureTime + " waiting until " + transferEdge.rideStartTime +
-                        " to " + transferEdge.arrivalTime);
+//                if (isDebugMode) System.err.println("Transfer " + transferEdge.fromStopId + " to " + transferEdge.toStopId +
+//                        " weight " + transferEdge.weight + " by route " + transferEdge.trip.getRoute().routeId +
+//                        " at " + transferEdge.departureTime + " waiting until " + transferEdge.rideStartTime +
+//                        " to " + transferEdge.arrivalTime);
             } catch (IllegalArgumentException e) {
-                if (isDebugMode) System.err.println("Skipping trip " + trip.tripId + ": " + e.getMessage());
+                //if (isDebugMode) System.err.println("Skipping trip " + trip.tripId + ": " + e.getMessage());
             }
         }
 

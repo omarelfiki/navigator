@@ -1,6 +1,7 @@
 package com.navigator14;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -72,8 +73,9 @@ public class RoutingEngine {
                         sendError("Invalid time format");
                         continue;
                     }
+                    List<String> avoidedStops = new ArrayList<String>();
                     AStarRouterV router = new AStarRouterV();
-                    List<Node> path = router.findFastestPath(requestR.latStart(), requestR.lonStart(), requestR.latEnd(), requestR.lonEnd(), requestR.time());
+                    List<Node> path = router.findFastestPath(requestR.latStart(), requestR.lonStart(), requestR.latEnd(), requestR.lonEnd(), requestR.time(),avoidedStops);
                     if (path == null) {
                         sendError("No path found");
                         continue;
