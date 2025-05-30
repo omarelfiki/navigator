@@ -2,6 +2,7 @@ package ui;
 
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Pos;
+import javafx.scene.control.Button;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -94,7 +95,7 @@ public class UiHelper {
         return container;
     }
 
-    public static void bindDateTime(StackPane timeContainer, StackPane dateContainer, TextField originField, TextField destinationField) {
+    public static void bindElements(StackPane timeContainer, StackPane dateContainer, Button clear, TextField originField, TextField destinationField) {
         timeContainer.visibleProperty().bind(
                 Bindings.createBooleanBinding(
                         () -> !originField.getText().isEmpty() && !destinationField.getText().isEmpty(),
@@ -106,6 +107,14 @@ public class UiHelper {
         dateContainer.visibleProperty().bind(
                 Bindings.createBooleanBinding(
                         () -> !originField.getText().isEmpty() && !destinationField.getText().isEmpty(),
+                        originField.textProperty(),
+                        destinationField.textProperty()
+                )
+        );
+
+        clear.visibleProperty().bind(
+                Bindings.createBooleanBinding(
+                        () -> !originField.getText().isEmpty() || !destinationField.getText().isEmpty(),
                         originField.textProperty(),
                         destinationField.textProperty()
                 )
