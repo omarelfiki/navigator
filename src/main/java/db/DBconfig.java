@@ -73,7 +73,7 @@ public class DBconfig {
                 if (isDebugMode) System.err.println("Stopping database initialization: connection to the database is not established.");
             }
         } catch (SQLException e) {
-            System.err.println("SQL Error: " + e.getMessage());
+            System.err.println("SQL Initialization Error: " + e.getMessage());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -101,7 +101,7 @@ public class DBconfig {
                 if (isDebugMode) System.err.println("Stopping trigger initialization: connection to the database is not established.");
             }
         } catch (SQLException e) {
-            System.err.println("SQL Error: " + e.getMessage());
+            System.err.println("SQL Trigger Error: " + e.getMessage());
         }
     }
 
@@ -131,7 +131,7 @@ public class DBconfig {
                 if (isDebugMode) System.err.println("Stopping table initialization: connection to the database is not established.");
             }
         } catch (SQLException e) {
-            System.err.println("SQL Error: " + e.getMessage());
+            System.err.println("SQL Table Init Error: " + e.getMessage());
         }
     }
 }

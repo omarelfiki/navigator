@@ -54,7 +54,7 @@ CREATE TABLE routes
     route_short_name    NVARCHAR(50)                           NOT NULL,
     route_long_name     NVARCHAR(255),
     route_desc          NVARCHAR(255),
-    route_type          ENUM ('0','1','2','3','4','5','6','7','11','12') NOT NULL,
+    route_type          INT NOT NULL,
     route_url           NVARCHAR(255),
     route_color         NVARCHAR(10),
     route_text_color    NVARCHAR(10),

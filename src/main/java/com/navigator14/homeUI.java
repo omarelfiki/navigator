@@ -26,8 +26,6 @@ import javafx.scene.shape.Circle;
 import map.*;
 import db.*;
 import org.jxmapviewer.JXMapViewer;
-import org.jxmapviewer.painter.CompoundPainter;
-import org.jxmapviewer.painter.Painter;
 import org.jxmapviewer.viewer.DefaultWaypoint;
 import org.jxmapviewer.viewer.GeoPosition;
 import org.jxmapviewer.viewer.Waypoint;
@@ -48,10 +46,10 @@ public class homeUI extends Application {
     private final BooleanProperty isOn = new SimpleBooleanProperty(false);
     private Button hideSidePanel, showSidePanel;
     private boolean firstClick = true;
-    private Set<Waypoint> waypoints = new HashSet<>();
+    private final Set<Waypoint> waypoints = new HashSet<>();
     private DefaultWaypoint originWaypoint;
     private DefaultWaypoint destinationWaypoint;
-    private WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<>();
+    private final WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<>();
 
     @Override
     public void start(Stage primaryStage) {
@@ -154,9 +152,12 @@ public class homeUI extends Application {
             if (isOn.get()) {
                 title.setText("Heatmap");
                 label.setText("Heatmap Mode Activated. \n Finding routes...");
+                originField.clear();
             } else {
                 title.setText("Navigator");
                 label.setText("Navigate to see public transport \n options");
+                originField.clear();
+                destinationField.clear();
             }
         });
 
@@ -326,7 +327,7 @@ public class homeUI extends Application {
         isOn.set(!isOn.get());
         if (isOn.get()) {
             background.setFill(Color.LIMEGREEN);
-            if(originWaypoint != null) {
+            if (originWaypoint != null) {
                 waypoints.clear();
                 waypoints.add(originWaypoint);
                 waypointPainter.setWaypoints(waypoints);
@@ -336,7 +337,7 @@ public class homeUI extends Application {
             firstClick = true;
         } else {
             background.setFill(Color.LIGHTGRAY);
-            if(destinationWaypoint != null&&originWaypoint!=null) {
+            if (destinationWaypoint != null && originWaypoint != null) {
                 waypoints.clear();
                 waypoints.add(originWaypoint);
                 waypoints.add(destinationWaypoint);
@@ -348,15 +349,7 @@ public class homeUI extends Application {
         }
     }
 
-    public void displayResult(List<Node> result, StackPane pane) {
-        for (Node node : result) {
-            Text text = new Text(node.stop.stopName);
-            text.setFill(Color.WHITE);
-            text.setStyle("-fx-font: 14 Ubuntu;");
-            pane.getChildren().add(text);
-        }
-    }
-// this method to add the markers on the clicks
+    // this method to add the markers on the clicks
     private void addMarkerOnClicks(double lat, double lon, boolean isOrigin) {
         MapIntegration mapIntegration = MapProvider.getInstance();
         JXMapViewer map = mapIntegration.getMap();
@@ -373,7 +366,8 @@ public class homeUI extends Application {
         waypointPainter.setWaypoints(waypoints);
         map.setOverlayPainter(waypointPainter);
     }
-// this method to update the fileds
+
+    // this method to update the fileds
     private void updateCoordinateFields(double lat, double lon, TextField originField, TextField destinationField) {
         // Format the coordinates
         String coordinateText = String.format("%.6f, %.6f", lat, lon);

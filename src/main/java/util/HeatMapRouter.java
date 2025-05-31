@@ -13,14 +13,14 @@ import static util.TimeUtil.addTime;
 public class HeatMapRouter {
     private final EdgeService edgeService = new EdgeService();
     private final Map<String, Double> bestCost = new HashMap<>();
-    private final Map<String, Node>    settled  = new HashMap<>();
+    private final Map<String, Node> settled = new HashMap<>();
 
     private final boolean debug = false;
 
 
     public Map<String, Node> buildWithWalk(double latStart,
-                                   double lonStart,
-                                   String startTime) {
+                                           double lonStart,
+                                           String startTime) {
 
         //creates the origin node
         Node ORIGIN = new Node("origin", startTime, null, "WALK", null);
@@ -30,7 +30,7 @@ public class HeatMapRouter {
 
         for (Stop s : NearbyStops.getNearbyStops(latStart, lonStart, 500)) {
             double walk = WalkingTime.getWalkingTime(latStart, lonStart, s.stopLat, s.stopLon);
-            String arr  = addTime(startTime, walk);
+            String arr = addTime(startTime, walk);
 
             Node n = new Node(s.stopId, arr, ORIGIN, "WALK", null);
             n.g = walk;
@@ -53,7 +53,7 @@ public class HeatMapRouter {
 
             for (Edge e : edgeService.getEdges(cur)) {
                 String to = e.getToStopId();
-                double g  = cur.g + e.getWeight();
+                double g = cur.g + e.getWeight();
                 if (g >= bestCost.getOrDefault(to, Double.MAX_VALUE) - 1e-6) continue;
 
                 Node nxt = new Node(to, e.getArrivalTime(), cur, e.getMode(), e.getTrip());
@@ -66,9 +66,10 @@ public class HeatMapRouter {
 
         return settled;   // key = stopId, value = Node
     }
+
     public Map<String, Node> buildWithoutWalk(double latStart,
-                                           double lonStart,
-                                           String startTime) {
+                                              double lonStart,
+                                              String startTime) {
 
         //Create the origin node from where you start :)
         Node ORIGIN = new Node("origin", startTime, null, "WALK", null);
@@ -78,7 +79,7 @@ public class HeatMapRouter {
 
         for (Stop s : NearbyStops.getNearbyStops(latStart, lonStart, 500)) {
             double walk = WalkingTime.getWalkingTime(latStart, lonStart, s.stopLat, s.stopLon);
-            String arr  = addTime(startTime, walk);
+            String arr = addTime(startTime, walk);
 
             Node n = new Node(s.stopId, arr, ORIGIN, "WALK", null);
             n.g = walk;
@@ -101,7 +102,7 @@ public class HeatMapRouter {
 
             for (Edge e : edgeService.getEdgesNoWalk(cur)) {
                 String to = e.getToStopId();
-                double g  = cur.g + e.getWeight();
+                double g = cur.g + e.getWeight();
                 if (g >= bestCost.getOrDefault(to, Double.MAX_VALUE) - 1e-6) continue;
 
                 Node nxt = new Node(to, e.getArrivalTime(), cur, e.getMode(), e.getTrip());
@@ -120,13 +121,13 @@ public class HeatMapRouter {
 
         //Visits 8529 out of 8723 stops
         // takes 1min and 37 sec
-        Map<String,Node> bestWithWalk = fsr.buildWithWalk(41.904, 12.5004, "09:30:00");
+        Map<String, Node> bestWithWalk = fsr.buildWithWalk(41.904, 12.5004, "09:30:00");
         System.out.printf("Reachable stops with walking: %,d%n", bestWithWalk.size());
 
 
         //visits 7518 out of 8723 stops
         //takes 50 sec
-        Map<String,Node> bestWithoutWalk = fsr.buildWithoutWalk(41.904, 12.5004, "09:30:00");
+        Map<String, Node> bestWithoutWalk = fsr.buildWithoutWalk(41.904, 12.5004, "09:30:00");
         System.out.printf("Reachable stops without walking: %,d%n", bestWithoutWalk.size());
     }
 }
