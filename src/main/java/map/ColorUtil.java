@@ -4,7 +4,8 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 
 public class ColorUtil {
-    public static BufferedImage getColorTile(String color) {
+    public static BufferedImage getColorTile(double time) {
+        String color = getColorFromGradient(time);
         if (color == null || color.isEmpty()) {
             return null;
         }

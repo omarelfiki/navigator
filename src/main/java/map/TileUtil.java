@@ -1,16 +1,24 @@
 package map;
 
+import java.awt.geom.Point2D;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
+import org.jxmapviewer.JXMapViewer;
 import org.jxmapviewer.OSMTileFactoryInfo;
 import org.jxmapviewer.viewer.DefaultTileFactory;
+import org.jxmapviewer.viewer.GeoPosition;
 import org.jxmapviewer.viewer.TileFactory;
 import org.jxmapviewer.viewer.TileFactoryInfo;
+
+import javax.imageio.ImageIO;
 
 import static util.DebugUtli.getDebugMode;
 
@@ -19,24 +27,91 @@ public class TileUtil {
 
     boolean isDebugMode;
 
+    List<HeatPoint> heatPoints;
+
+    int[] zoomLevels;
+
     public TileUtil(boolean isOnline) {
         this.isOnline = isOnline;
         this.isDebugMode = getDebugMode();
     }
 
-    public TileFactory getTileFactory() {
+    public TileUtil(List<HeatPoint> heatPoints, int[] zoomLevels) {
+        this.isDebugMode = getDebugMode();
+        this.heatPoints = heatPoints;
+        this.zoomLevels = zoomLevels;
+    }
+
+    public TileFactory getTileFactory(int type) {
         TileFactoryInfo info;
-        if (isOnline) {
-            info = new OSMTileFactoryInfo();
-        } else {
-            try {
-                String encodedPath = Paths.get(System.getProperty("user.home"), "Archive.zip").toUri().toString();
-                info = new OSMTileFactoryInfo("Zip archive", "jar:" + encodedPath + "!");
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to construct file path for TileFactory", e);
-            }
+        switch (type) {
+            case 0:
+                if (isOnline) {
+                    info = new OSMTileFactoryInfo();
+                } else {
+                    try {
+                        String encodedPath = Paths.get(System.getProperty("user.home"), "Archive.zip").toUri().toString();
+                        info = new OSMTileFactoryInfo("Zip archive", "jar:" + encodedPath + "!");
+                    } catch (Exception e) {
+                        throw new RuntimeException("Failed to construct file path for TileFactory", e);
+                    }
+                }
+                break;
+            case 1:
+                try {
+                    createHeatTileDirectory();
+                    String encodedPath = Paths.get(System.getProperty("user.home"), "heatTiles.zip").toUri().toString();
+                    info = new OSMTileFactoryInfo("Zip archive", "jar:" + encodedPath + "!");
+                } catch (Exception e) {
+                    throw new RuntimeException("Failed to construct file path for HeatTileFactory", e);
+                }
+                break;
+            default:
+                throw new RuntimeException("Unsupported tile type: " + type);
         }
         return new DefaultTileFactory(info);
+    }
+
+    public void createHeatTileDirectory() throws IOException {
+        MapIntegration mapIntegration = MapProvider.getInstance();
+        JXMapViewer map = mapIntegration.getMap();
+
+        File mainDir = new File(System.getProperty("user.home"), "heatTiles");
+        if (!mainDir.exists() && !mainDir.mkdirs()) {
+            if (isDebugMode) System.err.println("Failed to create main directory: " + mainDir.getAbsolutePath());
+            return;
+        }
+
+        for (HeatPoint heatPoint : heatPoints) {
+            GeoPosition position = new GeoPosition(heatPoint.longitude(), heatPoint.latitude());
+            Point2D point = map.convertGeoPositionToPoint(position);
+            double x = point.getX();
+            double y = point.getY();
+            BufferedImage colorTile = ColorUtil.getColorTile(heatPoint.time());
+
+            for (int zoom : zoomLevels) {
+                int tileX = (int) (x / 256);
+                int tileY = (int) (y / 256);
+
+                // Create directory structure under the main directory
+                File zoomDir = new File(mainDir, String.valueOf(zoom));
+                File xDir = new File(zoomDir, String.valueOf(tileX));
+                if (!xDir.exists() && !xDir.mkdirs()) {
+                    if (isDebugMode) System.err.println("Failed to create directory: " + xDir.getAbsolutePath());
+                    continue;
+                }
+
+                // Save the image
+                File tileFile = new File(xDir, tileY + ".png");
+                try {
+                    assert colorTile != null;
+                    ImageIO.write(colorTile, "png", tileFile);
+                } catch (IOException e) {
+                    if (isDebugMode) System.err.println("Failed to save tile: " + tileFile.getAbsolutePath());
+                }
+            }
+        }
+        createZip(mainDir.getAbsolutePath(), System.getProperty("user.home") + File.separator + "heatTiles.zip");
     }
 
     public void createZip(String sourceDirPath, String zipFilePath) throws IOException {

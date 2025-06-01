@@ -37,7 +37,7 @@ public class MapIntegration {
         StackPane mapPane = new StackPane();
         SwingNode swingNode = new SwingNode();
         TileUtil tileUtil = new TileUtil(isOnline);
-        TileFactory tileFactory = tileUtil.getTileFactory();
+        TileFactory tileFactory = tileUtil.getTileFactory(0);
 
         // Setup local file cache
         setCache(tileFactory, tileUtil);

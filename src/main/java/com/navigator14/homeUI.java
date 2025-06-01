@@ -1,6 +1,4 @@
 package com.navigator14;
-
-import map.WayPoint;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -23,20 +21,20 @@ import javafx.stage.Stage;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.shape.Circle;
-import map.*;
-import db.*;
+import java.awt.geom.Point2D;
 import org.jxmapviewer.JXMapViewer;
 import org.jxmapviewer.viewer.DefaultWaypoint;
 import org.jxmapviewer.viewer.GeoPosition;
 import org.jxmapviewer.viewer.Waypoint;
 import org.jxmapviewer.viewer.WaypointPainter;
-import ui.*;
 import util.AStarRouterV;
 import util.NetworkUtil;
 import util.Node;
-
-import java.awt.geom.Point2D;
 import java.util.*;
+import map.WayPoint;
+import map.*;
+import db.*;
+import ui.*;
 
 import static util.DebugUtli.getDebugMode;
 import static util.NavUtil.parsePoint;
