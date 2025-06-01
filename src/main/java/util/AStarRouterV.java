@@ -25,6 +25,13 @@ public class AStarRouterV {
         if (debugMode) System.err.println("Stop stops: " + stopStops.size());
         EdgeService edgeService = new EdgeService();
 
+        double walkingTimeOnly = WalkingTime.getWalkingTime(latStart, lonStart, latStop, lonStop);
+        System.err.println("Walking time only: " + walkingTimeOnly);
+        if(walkingTimeOnly<420){
+            STOP_NODE.parent = STARTING_NODE;
+            return reconstructPath(STOP_NODE);
+        }
+
         PriorityQueue<Node> pq = new PriorityQueue<>(Comparator.comparingDouble(n -> n.g + n.h));
 
         for (Stop stop : startStops) {
