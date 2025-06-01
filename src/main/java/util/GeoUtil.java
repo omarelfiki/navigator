@@ -81,6 +81,47 @@ public class GeoUtil {
         return R * c * 1000; // Convert to meters
     }
 
+    public static String getAddress(double lat, double lng) {
+        boolean isDebugMode = getDebugMode();
+        try {
+            if(!NetworkUtil.isNetworkAvailable()) {
+                if (isDebugMode) System.err.println("Geocode Error: Network is not available.");
+                return null;
+            }
+
+            String urlStr = String.format(
+                    "https://maps.googleapis.com/maps/api/geocode/json?latlng=%f,%f&key=%s",
+                    lat, lng, API_KEY
+            );
+
+            URI uri = URI.create(urlStr);
+            URL url = uri.toURL();
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+
+            BufferedReader in = new BufferedReader(
+                    new InputStreamReader(conn.getInputStream())
+            );
+
+            String inputLine;
+            StringBuilder response = new StringBuilder();
+            while ((inputLine = in.readLine()) != null) {
+                response.append(inputLine);
+            }
+            in.close();
+
+            JSONObject json = new JSONObject(response.toString());
+            JSONArray results = json.getJSONArray("results");
+            if (results.isEmpty()) return null;
+
+            return results.getJSONObject(0).getString("formatted_address");
+
+        } catch (Exception e) {
+            System.err.println("Geocode Error: " + e);
+            return null;
+        }
+    }
+
     public static double[] parseCoords(String coords) {
         boolean isDebugMode = getDebugMode();
         String[] parts = coords.split(",");

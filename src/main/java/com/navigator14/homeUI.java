@@ -32,6 +32,7 @@ import org.jxmapviewer.viewer.Waypoint;
 import org.jxmapviewer.viewer.WaypointPainter;
 import ui.*;
 import util.AStarRouterV;
+import util.NetworkUtil;
 import util.Node;
 
 import java.awt.geom.Point2D;
@@ -41,6 +42,7 @@ import static util.DebugUtli.getDebugMode;
 import static util.NavUtil.parsePoint;
 import static ui.UiHelper.*;
 import static util.WeatherUtil.createWeatherTask;
+import static util.GeoUtil.*;
 
 public class homeUI extends Application {
     private final BooleanProperty isOn = new SimpleBooleanProperty(false);
@@ -96,6 +98,23 @@ public class homeUI extends Application {
 
         TextField timeField = (TextField) ((HBox) timeContainer.getChildren().getFirst()).getChildren().get(1);
         DatePicker dateField = (DatePicker) ((HBox) dateContainer.getChildren().getFirst()).getChildren().getFirst();
+
+        Button flipButton = new Button("⇅");
+        flipButton.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
+        flipButton.layoutXProperty().bind(root.widthProperty().multiply(0.2)); // 130/1280
+        flipButton.layoutYProperty().bind(root.heightProperty().multiply(0.1555)); // 120/832
+        flipButton.setOnAction(_ -> {
+            String temp = originField.getText();
+            originField.setText(destinationField.getText());
+            destinationField.setText(temp);
+            dateField.setValue(null);
+            timeField.clear();
+            WayPoint.clearRoute();
+            AStarRouterV router = new AStarRouterV();
+            router.reset();
+        });
+        leftPane.getChildren().add(flipButton);
+        flipButton.visibleProperty().bind(isOn.not());
 
         BooleanBinding filled = Bindings.createBooleanBinding(
                 () -> !originField.getText().isEmpty() &&
@@ -173,7 +192,7 @@ public class homeUI extends Application {
         background.setFill(Color.LIGHTGRAY);
 
         //Button to hide side panel
-        hideSidePanel = new Button("<<");
+        hideSidePanel = new Button("←");
         hideSidePanel.layoutXProperty().bind(root.widthProperty().multiply(0.245));
         hideSidePanel.layoutYProperty().bind(root.heightProperty().multiply(0.46));
         hideSidePanel.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
@@ -185,7 +204,7 @@ public class homeUI extends Application {
         leftPane.getChildren().add(hideSidePanel);
 
         // Button to show side panel (initially hidden)
-        showSidePanel = new Button(">>");
+        showSidePanel = new Button("→");
         showSidePanel.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
         showSidePanel.setVisible(false);
         mapPane.getChildren().add(showSidePanel);
@@ -371,17 +390,26 @@ public class homeUI extends Application {
     private void updateCoordinateFields(double lat, double lon, TextField originField, TextField destinationField) {
         // Format the coordinates
         String coordinateText = String.format("%.6f, %.6f", lat, lon);
-
         if (firstClick && originField.getText().isEmpty()) {
             addMarkerOnClicks(lat, lon, true);
             Platform.runLater(() -> {
-                originField.setText(coordinateText);
+                if (NetworkUtil.isNetworkAvailable()){
+                    String address = getAddress(lat, lon);
+                    originField.setText(Objects.requireNonNullElse(address, coordinateText));
+                } else {
+                    originField.setText(coordinateText);
+                }
                 firstClick = false;
             });
         } else if (!firstClick && destinationField.getText().isEmpty()) {
             addMarkerOnClicks(lat, lon, false);
             Platform.runLater(() -> {
-                destinationField.setText(coordinateText);
+                if (NetworkUtil.isNetworkAvailable()){
+                    String address = getAddress(lat, lon);
+                    destinationField.setText(Objects.requireNonNullElse(address, coordinateText));
+                } else {
+                    destinationField.setText(coordinateText);
+                }
                 firstClick = true;
             });
         }
