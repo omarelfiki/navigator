@@ -1,4 +1,5 @@
 package com.navigator14;
+
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -6,6 +7,7 @@ import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.concurrent.Task;
+import javafx.embed.swing.SwingNode;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -21,7 +23,9 @@ import javafx.stage.Stage;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.shape.Circle;
+
 import java.awt.geom.Point2D;
+
 import org.jxmapviewer.JXMapViewer;
 import org.jxmapviewer.viewer.DefaultWaypoint;
 import org.jxmapviewer.viewer.GeoPosition;
@@ -30,7 +34,9 @@ import org.jxmapviewer.viewer.WaypointPainter;
 import util.AStarRouterV;
 import util.NetworkUtil;
 import util.Node;
+
 import java.util.*;
+
 import map.WayPoint;
 import map.*;
 import db.*;
@@ -89,6 +95,31 @@ public class homeUI extends Application {
 
         TextField originField = (TextField) ((HBox) startGroup.getChildren().getFirst()).getChildren().get(1);
         TextField destinationField = (TextField) ((HBox) endGroup.getChildren().getFirst()).getChildren().get(1);
+
+        //Heatmap functionality -to be refactored
+        originField.textProperty().addListener((_, _, newValue) -> {
+            if (isOn.get()){
+                double[] coordinates = getCoordinatesFromAddress(newValue);
+                double lat;
+                double lon;
+                if (coordinates != null) {
+                    lat = coordinates[0];
+                    lon = coordinates[1];
+                    addMarkerOnClicks(lat, lon, true);
+                }
+                else {
+                    return;
+                }
+                // TODO: run the heatmap router somewhere around here
+                List<HeatPoint> heatPoints = new ArrayList<>(); //example - HeatMapRouter.getHeatPoints(newValue);
+
+                HeatMap heatMap = new HeatMap(new GeoPosition(lat, lon), heatPoints);
+                JXMapViewer map = heatMap.getHeatMap();
+                SwingNode swingNode = new SwingNode();
+                swingNode.setContent(map);
+                mapPane.getChildren().add(swingNode);
+            }
+        });
 
         StackPane timeContainer = createDateTimeContainer("⏰", "Time", 0.026, 0.12, 0.036, root, 1);
         StackPane dateContainer = createDateTimeContainer("🗓️", "Date", 0.11, 0.132, 0.061, root, 0);
@@ -391,7 +422,7 @@ public class homeUI extends Application {
         if (firstClick && originField.getText().isEmpty()) {
             addMarkerOnClicks(lat, lon, true);
             Platform.runLater(() -> {
-                if (NetworkUtil.isNetworkAvailable()){
+                if (NetworkUtil.isNetworkAvailable()) {
                     String address = getAddress(lat, lon);
                     originField.setText(Objects.requireNonNullElse(address, coordinateText));
                 } else {
@@ -402,7 +433,7 @@ public class homeUI extends Application {
         } else if (!firstClick && destinationField.getText().isEmpty()) {
             addMarkerOnClicks(lat, lon, false);
             Platform.runLater(() -> {
-                if (NetworkUtil.isNetworkAvailable()){
+                if (NetworkUtil.isNetworkAvailable()) {
                     String address = getAddress(lat, lon);
                     destinationField.setText(Objects.requireNonNullElse(address, coordinateText));
                 } else {
