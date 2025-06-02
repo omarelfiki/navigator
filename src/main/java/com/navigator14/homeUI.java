@@ -533,13 +533,35 @@ public class homeUI extends Application {
                     System.err.println("HeatmapRouter initialized with coordinates: " + lat + ", " + lon);
                 }
                 List<HeatPoint> heatPoints = router.toHeatPoints(router.buildWithoutWalk(lat, lon, "9:30:00"));
-                HeatMap heatMap = new HeatMap(new GeoPosition(lat, lon), heatPoints);
+                JXMapViewer baseMap = MapProvider.getInstance().getMap();
+                HeatMap heatMap = new HeatMap(new GeoPosition(lat, lon), heatPoints, baseMap);
                 JXMapViewer map = heatMap.getHeatMap();
 
                 Platform.runLater(() -> {
                     HeatmapNode = new SwingNode();
                     HeatmapNode.setContent(map);
+                    HeatmapNode.setOpacity(0.5);
                     mapStack.getChildren().add(HeatmapNode);
+                    MapIntegration mapIntegration = MapProvider.getInstance();
+                    VBox zoomControls = mapIntegration.getZoomControls();
+                    if (zoomControls != null) {
+                        mapStack.getChildren().remove(zoomControls);
+                        mapStack.getChildren().add(zoomControls);
+                        if (zoomControls.getChildren().size() >= 2 &&
+                            zoomControls.getChildren().get(0) instanceof Button zoomInBtn &&
+                            zoomControls.getChildren().get(1) instanceof Button zoomOutBtn) {
+                            zoomInBtn.setOnAction(_ -> {
+                                int newZoom = map.getZoom() - 1;
+                                map.setZoom(newZoom);
+                                baseMap.setZoom(newZoom);
+                            });
+                            zoomOutBtn.setOnAction(_ -> {
+                                int newZoom = map.getZoom() + 1;
+                                map.setZoom(newZoom);
+                                baseMap.setZoom(newZoom);
+                            });
+                        }
+                    }
                 });
 
                 return null;
@@ -566,7 +588,5 @@ public class homeUI extends Application {
         launch(args);
     }
 }
-
-
 
 

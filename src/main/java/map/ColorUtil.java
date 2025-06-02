@@ -13,7 +13,8 @@ public class ColorUtil {
             Color c = Color.decode(color);
             BufferedImage image = new BufferedImage(256, 256, BufferedImage.TYPE_INT_ARGB);
             Graphics2D g2d = (Graphics2D) image.getGraphics();
-            g2d.setColor(new Color(c.getRed(), c.getGreen(), c.getBlue(), 128)); // Semi-transparent color
+            // Use less transparency (more visible)
+            g2d.setColor(new Color(c.getRed(), c.getGreen(), c.getBlue(), 220)); // More opaque
             g2d.fillRect(0, 0, 256, 256);
             g2d.dispose();
             return image;
@@ -30,11 +31,11 @@ public class ColorUtil {
 
         double[] times = {0, 5, 20, 40, 60};
         Color[] stopcolors = {
-            new Color(87, 199, 133),  // #57C785
-            new Color(237, 221, 83), // #EDDD53
-            new Color(237, 124, 83), // #ED7C53
-            new Color(237, 83, 83),  // #ED5353
-            new Color(127, 83, 237)  // #7F53ED
+            new Color(0, 255, 0),     // Bright green
+            new Color(255, 255, 0),   // Yellow
+            new Color(255, 140, 0),   // Orange
+            new Color(255, 0, 0),     // Red
+            new Color(128, 0, 128)    // Purple
         };
 
         for (int i = 0; i < times.length - 1; i++) {

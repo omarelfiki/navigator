@@ -1,6 +1,5 @@
 package map;
 
-import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
@@ -10,11 +9,12 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import java.util.HashMap;
+import java.util.Map;
 
-import org.jxmapviewer.JXMapViewer;
 import org.jxmapviewer.OSMTileFactoryInfo;
 import org.jxmapviewer.viewer.DefaultTileFactory;
-import org.jxmapviewer.viewer.GeoPosition;
+
 import org.jxmapviewer.viewer.TileFactory;
 import org.jxmapviewer.viewer.TileFactoryInfo;
 
@@ -39,7 +39,12 @@ public class TileUtil {
     public TileUtil(List<HeatPoint> heatPoints, int[] zoomLevels) {
         this.isDebugMode = getDebugMode();
         this.heatPoints = heatPoints;
-        this.zoomLevels = zoomLevels;
+        if (zoomLevels == null) {
+            this.zoomLevels = new int[20];
+            for (int i = 0; i < 20; i++) this.zoomLevels[i] = i;
+        } else {
+            this.zoomLevels = zoomLevels;
+        }
     }
 
     public TileFactory getTileFactory(int type) {
@@ -73,8 +78,31 @@ public class TileUtil {
     }
 
     public void createHeatTileDirectory() throws IOException {
-        MapIntegration mapIntegration = MapProvider.getInstance();
-        JXMapViewer map = mapIntegration.getMap();
+        Map<String, Double> tileHeat = new HashMap<>();
+        int blurRadius = 2; // tiles to blur in each direction
+        double blurSigma = 1.0; // for Gaussian kernel
+
+        for (HeatPoint heatPoint : heatPoints) {
+            double lat = heatPoint.latitude();
+            double lon = heatPoint.longitude();
+            double value = heatPoint.time();
+            for (int zoom : zoomLevels) {
+                int n = 1 << zoom;
+                int tileX = (int) Math.floor((lon + 180.0) / 360.0 * n);
+                int tileY = (int) Math.floor((1.0 - Math.log(Math.tan(Math.toRadians(lat)) + 1.0 / Math.cos(Math.toRadians(lat))) / Math.PI) / 2.0 * n);
+                for (int dx = -blurRadius; dx <= blurRadius; dx++) {
+                    for (int dy = -blurRadius; dy <= blurRadius; dy++) {
+                        int nx = tileX + dx;
+                        int ny = tileY + dy;
+                        if (nx < 0 || ny < 0 || nx >= n || ny >= n) continue;
+                        double dist2 = dx * dx + dy * dy;
+                        double weight = Math.exp(-dist2 / (2 * blurSigma * blurSigma));
+                        String key = zoom + "," + nx + "," + ny;
+                        tileHeat.put(key, tileHeat.getOrDefault(key, 0.0) + value * weight);
+                    }
+                }
+            }
+        }
 
         File mainDir = new File(System.getProperty("user.home"), "heatTiles");
         if (!mainDir.exists() && !mainDir.mkdirs()) {
@@ -82,33 +110,28 @@ public class TileUtil {
             return;
         }
 
-        for (HeatPoint heatPoint : heatPoints) {
-            GeoPosition position = new GeoPosition(heatPoint.longitude(), heatPoint.latitude());
-            Point2D point = map.convertGeoPositionToPoint(position);
-            double x = point.getX();
-            double y = point.getY();
-            BufferedImage colorTile = ColorUtil.getColorTile(heatPoint.time());
+        double maxHeat = tileHeat.values().stream().mapToDouble(Double::doubleValue).max().orElse(1.0);
+        double scale = 60.0 / maxHeat; // 60 is the top of your color gradient
 
-            for (int zoom : zoomLevels) {
-                int tileX = (int) (x / 256);
-                int tileY = (int) (y / 256);
-
-                // Create directory structure under the main directory
-                File zoomDir = new File(mainDir, String.valueOf(zoom));
-                File xDir = new File(zoomDir, String.valueOf(tileX));
-                if (!xDir.exists() && !xDir.mkdirs()) {
-                    if (isDebugMode) System.err.println("Failed to create directory: " + xDir.getAbsolutePath());
-                    continue;
-                }
-
-                // Save the image
-                File tileFile = new File(xDir, tileY + ".png");
-                try {
-                    assert colorTile != null;
-                    ImageIO.write(colorTile, "png", tileFile);
-                } catch (IOException e) {
-                    if (isDebugMode) System.err.println("Failed to save tile: " + tileFile.getAbsolutePath());
-                }
+        for (Map.Entry<String, Double> entry : tileHeat.entrySet()) {
+            String[] parts = entry.getKey().split(",");
+            int zoom = Integer.parseInt(parts[0]);
+            int tileX = Integer.parseInt(parts[1]);
+            int tileY = Integer.parseInt(parts[2]);
+            double heat = entry.getValue() * scale;
+            BufferedImage colorTile = ColorUtil.getColorTile(heat);
+            File zoomDir = new File(mainDir, String.valueOf(zoom));
+            File xDir = new File(zoomDir, String.valueOf(tileX));
+            if (!xDir.exists() && !xDir.mkdirs()) {
+                if (isDebugMode) System.err.println("Failed to create directory: " + xDir.getAbsolutePath());
+                continue;
+            }
+            File tileFile = new File(xDir, tileY + ".png");
+            try {
+                assert colorTile != null;
+                ImageIO.write(colorTile, "png", tileFile);
+            } catch (IOException e) {
+                if (isDebugMode) System.err.println("Failed to save tile: " + tileFile.getAbsolutePath());
             }
         }
         createZip(mainDir.getAbsolutePath(), System.getProperty("user.home") + File.separator + "heatTiles.zip");
@@ -131,22 +154,18 @@ public class TileUtil {
         }
 
         File[] files = folder.listFiles();
-        if (files == null || files.length == 0) {
-            throw new IOException("No files to zip in directory: " + folder.getAbsolutePath());
+        if (files == null) {
+            return;
         }
 
         for (File file : files) {
+            String path = parentFolder.isEmpty() ? file.getName() : parentFolder + "/" + file.getName();
             if (file.isDirectory()) {
-                if (parentFolder.isEmpty() && file.getName().equals("tile.openstreetmap.org")) {
-                    zipDirectory(file, "", zos);
-                } else {
-                    zipDirectory(file, parentFolder + (parentFolder.isEmpty() ? "" : "/") + file.getName(), zos);
-                }
+                zipDirectory(file, path, zos);
                 continue;
             }
             try (FileInputStream fis = new FileInputStream(file)) {
-                String zipEntryName = parentFolder + "/" + file.getName();
-                zos.putNextEntry(new ZipEntry(zipEntryName));
+                zos.putNextEntry(new ZipEntry(path));
                 byte[] buffer = new byte[1024];
                 int length;
                 while ((length = fis.read(buffer)) > 0) {

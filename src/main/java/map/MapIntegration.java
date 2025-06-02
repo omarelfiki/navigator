@@ -28,9 +28,15 @@ public class MapIntegration {
 
     boolean isDebugMode;
 
+    private VBox zoomControls;
+
     public MapIntegration(boolean isOnline) {
         this.isOnline = isOnline;
         this.isDebugMode = getDebugMode();
+    }
+
+    public VBox getZoomControls() {
+        return zoomControls;
     }
 
     public StackPane createMapPane() {
@@ -59,6 +65,7 @@ public class MapIntegration {
         mapPane.getChildren().add(swingNode);
 
         VBox zoomControls = new VBox();
+        this.zoomControls = zoomControls;
         zoomControls.setSpacing(10);
         zoomControls.setStyle("-fx-padding: 10;");
         zoomControls.setAlignment(Pos.CENTER);
