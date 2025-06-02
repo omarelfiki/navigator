@@ -32,6 +32,7 @@ import org.jxmapviewer.viewer.GeoPosition;
 import org.jxmapviewer.viewer.Waypoint;
 import org.jxmapviewer.viewer.WaypointPainter;
 import util.AStarRouterV;
+import util.HeatMapRouter;
 import util.NetworkUtil;
 import util.Node;
 
@@ -110,8 +111,11 @@ public class homeUI extends Application {
                 else {
                     return;
                 }
+                HeatMapRouter router = new HeatMapRouter();
+
                 // TODO: run the heatmap router somewhere around here
-                List<HeatPoint> heatPoints = new ArrayList<>(); //example - HeatMapRouter.getHeatPoints(newValue);
+                List<HeatPoint> heatPoints = router.toHeatPoints(router.buildWithoutWalk(lat,lon, "9:30:00")); // Example radius, adjust as needed
+                //example - HeatMapRouter.getHeatPoints(newValue);
 
                 HeatMap heatMap = new HeatMap(new GeoPosition(lat, lon), heatPoints);
                 JXMapViewer map = heatMap.getHeatMap();
@@ -463,3 +467,7 @@ public class homeUI extends Application {
         launch(args);
     }
 }
+
+
+
+
