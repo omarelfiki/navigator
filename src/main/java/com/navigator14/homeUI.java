@@ -32,7 +32,6 @@ import org.jxmapviewer.viewer.GeoPosition;
 import org.jxmapviewer.viewer.Waypoint;
 import org.jxmapviewer.viewer.WaypointPainter;
 import util.AStarRouterV;
-import util.HeatMapRouter;
 import util.NetworkUtil;
 import util.Node;
 
@@ -55,9 +54,10 @@ public class homeUI extends Application {
     private Button hideSidePanel, showSidePanel;
     private boolean firstClick = true;
     private final Set<Waypoint> waypoints = new HashSet<>();
+    private final MapControl mapControl = new MapControl();
     private DefaultWaypoint originWaypoint;
     private DefaultWaypoint destinationWaypoint;
-    private SwingNode HeatmapNode;
+    private final SwingNode HeatmapNode = new SwingNode();
     private final WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<>();
 
     @Override
@@ -345,23 +345,7 @@ public class homeUI extends Application {
         dateField.setId("dateField");
     }
 
-    private static Button createFlipButton(BorderPane root, TextField originField, TextField destinationField, DatePicker dateField, TextField timeField) {
-        Button flipButton = new Button("⇅");
-        flipButton.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
-        flipButton.layoutXProperty().bind(root.widthProperty().multiply(0.2)); // 130/1280
-        flipButton.layoutYProperty().bind(root.heightProperty().multiply(0.1555)); // 120/832
-        flipButton.setOnAction(_ -> {
-            String temp = originField.getText();
-            originField.setText(destinationField.getText());
-            destinationField.setText(temp);
-            dateField.setValue(null);
-            timeField.clear();
-            WayPoint.clearRoute();
-            AStarRouterV router = new AStarRouterV();
-            router.reset();
-        });
-        return flipButton;
-    }
+
 
     private void toggleSwitch(Rectangle background) {
         isOn.set(!isOn.get());
@@ -385,9 +369,7 @@ public class homeUI extends Application {
                 JXMapViewer map = MapProvider.getInstance().getMap();
                 map.setOverlayPainter(waypointPainter);
             }
-            if (HeatmapNode != null) {
-                HeatmapNode.setVisible(false);
-            }
+            HeatmapNode.setVisible(false);
         }
     }
 
@@ -516,57 +498,12 @@ public class homeUI extends Application {
                 double lon = coordinates[1];
                 addMarkerOnClicks(lat, lon, true);
 
-                Task<Void> routerTask = createRouterTask(lat, lon, mapStack, isDebugMode);
+                Task<Void> routerTask = mapControl.createRouterTask(lat, lon, mapStack, HeatmapNode, isDebugMode);
                 routerTask.setOnSucceeded(_ -> Platform.runLater(() -> label.setText("Heatmap Created")));
                 routerTask.setOnFailed(_ -> Platform.runLater(() -> label.setText("Heatmap Mode Activated. \n Enter an origin point")));
                 new Thread(routerTask).start();
             }
         });
-    }
-
-    private Task<Void> createRouterTask(double lat, double lon, StackPane mapStack, boolean isDebugMode) {
-        return new Task<>() {
-            @Override
-            protected Void call() {
-                HeatMapRouter router = new HeatMapRouter();
-                if (isDebugMode) {
-                    System.err.println("HeatmapRouter initialized with coordinates: " + lat + ", " + lon);
-                }
-                List<HeatPoint> heatPoints = router.toHeatPoints(router.buildWithoutWalk(lat, lon, "9:30:00"));
-                JXMapViewer baseMap = MapProvider.getInstance().getMap();
-                HeatMap heatMap = new HeatMap(new GeoPosition(lat, lon), heatPoints, baseMap);
-                JXMapViewer map = heatMap.getHeatMap();
-
-                Platform.runLater(() -> {
-                    HeatmapNode = new SwingNode();
-                    HeatmapNode.setContent(map);
-                    HeatmapNode.setOpacity(0.5);
-                    mapStack.getChildren().add(HeatmapNode);
-                    MapIntegration mapIntegration = MapProvider.getInstance();
-                    VBox zoomControls = mapIntegration.getZoomControls();
-                    if (zoomControls != null) {
-                        mapStack.getChildren().remove(zoomControls);
-                        mapStack.getChildren().add(zoomControls);
-                        if (zoomControls.getChildren().size() >= 2 &&
-                            zoomControls.getChildren().get(0) instanceof Button zoomInBtn &&
-                            zoomControls.getChildren().get(1) instanceof Button zoomOutBtn) {
-                            zoomInBtn.setOnAction(_ -> {
-                                int newZoom = map.getZoom() - 1;
-                                map.setZoom(newZoom);
-                                baseMap.setZoom(newZoom);
-                            });
-                            zoomOutBtn.setOnAction(_ -> {
-                                int newZoom = map.getZoom() + 1;
-                                map.setZoom(newZoom);
-                                baseMap.setZoom(newZoom);
-                            });
-                        }
-                    }
-                });
-
-                return null;
-            }
-        };
     }
 
     public static void main(String[] args) {

@@ -10,6 +10,8 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
+import map.WayPoint;
+import util.AStarRouterV;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -158,5 +160,23 @@ public class UiHelper {
         line.endYProperty().bind(root.heightProperty().multiply(0.89).add(20)); // 740/832 + 20
         line.setStroke(Color.WHITE);
         return line;
+    }
+
+    public static Button createFlipButton(BorderPane root, TextField originField, TextField destinationField, DatePicker dateField, TextField timeField) {
+        Button flipButton = new Button("⇅");
+        flipButton.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
+        flipButton.layoutXProperty().bind(root.widthProperty().multiply(0.2)); // 130/1280
+        flipButton.layoutYProperty().bind(root.heightProperty().multiply(0.1555)); // 120/832
+        flipButton.setOnAction(_ -> {
+            String temp = originField.getText();
+            originField.setText(destinationField.getText());
+            destinationField.setText(temp);
+            dateField.setValue(null);
+            timeField.clear();
+            WayPoint.clearRoute();
+            AStarRouterV router = new AStarRouterV();
+            router.reset();
+        });
+        return flipButton;
     }
 }

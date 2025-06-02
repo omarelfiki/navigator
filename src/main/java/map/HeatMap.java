@@ -27,11 +27,35 @@ public class HeatMap {
         map.setTileFactory(tileUtil.getTileFactory(1));
         map.setZoom(syncMap.getZoom());
         map.setAddressLocation(startPos);
+
+        syncMap.addPropertyChangeListener("center", _ -> {
+            if (!map.getAddressLocation().equals(syncMap.getAddressLocation())) {
+                map.setAddressLocation(syncMap.getAddressLocation());
+            }
+        });
+        map.addPropertyChangeListener("center", _ -> {
+            if (!syncMap.getAddressLocation().equals(map.getAddressLocation())) {
+                syncMap.setAddressLocation(map.getAddressLocation());
+            }
+        });
+
+        syncMap.addPropertyChangeListener("zoom", _ -> {
+            if (map.getZoom() != syncMap.getZoom()) {
+                map.setZoom(syncMap.getZoom());
+            }
+        });
+        map.addPropertyChangeListener("zoom", _ -> {
+            if (syncMap.getZoom() != map.getZoom()) {
+                syncMap.setZoom(map.getZoom());
+            }
+        });
+
         map.addMouseListener(new PanMouseInputListener(map));
         map.addMouseMotionListener(new PanMouseInputListener(map));
         map.addMouseListener(new CenterMapListener(map));
         map.addMouseWheelListener(new ZoomMouseWheelListenerCursor(map));
         map.addKeyListener(new PanKeyListener(map));
+
         final int initialZoom = map.getZoom();
         map.addPropertyChangeListener("zoom", _ -> {
             int zoom = map.getZoom();
