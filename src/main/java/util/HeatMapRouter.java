@@ -118,7 +118,7 @@ public class HeatMapRouter {
     public List<HeatPoint> toHeatPoints(Map<String, Node> nodes){
         List<HeatPoint> hp = new ArrayList<>(nodes.size());
         for (Node n : nodes.values()) {                                           //just as a reminder , also hello little easter egg:)
-            hp.add(new HeatPoint(n.stop.getStopLat(), n.stop.getStopLon(), n.g)); // g is seconds (SENTINEL = 2701)
+            hp.add(new HeatPoint(n.stop.getStopLat(), n.stop.getStopLon(), n.g/60)); // g is seconds (SENTINEL = 2701s =>45 min)
         }
         return hp;
     }

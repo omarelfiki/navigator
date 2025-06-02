@@ -112,6 +112,7 @@ public class homeUI extends Application {
                     return;
                 }
                 HeatMapRouter router = new HeatMapRouter();
+                System.err.println("HeatmapRouter initialized with coordinates: " + lat + ", " + lon);
 
                 // TODO: run the heatmap router somewhere around here
                 List<HeatPoint> heatPoints = router.toHeatPoints(router.buildWithoutWalk(lat,lon, "9:30:00")); // Example radius, adjust as needed
