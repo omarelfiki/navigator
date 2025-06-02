@@ -37,6 +37,7 @@ import util.NetworkUtil;
 import util.Node;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 import map.WayPoint;
 import map.*;
@@ -62,6 +63,7 @@ public class homeUI extends Application {
     public void start(Stage primaryStage) {
         primaryStage.setTitle("Navigator");
         DBaccess access = DBaccessProvider.getInstance();
+        boolean isDebugMode = getDebugMode();
 
         BorderPane root = new BorderPane();
 
@@ -99,7 +101,7 @@ public class homeUI extends Application {
 
         //Heatmap functionality -to be refactored
         originField.textProperty().addListener((_, _, newValue) -> {
-            if (isOn.get()){
+            if (isOn.get()) {
                 double[] coordinates = getCoordinatesFromAddress(newValue);
                 double lat;
                 double lon;
@@ -107,16 +109,13 @@ public class homeUI extends Application {
                     lat = coordinates[0];
                     lon = coordinates[1];
                     addMarkerOnClicks(lat, lon, true);
-                }
-                else {
+                } else {
                     return;
                 }
                 HeatMapRouter router = new HeatMapRouter();
-                System.err.println("HeatmapRouter initialized with coordinates: " + lat + ", " + lon);
+                if (isDebugMode) System.err.println("HeatmapRouter initialized with coordinates: " + lat + ", " + lon);
 
-                // TODO: run the heatmap router somewhere around here
-                List<HeatPoint> heatPoints = router.toHeatPoints(router.buildWithoutWalk(lat,lon, "9:30:00")); // Example radius, adjust as needed
-                //example - HeatMapRouter.getHeatPoints(newValue);
+                List<HeatPoint> heatPoints = router.toHeatPoints(router.buildWithoutWalk(lat, lon, "9:30:00")); // Example radius, adjust as needed
 
                 HeatMap heatMap = new HeatMap(new GeoPosition(lat, lon), heatPoints);
                 JXMapViewer map = heatMap.getHeatMap();
@@ -169,6 +168,9 @@ public class homeUI extends Application {
         label.yProperty().bind(root.heightProperty().multiply(0.48)); // 400/832
         leftPane.getChildren().add(label);
 
+        AtomicReference<StackPane> resultPaneRef = new AtomicReference<>(new StackPane());
+        leftPane.getChildren().add(resultPaneRef.get());
+
         dateField.valueProperty().addListener((_, _, _) -> {
             if (filled.get()) {
                 Task<Void> task = new Task<>() {
@@ -187,7 +189,12 @@ public class homeUI extends Application {
                             if (result == null) {
                                 label.setText("No route found.");
                             } else {
-//                                displayTransportModes(result.getLast(), leftPane);
+                                label.setVisible(false);
+                                StackPane newResult = displayTransportModes(result.getLast(), root);
+                                resultPaneRef.get().getChildren().setAll(newResult.getChildren());
+                                resultPaneRef.get().setTranslateX(newResult.getTranslateX());
+                                resultPaneRef.get().setTranslateY(newResult.getTranslateY());
+                                resultPaneRef.get().setVisible(true);
                             }
                         });
 
@@ -310,6 +317,8 @@ public class homeUI extends Application {
             AStarRouterV router = new AStarRouterV();
             router.reset();
             label.setText("Navigate to see public transport \n options");
+            label.setVisible(true);
+            resultPaneRef.get().setVisible(false);
             originWaypoint = null;
             destinationWaypoint = null;
             waypoints.clear();
@@ -338,18 +347,6 @@ public class homeUI extends Application {
 
         JXMapViewer map = mapIntegration.getMap();
 
-    /*    map.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent e) {
-                Point2D point = e.getPoint();
-                GeoPosition geoPosition = map.convertPointToGeoPosition(point);
-                double lat = geoPosition.getLatitude();
-                double lon = geoPosition.getLongitude();
-
-                Task<Void> weatherTask = createWeatherTask(lat, lon, temperatureLabel, weatherIcon);
-                new Thread(weatherTask).start();
-            }
-        });*/
         map.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent e) {
@@ -420,7 +417,7 @@ public class homeUI extends Application {
         map.setOverlayPainter(waypointPainter);
     }
 
-    // this method to update the fileds
+    // this method to update the fields
     private void updateCoordinateFields(double lat, double lon, TextField originField, TextField destinationField) {
         // Format the coordinates
         String coordinateText = String.format("%.6f, %.6f", lat, lon);
@@ -446,14 +443,19 @@ public class homeUI extends Application {
                 }
                 firstClick = true;
             });
-//           ` background.setFill(Color.LIMEGREEN); // On state
         }
-        isOn.set(!isOn.get()); // Toggle the state
     }
 
-    private void displayTransportModes(Node destinationNode, Pane pane) {
-        Set<String> modes = new LinkedHashSet<>(); // To avoid duplicates
+    private StackPane displayTransportModes(Node destinationNode, BorderPane root) {
+        // StackPane creation and styling - do not change
+        StackPane resultPane = new StackPane();
+        resultPane.setStyle("-fx-background-color: rgba(0, 0, 0, 0.5); -fx-padding: 10;");
+        resultPane.setAlignment(Pos.CENTER);
+        resultPane.setPrefSize(300, 200);
+        resultPane.setTranslateX(root.getWidth() * 0.02); // 10/1280
+        resultPane.setTranslateY(root.getHeight() * 0.4); // 80/832
 
+        Set<String> modes = new LinkedHashSet<>(); // To avoid duplicates
         Node current = destinationNode;
         while (current != null) {
             if (current.mode != null && !current.mode.isBlank()) {
@@ -462,31 +464,36 @@ public class homeUI extends Application {
             current = current.parent;
         }
 
-        // Clear any existing content
-        pane.getChildren().clear();
-
         Text transportTitle = new Text("Modes of Transport:");
         transportTitle.setStyle("-fx-font: 16 Ubuntu; -fx-fill: white;");
-        pane.getChildren().add(transportTitle);
+
+        VBox contentBox = new VBox(10);
+        contentBox.setAlignment(Pos.CENTER);
+        contentBox.getChildren().add(transportTitle);
 
         for (String mode : modes) {
-            Pane row = new Pane();
+            HBox row = new HBox(10);
+            row.setAlignment(Pos.CENTER);
 
             Text modeText = new Text(mode);
             modeText.setStyle("-fx-font: 14 Ubuntu; -fx-fill: white;");
             row.getChildren().add(modeText);
 
-//            ImageView icon = getModeIcon(mode);
-//            if (icon != null) row.getChildren().add(icon);
+            // ImageView icon = getModeIcon(mode);
+            // if (icon != null) row.getChildren().add(icon);
 
-            pane.getChildren().add(row);
+            contentBox.getChildren().add(row);
         }
+
+        resultPane.getChildren().add(contentBox);
+        return resultPane;
     }
 
 //    private ImageView getModeIcon(String mode) {
 //        try {
 //            String iconPath = switch (mode.toLowerCase()) {
-            // add pictures, after case include path
+
+    /// /             add pictures, after case include path
 //                case "bus" ->
 //                case "walk" ->
 //                case "metro" ->
@@ -503,16 +510,6 @@ public class homeUI extends Application {
 //        }
 //        return null;
 //    }
-
-
-    public void displayResult(List<Node> result, StackPane pane) {
-        for (Node node : result) {
-            Text text = new Text(node.stop.stopName);
-            text.setFill(Color.WHITE);
-            text.setStyle("-fx-font: 14 Ubuntu;");
-            pane.getChildren().add(text);
-        }
-    }
 
     public static void main(String[] args) {
         String gtfsDir = System.getenv("GTFS_DIR");
