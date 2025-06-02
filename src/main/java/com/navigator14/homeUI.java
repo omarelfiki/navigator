@@ -57,6 +57,7 @@ public class homeUI extends Application {
     private final Set<Waypoint> waypoints = new HashSet<>();
     private DefaultWaypoint originWaypoint;
     private DefaultWaypoint destinationWaypoint;
+    private SwingNode HeatmapNode;
     private final WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<>();
 
     @Override
@@ -69,7 +70,9 @@ public class homeUI extends Application {
 
         MapIntegration mapIntegration = MapProvider.getInstance();
         StackPane mapPane = mapIntegration.createMapPane();
-        root.setCenter(mapPane);
+        StackPane mapStack = new StackPane();
+        mapStack.getChildren().add(mapPane);
+        root.setCenter(mapStack);
 
         Pane leftPane = new Pane();
         VBox vbox_left = new VBox();
@@ -99,31 +102,6 @@ public class homeUI extends Application {
         TextField originField = (TextField) ((HBox) startGroup.getChildren().getFirst()).getChildren().get(1);
         TextField destinationField = (TextField) ((HBox) endGroup.getChildren().getFirst()).getChildren().get(1);
 
-        //Heatmap functionality -to be refactored
-        originField.textProperty().addListener((_, _, newValue) -> {
-            if (isOn.get()) {
-                double[] coordinates = getCoordinatesFromAddress(newValue);
-                double lat;
-                double lon;
-                if (coordinates != null) {
-                    lat = coordinates[0];
-                    lon = coordinates[1];
-                    addMarkerOnClicks(lat, lon, true);
-                } else {
-                    return;
-                }
-                HeatMapRouter router = new HeatMapRouter();
-                if (isDebugMode) System.err.println("HeatmapRouter initialized with coordinates: " + lat + ", " + lon);
-
-                List<HeatPoint> heatPoints = router.toHeatPoints(router.buildWithoutWalk(lat, lon, "9:30:00")); // Example radius, adjust as needed
-
-                HeatMap heatMap = new HeatMap(new GeoPosition(lat, lon), heatPoints);
-                JXMapViewer map = heatMap.getHeatMap();
-                SwingNode swingNode = new SwingNode();
-                swingNode.setContent(map);
-                mapPane.getChildren().add(swingNode);
-            }
-        });
 
         StackPane timeContainer = createDateTimeContainer("⏰", "Time", 0.026, 0.12, 0.036, root, 1);
         StackPane dateContainer = createDateTimeContainer("🗓️", "Date", 0.11, 0.132, 0.061, root, 0);
@@ -132,20 +110,7 @@ public class homeUI extends Application {
         TextField timeField = (TextField) ((HBox) timeContainer.getChildren().getFirst()).getChildren().get(1);
         DatePicker dateField = (DatePicker) ((HBox) dateContainer.getChildren().getFirst()).getChildren().getFirst();
 
-        Button flipButton = new Button("⇅");
-        flipButton.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
-        flipButton.layoutXProperty().bind(root.widthProperty().multiply(0.2)); // 130/1280
-        flipButton.layoutYProperty().bind(root.heightProperty().multiply(0.1555)); // 120/832
-        flipButton.setOnAction(_ -> {
-            String temp = originField.getText();
-            originField.setText(destinationField.getText());
-            destinationField.setText(temp);
-            dateField.setValue(null);
-            timeField.clear();
-            WayPoint.clearRoute();
-            AStarRouterV router = new AStarRouterV();
-            router.reset();
-        });
+        Button flipButton = createFlipButton(root, originField, destinationField, dateField, timeField);
         leftPane.getChildren().add(flipButton);
         flipButton.visibleProperty().bind(isOn.not());
 
@@ -168,6 +133,7 @@ public class homeUI extends Application {
         label.yProperty().bind(root.heightProperty().multiply(0.48)); // 400/832
         leftPane.getChildren().add(label);
 
+        setHeatMapListener(originField, mapStack, isOn, isDebugMode, label);
         AtomicReference<StackPane> resultPaneRef = new AtomicReference<>(new StackPane());
         leftPane.getChildren().add(resultPaneRef.get());
 
@@ -211,13 +177,14 @@ public class homeUI extends Application {
         isOn.addListener((_, _, _) -> {
             if (isOn.get()) {
                 title.setText("Heatmap");
-                label.setText("Heatmap Mode Activated. \n Finding routes...");
+                label.setText("Heatmap Mode Activated. \n Enter an origin point...");
                 originField.clear();
             } else {
                 title.setText("Navigator");
                 label.setText("Navigate to see public transport \n options");
                 originField.clear();
                 destinationField.clear();
+
             }
         });
 
@@ -248,7 +215,7 @@ public class homeUI extends Application {
         showSidePanel = new Button("→");
         showSidePanel.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
         showSidePanel.setVisible(false);
-        mapPane.getChildren().add(showSidePanel);
+        mapStack.getChildren().addFirst(showSidePanel);
         StackPane.setAlignment(showSidePanel, Pos.CENTER_LEFT);
         showSidePanel.translateXProperty().bind(root.widthProperty().multiply(0.01));
         showSidePanel.translateYProperty().bind(root.heightProperty().multiply(-0.04));
@@ -309,18 +276,23 @@ public class homeUI extends Application {
         clearButton.layoutYProperty().bind(root.heightProperty().multiply(0.85));
         clearButton.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
         clearButton.setOnAction(_ -> {
+            if (isOn.get()) {
+                label.setText("Heatmap Mode Activated. \n Enter an origin point");
+                HeatmapNode.setVisible(false);
+            } else {
+                destinationField.clear();
+                timeField.clear();
+                dateField.setValue(null);
+                label.setText("Navigate to see public transport \n options");
+                label.setVisible(true);
+                resultPaneRef.get().setVisible(false);
+                destinationWaypoint = null;
+            }
             originField.clear();
-            destinationField.clear();
-            timeField.clear();
-            dateField.setValue(null);
+            originWaypoint = null;
             WayPoint.clearRoute();
             AStarRouterV router = new AStarRouterV();
             router.reset();
-            label.setText("Navigate to see public transport \n options");
-            label.setVisible(true);
-            resultPaneRef.get().setVisible(false);
-            originWaypoint = null;
-            destinationWaypoint = null;
             waypoints.clear();
         });
         leftPane.getChildren().add(clearButton);
@@ -373,6 +345,24 @@ public class homeUI extends Application {
         dateField.setId("dateField");
     }
 
+    private static Button createFlipButton(BorderPane root, TextField originField, TextField destinationField, DatePicker dateField, TextField timeField) {
+        Button flipButton = new Button("⇅");
+        flipButton.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
+        flipButton.layoutXProperty().bind(root.widthProperty().multiply(0.2)); // 130/1280
+        flipButton.layoutYProperty().bind(root.heightProperty().multiply(0.1555)); // 120/832
+        flipButton.setOnAction(_ -> {
+            String temp = originField.getText();
+            originField.setText(destinationField.getText());
+            destinationField.setText(temp);
+            dateField.setValue(null);
+            timeField.clear();
+            WayPoint.clearRoute();
+            AStarRouterV router = new AStarRouterV();
+            router.reset();
+        });
+        return flipButton;
+    }
+
     private void toggleSwitch(Rectangle background) {
         isOn.set(!isOn.get());
         if (isOn.get()) {
@@ -395,7 +385,9 @@ public class homeUI extends Application {
                 JXMapViewer map = MapProvider.getInstance().getMap();
                 map.setOverlayPainter(waypointPainter);
             }
-
+            if (HeatmapNode != null) {
+                HeatmapNode.setVisible(false);
+            }
         }
     }
 
@@ -510,6 +502,50 @@ public class homeUI extends Application {
 //        }
 //        return null;
 //    }
+
+    private void setHeatMapListener(TextField originField, StackPane mapStack, BooleanProperty isOn, boolean isDebugMode, Text label) {
+        originField.textProperty().addListener((_, _, newValue) -> {
+            if (isOn.get()) {
+               Platform.runLater(() -> label.setText("Creating Heatmap..."));
+                double[] coordinates = getCoordinatesFromAddress(newValue);
+                if (coordinates == null) {
+                    Platform.runLater(() -> label.setText("Invalid address. Please try again."));
+                    return;
+                }
+                double lat = coordinates[0];
+                double lon = coordinates[1];
+                addMarkerOnClicks(lat, lon, true);
+
+                Task<Void> routerTask = createRouterTask(lat, lon, mapStack, isDebugMode);
+                routerTask.setOnSucceeded(_ -> Platform.runLater(() -> label.setText("Heatmap Created")));
+                routerTask.setOnFailed(_ -> Platform.runLater(() -> label.setText("Heatmap Mode Activated. \n Enter an origin point")));
+                new Thread(routerTask).start();
+            }
+        });
+    }
+
+    private Task<Void> createRouterTask(double lat, double lon, StackPane mapStack, boolean isDebugMode) {
+        return new Task<>() {
+            @Override
+            protected Void call() {
+                HeatMapRouter router = new HeatMapRouter();
+                if (isDebugMode) {
+                    System.err.println("HeatmapRouter initialized with coordinates: " + lat + ", " + lon);
+                }
+                List<HeatPoint> heatPoints = router.toHeatPoints(router.buildWithoutWalk(lat, lon, "9:30:00"));
+                HeatMap heatMap = new HeatMap(new GeoPosition(lat, lon), heatPoints);
+                JXMapViewer map = heatMap.getHeatMap();
+
+                Platform.runLater(() -> {
+                    HeatmapNode = new SwingNode();
+                    HeatmapNode.setContent(map);
+                    mapStack.getChildren().add(HeatmapNode);
+                });
+
+                return null;
+            }
+        };
+    }
 
     public static void main(String[] args) {
         String gtfsDir = System.getenv("GTFS_DIR");
