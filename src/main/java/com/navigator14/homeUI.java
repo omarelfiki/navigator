@@ -215,7 +215,7 @@ public class homeUI extends Application {
         showSidePanel = new Button("→");
         showSidePanel.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
         showSidePanel.setVisible(false);
-        mapStack.getChildren().addFirst(showSidePanel);
+        mapStack.getChildren().add(showSidePanel);
         StackPane.setAlignment(showSidePanel, Pos.CENTER_LEFT);
         showSidePanel.translateXProperty().bind(root.widthProperty().multiply(0.01));
         showSidePanel.translateYProperty().bind(root.heightProperty().multiply(-0.04));
