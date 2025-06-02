@@ -187,7 +187,7 @@ public class homeUI extends Application {
                             if (result == null) {
                                 label.setText("No route found.");
                             } else {
-                                label.setText("Found " + result.size() + " stops along route.");
+//                                displayTransportModes(result.getLast(), leftPane);
                             }
                         });
 
@@ -446,6 +446,71 @@ public class homeUI extends Application {
                 }
                 firstClick = true;
             });
+//           ` background.setFill(Color.LIMEGREEN); // On state
+        }
+        isOn.set(!isOn.get()); // Toggle the state
+    }
+
+    private void displayTransportModes(Node destinationNode, Pane pane) {
+        Set<String> modes = new LinkedHashSet<>(); // To avoid duplicates
+
+        Node current = destinationNode;
+        while (current != null) {
+            if (current.mode != null && !current.mode.isBlank()) {
+                modes.add(current.mode);
+            }
+            current = current.parent;
+        }
+
+        // Clear any existing content
+        pane.getChildren().clear();
+
+        Text transportTitle = new Text("Modes of Transport:");
+        transportTitle.setStyle("-fx-font: 16 Ubuntu; -fx-fill: white;");
+        pane.getChildren().add(transportTitle);
+
+        for (String mode : modes) {
+            Pane row = new Pane();
+
+            Text modeText = new Text(mode);
+            modeText.setStyle("-fx-font: 14 Ubuntu; -fx-fill: white;");
+            row.getChildren().add(modeText);
+
+//            ImageView icon = getModeIcon(mode);
+//            if (icon != null) row.getChildren().add(icon);
+
+            pane.getChildren().add(row);
+        }
+    }
+
+//    private ImageView getModeIcon(String mode) {
+//        try {
+//            String iconPath = switch (mode.toLowerCase()) {
+            // add pictures, after case include path
+//                case "bus" ->
+//                case "walk" ->
+//                case "metro" ->
+//                default -> null;
+//            };
+//
+//            if (iconPath != null) {
+//                Image icon = new Image(getClass().getResourceAsStream(iconPath));
+//                ImageView imageView = new ImageView(icon);
+//                return imageView;
+//            }
+//        } catch (Exception e) {
+//
+//        }
+//        return null;
+//    }
+
+
+    public void displayResult(List<Node> result, StackPane pane) {
+        for (Node node : result) {
+            Text text = new Text(node.stop.stopName);
+            text.setFill(Color.WHITE);
+            text.setStyle("-fx-font: 14 Ubuntu;");
+            pane.getChildren().add(text);
         }
     }
 
