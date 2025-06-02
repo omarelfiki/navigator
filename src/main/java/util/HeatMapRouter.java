@@ -1,7 +1,6 @@
 package util;
 
 import db.NearbyStops;
-import db.TDSImplement;
 import map.HeatPoint;
 import models.Stop;
 
@@ -116,7 +115,7 @@ public class HeatMapRouter {
         }
         return settled;
     }
-    public static List<HeatPoint> toHeatPoints(Map<String, Node> nodes){
+    public List<HeatPoint> toHeatPoints(Map<String, Node> nodes){
         List<HeatPoint> hp = new ArrayList<>(nodes.size());
         for (Node n : nodes.values()) {                                           //just as a reminder , also hello little easter egg:)
             hp.add(new HeatPoint(n.stop.getStopLat(), n.stop.getStopLon(), n.g)); // g is seconds (SENTINEL = 2701)
