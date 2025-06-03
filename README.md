@@ -25,12 +25,17 @@ Designed for public transit systems, it enables real-time route discovery using 
     │   ├── main/                                                   
     │   │   ├── java/
     │   │   │   ├── com.navigator14/    # Main Java Package (UI + CLI)
-    │   │   │   ├── models/             # Data Models (Stop, Trip, Route, etc.)                                             
-    │   │   │   ├── db/                 # Database Classes                                                      
-    │   │   │   ├── ui/                 # JavaFX GUI Components
+    │   │   │   ├── closureAnalysis/    # Stop Closure Analysis (for GTFS data)
+    │   │   │   ├── db/                 # Database Classes
     │   │   │   ├── map/                # GUI Map Classes
-    │   │   │   └── util/               # Utility Classes + Routing Engine 
+    │   │   │   ├── models/             # Data Models (Stop, Trip, Route, etc.)                                             
+    │   │   │   ├── router/             # A* + Routing Engine
+    │   │   │   ├── ui/                 # JavaFX GUI Components
+    │   │   │   └── util/               # Utility Classes  
     │   │   └── resources/              # JavaFX and SQL Resources (.sql, .css, Images)
+    │   ├── test/                       # Test Classes
+    │   │   └── java/
+    │   │       └── com.navigator14/    
     ├── oldGraphStuff/                  # Early Prototype (for reference)                                       
     └── README.md                                   
 
@@ -53,7 +58,6 @@ Navigate to the project directory and run the following command to build the pro
     `mvn clean install`
 
 ### 4. Configure environment variables
-   - Set the `GTFS_DIR` variable to the path of your GTFS data directory.
    - Set the `ROUTING_ENGINE_MYSQL_JDBC` variable to your MySQL connection string with `allowLoadLocalInfile=true&useCursorFetch=true`.
    - Set the `ROUTING_ENGINE_STORAGE_DIRECTORY` variable to the path where you want to store the extracted GTFS data.
 
@@ -101,10 +105,8 @@ Navigate to the project directory and run the following command to build the pro
 - The system will also create the necessary tables and indexes for efficient querying.
 
 ### Initializing the database through GUI
-- The GUI provides a simple interface to initialize the database. You can add the GTFS dataset directory path to the `GTFS_DIR` enviroment variable and click on the "Load GTFS Data" button to initialize the database.
+- The GUI provides a simple interface to initialize the database. You can add the GTFS dataset directory path to the `GTFS_DIR` environment variable and click on the "Load GTFS Data" button to initialize the database.
 - The system will extract the GTFS data and load it into the MySQL database.
-
-Note: The CLI only accepts the GTFS dataset zip file path, while the GUI accepts the extracted GTFS dataset directory path. Do not include the zip file in the GUI. Dir path will be deprecated in the future.
 
 ## Contributors
 - [@I6344736] - Omar Elfiki

@@ -1,6 +1,7 @@
 package com.navigator14;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -8,10 +9,12 @@ import java.util.Objects;
 import com.leastfixedpoint.json.JSONReader;
 import com.leastfixedpoint.json.JSONSyntaxError;
 import com.leastfixedpoint.json.JSONWriter;
-import db.DBconfig;
+import db.DBConfig;
 import models.Request;
-import util.AStarRouterV;
-import util.Node;
+import router.AStarRouterV;
+import router.Node;
+
+import static util.DebugUtil.getDebugMode;
 import static util.TimeUtil.parseTime;
 
 public class RoutingEngine {
@@ -28,6 +31,13 @@ public class RoutingEngine {
     }
 
     public static void main(String[] args) throws IOException {
+        String debug = System.getenv("debug");
+        boolean isDebugMode = getDebugMode();
+        if (debug != null) {
+            System.setProperty("debug", debug);
+        } else {
+            if (isDebugMode) System.err.println("Environment variable 'debug' is not set. Debug mode is enabled by default.");
+        }
         new RoutingEngine().run();
     }
 
@@ -46,6 +56,11 @@ public class RoutingEngine {
             }
 
             if (json instanceof Map<?, ?> request) {
+                if (request.containsKey("exit")) {
+                    System.err.println("Exit command received");
+                    break; // Exit the loop
+                }
+
                 if (request.containsKey("load")) {
                     if (initDB(request)) return;
                     sendOk("loaded");
@@ -58,8 +73,9 @@ public class RoutingEngine {
                         sendError("Invalid time format");
                         continue;
                     }
+                    List<String> avoidedStops = new ArrayList<>();
                     AStarRouterV router = new AStarRouterV();
-                    List<Node> path = router.findFastestPath(requestR.latStart(), requestR.lonStart(), requestR.latEnd(), requestR.lonEnd(), requestR.time());
+                    List<Node> path = router.findFastestPath(requestR.latStart(), requestR.lonStart(), requestR.latEnd(), requestR.lonEnd(), requestR.time(),avoidedStops);
                     if (path == null) {
                         sendError("No path found");
                         continue;
@@ -86,7 +102,7 @@ public class RoutingEngine {
             sendError("File does not exist");
             return true;
         }
-        DBconfig dbConfig = new DBconfig(load);
+        DBConfig dbConfig = new DBConfig(load);
         dbConfig.initializeDB();
         return false;
     }
@@ -117,8 +133,8 @@ public class RoutingEngine {
 
     private List<Map<String, Object>> parseResult(List<Node> path, Request request) {
         return path.stream().map(node -> {
-            if (Objects.equals(node.mode, "WALK")) {
-                if(node.parent == null) {
+            if (Objects.equals(node.getMode(), "WALK")) {
+                if(node.getParent() == null) {
                     return Map.of(
                             "mode", "walk",
                             "to", Map.of("lat", 12.123, "lon", 12.123),
@@ -128,36 +144,36 @@ public class RoutingEngine {
                 }
                 return Map.of(
                         "mode", "walk",
-                        "to", Map.of("lat", node.stop.stopLat, "lon", node.stop.stopLon),
+                        "to", Map.of("lat", node.getStop().getStopLat(), "lon", node.getStop().getStopLon()),
                         "duration", 0,
-                        "startTime", node.arrivalTime
+                        "startTime", node.getArrivalTime()
                 );
-            } else if (Objects.equals(node.mode, "SAME_TRIP")) {
+            } else if (Objects.equals(node.getMode(), "SAME_TRIP")) {
                 return Map.of(
                         "mode", "ride",
-                        "to", Map.of("lat", node.stop.stopLat, "lon", node.stop.stopLon),
+                        "to", Map.of("lat", node.getStop().getStopLat(), "lon", node.getStop().getStopLon()),
                         "duration", 0,
-                        "startTime", node.arrivalTime,
-                        "stop", node.stop.getStopName(),
+                        "startTime", node.getArrivalTime(),
+                        "stop", node.getStop().getStopName(),
                         "route", Map.of(
-                                "operator", node.trip.route.getAgency() != null ? node.trip.route.getAgency().getAgencyName() : "N/A",
-                                "shortName", node.trip.route != null ? node.trip.route.getRouteShortName() : "N/A",
-                                "longName", node.trip.route != null ? node.trip.route.getRouteLongName() : "N/A",
-                                "headSign", node.trip.getHeadSign() == null ? "N/A" : node.trip.getHeadSign()
+                                "operator", node.getTrip().route().agency() != null ? node.getTrip().route().agency().agencyName() : "N/A",
+                                "shortName", node.getTrip().route().routeShortName(),
+                                "longName", node.getTrip().route().routeLongName(),
+                                "headSign", node.getTrip().headSign() == null ? "N/A" : node.getTrip().headSign()
                         )
                 );
-            } else if (Objects.equals(node.mode, "TRANSFER")) {
+            } else if (Objects.equals(node.getMode(), "TRANSFER")) {
                 return Map.of(
                         "mode", "ride",
-                        "to", Map.of("lat", node.stop.stopLat, "lon", node.stop.stopLon),
+                        "to", Map.of("lat", node.getStop().getStopLat(), "lon", node.getStop().getStopLon()),
                         "duration", 0,
-                        "startTime", node.arrivalTime,
-                        "stop", node.stop.getStopName(),
+                        "startTime", node.getArrivalTime(),
+                        "stop", node.getStop().getStopName(),
                         "route", Map.of(
-                                "operator", node.trip.route.getAgency() != null ? node.trip.route.getAgency().getAgencyName() : "N/A",
-                                "shortName", node.trip.route != null ? node.trip.route.getRouteShortName() : "N/A",
-                                "longName", node.trip.route != null ? node.trip.route.getRouteLongName() : "N/A",
-                                "headSign", node.trip.getHeadSign() == null ? "N/A" : node.trip.getHeadSign()
+                                "operator", node.getTrip().route().agency() != null ? node.getTrip().route().agency().agencyName() : "N/A",
+                                "shortName", node.getTrip().route().routeShortName(),
+                                "longName", node.getTrip().route().routeLongName(),
+                                "headSign", node.getTrip().headSign() == null ? "N/A" : node.getTrip().headSign()
                         )
                 );
             }
@@ -166,3 +182,5 @@ public class RoutingEngine {
     }
 }
 // {"routeFrom":{"lat":41.904,"lon":12.5004},"to":{"lat":41.8791,"lon":12.5221},"startingAt":"09:30:00"} - test case
+//  Roma Termini - Vatican test case below
+// {"routeFrom":{"lat":41.900496398,"lon":12.501164662},"to":{"lat":41.906487,"lon":12.453641},"startingAt":"09:30:00"}

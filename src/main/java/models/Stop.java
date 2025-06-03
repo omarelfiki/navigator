@@ -1,75 +1,33 @@
 package models;
 
-public class Stop {
-   public String stopId;
-   public String stopName;
-   public double stopLat;
-   public double stopLon;
-   // Optional fields
-   private String stopDesc;
-   private String stopURl;
-   private int locationType;
-   private String parentStation;
-   private String stopTimezone;
-   private int wheelchairBoarding;
+import closureAnalysis.StopData;
 
-    // Constructor with required + optional fields
-    public Stop(String stopId, String stopName, double stopLat, double stopLon, String stopDesc, String stopURl, int locationType, String parentStation, String stopTimezone, int wheelchairBoarding) {
-        this.stopId = stopId;
-        this.stopName = stopName;
-        this.stopLat = stopLat;
-        this.stopLon = stopLon;
-        this.stopDesc = stopDesc;
-        this.stopURl = stopURl;
-        this.locationType = locationType;
-        this.parentStation = parentStation;
-        this.stopTimezone = stopTimezone;
-        this.wheelchairBoarding = wheelchairBoarding;
+public class Stop extends StopData {
+    private final String stopId;
+    private final String stopName;
+    private final double stopLat;
+    private final double stopLon;
 
-    }
-    // Constructor with required fields
     public Stop(String stopId, String stopName, double stopLat, double stopLon) {
         this.stopId = stopId;
         this.stopName = stopName;
         this.stopLat = stopLat;
         this.stopLon = stopLon;
     }
-
-    public Stop()
-    {
-
-    }
-
-
     public String getStopId() {
         return stopId;
     }
+
     public String getStopName() {
         return stopName;
     }
+
     public double getStopLat() {
         return stopLat;
     }
+
     public double getStopLon() {
         return stopLon;
-    }
-    public String getStopDesc() {
-        return stopDesc;
-    }
-    public String getStopURl() {
-        return stopURl;
-    }
-    public int getLocationType() {
-        return locationType;
-    }
-    public String getParentStation() {
-        return parentStation;
-    }
-    public String getStopTimezone() {
-        return stopTimezone;
-    }
-    public int getWheelchairBoarding() {
-        return wheelchairBoarding;
     }
 
     @Override
