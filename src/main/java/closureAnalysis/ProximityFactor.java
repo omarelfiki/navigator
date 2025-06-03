@@ -22,7 +22,8 @@ public class ProximityFactor {
             new TouristicLocations("Galleria Borghese & Villa Borghese", 41.9142, 12.4923),
             new TouristicLocations("Baths of Caracalla", 41.8796, 12.4930),
             new TouristicLocations("Palatine Hill", 41.8894, 12.4882),
-            new TouristicLocations("Ostia Antica", 41.7550, 12.2930)
+            new TouristicLocations("Ostia Antica", 41.7550, 12.2930),
+            new TouristicLocations("Termini Station", 41.9028, 12.5014)
     );
 
 
