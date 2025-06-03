@@ -1,6 +1,7 @@
 package map;
 
 
+import models.HeatPoint;
 import org.jxmapviewer.JXMapViewer;
 import org.jxmapviewer.input.CenterMapListener;
 import org.jxmapviewer.input.PanKeyListener;

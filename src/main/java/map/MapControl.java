@@ -1,8 +1,12 @@
 package map;
 
 import javafx.concurrent.Task;
+import javafx.embed.swing.SwingNode;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import models.HeatPoint;
 import org.jxmapviewer.JXMapViewer;
+import org.jxmapviewer.viewer.GeoPosition;
 import router.HeatMapRouter;
 import java.util.List;
 
