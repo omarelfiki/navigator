@@ -1,7 +1,7 @@
-package util;
+package router;
 
 import db.NearbyStops;
-import map.HeatPoint;
+import models.HeatPoint;
 import models.Stop;
 
 

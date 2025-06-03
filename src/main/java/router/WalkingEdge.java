@@ -1,11 +1,11 @@
-package util;
+package router;
 
 import db.TDSImplement;
 import models.Stop;
 import models.Trip;
 
 import static util.TimeUtil.addTime;
-import static util.WalkingTime.getWalkingTime;
+import static router.WalkingTime.getWalkingTime;
 
 public class WalkingEdge implements Edge {
     String toStopId;

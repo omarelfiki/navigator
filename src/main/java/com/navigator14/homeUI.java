@@ -31,9 +31,9 @@ import org.jxmapviewer.viewer.DefaultWaypoint;
 import org.jxmapviewer.viewer.GeoPosition;
 import org.jxmapviewer.viewer.Waypoint;
 import org.jxmapviewer.viewer.WaypointPainter;
-import util.AStarRouterV;
+import router.AStarRouterV;
 import util.NetworkUtil;
-import util.Node;
+import router.Node;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;

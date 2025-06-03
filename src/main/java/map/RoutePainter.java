@@ -10,7 +10,7 @@ import java.util.List;
 import org.jxmapviewer.JXMapViewer;
 import org.jxmapviewer.viewer.GeoPosition;
 import org.jxmapviewer.painter.Painter;
-import util.Node;
+import router.Node;
 
 public class RoutePainter implements Painter<JXMapViewer> {
     private final List<Node> path;

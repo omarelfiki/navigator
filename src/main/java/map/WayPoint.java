@@ -7,7 +7,7 @@ import org.jxmapviewer.viewer.DefaultWaypoint;
 import org.jxmapviewer.viewer.GeoPosition;
 import org.jxmapviewer.viewer.Waypoint;
 import org.jxmapviewer.viewer.WaypointPainter;
-import util.Node;
+import router.Node;
 
 import java.awt.*;
 import java.awt.geom.Point2D;

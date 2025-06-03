@@ -1,4 +1,4 @@
-package map;
+package models;
 
 public record HeatPoint(double latitude, double longitude, double time) {
 

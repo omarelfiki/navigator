@@ -1,7 +1,7 @@
 package com.navigator14;
 import db.*;
-import util.AStarRouterV;
-import util.Node;
+import router.AStarRouterV;
+import router.Node;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +15,7 @@ public class RoutingTest {
             return;
         }
 
-        List<String> avoidedStops = new ArrayList<String>();
+        List<String> avoidedStops = new ArrayList<>();
         List<Node> path = router.findFastestPath(41.9012873,12.5015756,41.8791,12.5221,"09:30:00",avoidedStops);
         if (path != null) {
             System.out.println("Path found:");

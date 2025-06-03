@@ -1,5 +1,7 @@
-package util;
+package router;
 
+
+import util.GeoUtil;
 
 public class WalkingTime {
 

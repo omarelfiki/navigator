@@ -1,6 +1,8 @@
 package util;
 
 import map.WayPoint;
+import router.AStarRouterV;
+import router.Node;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -40,7 +42,7 @@ public class NavUtil {
         }
 
         //to be changed when needed
-        List<String> avoidedStops = new ArrayList<String>();
+        List<String> avoidedStops = new ArrayList<>();
         Future<List<Node>> future = executor.submit(() -> router.findFastestPath(ocoords[0], ocoords[1], dcoords[0], dcoords[1], finalTime,avoidedStops));
 
         try {

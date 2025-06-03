@@ -11,7 +11,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 import map.WayPoint;
-import util.AStarRouterV;
+import router.AStarRouterV;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

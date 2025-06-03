@@ -11,8 +11,8 @@ import com.leastfixedpoint.json.JSONSyntaxError;
 import com.leastfixedpoint.json.JSONWriter;
 import db.DBconfig;
 import models.Request;
-import util.AStarRouterV;
-import util.Node;
+import router.AStarRouterV;
+import router.Node;
 
 import static util.DebugUtli.getDebugMode;
 import static util.TimeUtil.parseTime;
@@ -73,7 +73,7 @@ public class RoutingEngine {
                         sendError("Invalid time format");
                         continue;
                     }
-                    List<String> avoidedStops = new ArrayList<String>();
+                    List<String> avoidedStops = new ArrayList<>();
                     AStarRouterV router = new AStarRouterV();
                     List<Node> path = router.findFastestPath(requestR.latStart(), requestR.lonStart(), requestR.latEnd(), requestR.lonEnd(), requestR.time(),avoidedStops);
                     if (path == null) {

@@ -1,4 +1,4 @@
-package util;
+package router;
 
 import models.Trip;
 
