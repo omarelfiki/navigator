@@ -12,6 +12,7 @@ import java.util.zip.ZipOutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+import models.HeatPoint;
 import org.jxmapviewer.OSMTileFactoryInfo;
 import org.jxmapviewer.viewer.DefaultTileFactory;
 
