@@ -7,7 +7,6 @@ import static util.DebugUtli.getDebugMode;
 public class DBaccessProvider {
     private static DBaccess instance;
 
-
     private DBaccessProvider() {}
 
     public static synchronized DBaccess getInstance() {

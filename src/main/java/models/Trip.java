@@ -4,7 +4,6 @@ public class Trip {
     public String tripId;
     public Route route;
     private Service service;
-    private Shape shape;
     private String directionalId;
     private String tripShortName;
     public String headSign;
@@ -14,11 +13,10 @@ public class Trip {
     private String blockId;
 
     //  Required fields constructor
-    public Trip(String tripId, Service service, Shape shape, Route route, String directionalId,
+    public Trip(String tripId, Service service, Route route, String directionalId,
                 String tripShortName, String headSign, boolean wheelChairAccess) {
         this.tripId = tripId;
         this.service = service;
-        this.shape = shape;
         this.route = route;
         this.directionalId = directionalId;
         this.tripShortName = tripShortName;
@@ -26,14 +24,12 @@ public class Trip {
         this.wheelChairAccess = wheelChairAccess;
     }
 
-    public Trip()
-    {}
+    public Trip() {}
     //  Full constructor (required + optional)
-    public Trip(String tripId, Service service, Shape shape, Route route, String directionalId,
+    public Trip(String tripId, Service service, Route route, String directionalId,
                 String tripShortName, String headSign, boolean wheelChairAccess, String blockId) {
         this.tripId = tripId;
         this.service = service;
-        this.shape = shape;
         this.route = route;
         this.directionalId = directionalId;
         this.tripShortName = tripShortName;
@@ -49,21 +45,12 @@ public class Trip {
     public String getTripId() {
         return tripId;
     }
-
     public Service getService() {
         return service;
     }
 
-    public Shape getShape() {
-        return shape;
-    }
-
     public Route getRoute() {
         return route;
-    }
-
-    public String getDirectionalId() {
-        return directionalId;
     }
 
     public String getTripShortName() {
@@ -74,20 +61,11 @@ public class Trip {
         return headSign;
     }
 
-    public boolean isWheelChairAccess() {
-        return wheelChairAccess;
-    }
-
-    public String getBlockId() {
-        return blockId;
-    }
-
     @Override
     public String toString() {
         return "Trip{" +
                 "tripId='" + tripId + '\'' +
                 ", service=" + (service != null ? service.getServiceId() : "null") +
-                ", shape=" + (shape != null ? shape.getShapeId() : "null") +
                 ", route=" + (route != null ? route.getRouteId() : "null") +
                 ", directionalId='" + directionalId + '\'' +
                 ", tripShortName='" + tripShortName + '\'' +
