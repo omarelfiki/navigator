@@ -7,7 +7,7 @@ import org.jxmapviewer.viewer.DefaultWaypoint;
 import org.jxmapviewer.viewer.GeoPosition;
 import org.jxmapviewer.viewer.Waypoint;
 import org.jxmapviewer.viewer.WaypointPainter;
-import util.Node;
+import router.Node;
 
 import java.awt.*;
 import java.awt.geom.Point2D;
@@ -15,7 +15,7 @@ import java.util.*;
 import java.util.List;
 
 public class WayPoint {
-public static void addWaypoint(List<Node> path) {
+    public static void addWaypoint(List<Node> path) {
     MapIntegration mapIntegration = MapProvider.getInstance();
     JXMapViewer map = mapIntegration.getMap();
 
@@ -24,7 +24,7 @@ public static void addWaypoint(List<Node> path) {
 
     for (int i = 0; i < path.size(); i++) {
         Node node = path.get(i);
-        double[] coords = {node.stop.stopLat, node.stop.stopLon};
+        double[] coords = {node.getStop().getStopLat(), node.getStop().getStopLon()};
         GeoPosition position = new GeoPosition(coords[0], coords[1]);
 
         if (i == 0 || i == path.size() - 1) {
@@ -59,4 +59,11 @@ public static void addWaypoint(List<Node> path) {
     }
     map.zoomToBestFit(geoPositions, 0.7);
 }
+
+    public static void clearRoute() {
+        MapIntegration mapIntegration = MapProvider.getInstance();
+        JXMapViewer map = mapIntegration.getMap();
+        map.setOverlayPainter(null);
+    }
+
 }

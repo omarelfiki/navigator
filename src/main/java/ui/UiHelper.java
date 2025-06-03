@@ -2,6 +2,7 @@ package ui;
 
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Pos;
+import javafx.scene.control.Button;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -9,6 +10,8 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
+import map.WayPoint;
+import router.AStarRouterV;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -28,7 +31,7 @@ public class UiHelper {
     }
 
     public static void showSettingsMenu(BorderPane root, Pane leftPane, VBox vbox_left) {
-        settingsUI settingsUI = new settingsUI(root, leftPane);
+        SettingsUI settingsUI = new SettingsUI(root, leftPane);
         Pane settingsPane = settingsUI.createSettingsMenu();
         vbox_left.getChildren().add(settingsPane);
     }
@@ -94,7 +97,7 @@ public class UiHelper {
         return container;
     }
 
-    public static void bindDateTime(StackPane timeContainer, StackPane dateContainer, TextField originField, TextField destinationField) {
+    public static void bindElements(StackPane timeContainer, StackPane dateContainer, Button clear, TextField originField, TextField destinationField) {
         timeContainer.visibleProperty().bind(
                 Bindings.createBooleanBinding(
                         () -> !originField.getText().isEmpty() && !destinationField.getText().isEmpty(),
@@ -106,6 +109,14 @@ public class UiHelper {
         dateContainer.visibleProperty().bind(
                 Bindings.createBooleanBinding(
                         () -> !originField.getText().isEmpty() && !destinationField.getText().isEmpty(),
+                        originField.textProperty(),
+                        destinationField.textProperty()
+                )
+        );
+
+        clear.visibleProperty().bind(
+                Bindings.createBooleanBinding(
+                        () -> !originField.getText().isEmpty() || !destinationField.getText().isEmpty(),
                         originField.textProperty(),
                         destinationField.textProperty()
                 )
@@ -138,8 +149,6 @@ public class UiHelper {
             passwordField.setText(password);
             hostField.setText(host);
             portField.setText(port);
-        } else {
-            System.out.println("Invalid connection string format.");
         }
     }
 
@@ -151,5 +160,23 @@ public class UiHelper {
         line.endYProperty().bind(root.heightProperty().multiply(0.89).add(20)); // 740/832 + 20
         line.setStroke(Color.WHITE);
         return line;
+    }
+
+    public static Button createFlipButton(BorderPane root, TextField originField, TextField destinationField, DatePicker dateField, TextField timeField) {
+        Button flipButton = new Button("⇅");
+        flipButton.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
+        flipButton.layoutXProperty().bind(root.widthProperty().multiply(0.2)); // 130/1280
+        flipButton.layoutYProperty().bind(root.heightProperty().multiply(0.1555)); // 120/832
+        flipButton.setOnAction(_ -> {
+            String temp = originField.getText();
+            originField.setText(destinationField.getText());
+            destinationField.setText(temp);
+            dateField.setValue(null);
+            timeField.clear();
+            WayPoint.clearRoute();
+            AStarRouterV router = new AStarRouterV();
+            router.reset();
+        });
+        return flipButton;
     }
 }

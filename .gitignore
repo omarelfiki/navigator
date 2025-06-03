@@ -15,3 +15,6 @@ config.properties
 /dataSources.local.xml
 /.idea/libraries/
 /.idea/
+
+/target
+/target/classes/util/HeatMapRouter.class

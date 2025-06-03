@@ -1,8 +1,10 @@
 package util;
 
 import map.WayPoint;
+import router.AStarRouterV;
+import router.Node;
 
-import java.util.Date;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -10,59 +12,66 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static util.DebugUtil.getDebugMode;
 import static util.GeoUtil.parseCoords;
 import static util.TimeUtil.parseTime;
 
 public class NavUtil {
     static double[] romeCoords = {41.6558, 42.1233, 12.2453, 12.8558}; // {minLat, maxLat, minLng, maxLng}
 
-    public static List<Node> parsePoint(String origin, String destination, String time, Date date) {
+    public static List<Node> parsePoint(String origin, String destination, String time) {
+        boolean isDebugMode = getDebugMode();
         boolean isOnline = NetworkUtil.isNetworkAvailable();
-        double[] ocoords;
-        double[] dcoords;
+        double[] oCoords;
+        double[] dCoords;
         if (isOnline) {
-            ocoords = GeoUtil.getCoordinatesFromAddress(origin);
-            dcoords = GeoUtil.getCoordinatesFromAddress(destination);
+            oCoords = GeoUtil.getCoordinatesFromAddress(origin);
+            dCoords = GeoUtil.getCoordinatesFromAddress(destination);
         } else {
-            ocoords = parseCoords(origin);
-            dcoords = parseCoords(destination);
+            oCoords = parseCoords(origin);
+            dCoords = parseCoords(destination);
         }
         time = parseTime(time);
         AStarRouterV router = new AStarRouterV();
         ExecutorService executor = Executors.newSingleThreadExecutor();
         String finalTime = time;
-        if (ocoords == null || dcoords == null) {
-            System.err.println("Invalid coordinates");
+        if (oCoords == null || dCoords == null) {
+            if (isDebugMode) System.err.println("Invalid coordinates");
             return null;
         }
-        Future<List<Node>> future = executor.submit(() -> router.findFastestPath(ocoords[0], ocoords[1], dcoords[0], dcoords[1], finalTime));
+
+        //to be changed when needed
+        List<String> avoidedStops = new ArrayList<>();
+        Future<List<Node>> future = executor.submit(() -> router.findFastestPath(oCoords[0], oCoords[1], dCoords[0], dCoords[1], finalTime,avoidedStops));
 
         try {
             List<Node> path = future.get(30, SECONDS);
             if (path == null) {
-                System.err.println("No path found.");
+                if (isDebugMode) System.err.println("No path found.");
                 return null;
             } else {
                 WayPoint.addWaypoint(path);
                 return path;
             }
         } catch (TimeoutException e) {
-            System.err.println("findFastestPath timed out.");
+            if (isDebugMode) System.err.println("findFastestPath timed out.");
             return null;
         } catch (Exception e) {
-            e.printStackTrace();
+            if (isDebugMode) System.err.println("Error in findFastestPath: " + e);
             return null;
         } finally {
             executor.shutdown();
         }
     }
 
-    private static boolean checkBounds(double[] ocoords, double[] dcoords) {
-        if (ocoords[0] < romeCoords[0] || ocoords[0] > romeCoords[1] || ocoords[1] < romeCoords[2] || ocoords[1] > romeCoords[3]) {
-            System.out.println("origin coordinates out of bounds");
+    @SuppressWarnings("unused")
+    private static boolean checkBounds(double[] oCoords, double[] dCoords) {
+        boolean isDebugMode = getDebugMode();
+        if (oCoords[0] < romeCoords[0] || oCoords[0] > romeCoords[1] || oCoords[1] < romeCoords[2] || oCoords[1] > romeCoords[3]) {
+            if (isDebugMode) System.out.println("origin coordinates out of bounds");
             return false;
-        } else if (dcoords[0] < romeCoords[0] || dcoords[0] > romeCoords[1] || dcoords[1] < romeCoords[2] || dcoords[1] > romeCoords[3]) {
-            System.out.println("destination coordinates out of bounds");
+        } else if (dCoords[0] < romeCoords[0] || dCoords[0] > romeCoords[1] || dCoords[1] < romeCoords[2] || dCoords[1] > romeCoords[3]) {
+            if (isDebugMode) System.out.println("destination coordinates out of bounds");
             return false;
         }
         return true;

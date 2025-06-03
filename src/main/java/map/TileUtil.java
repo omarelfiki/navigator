@@ -7,16 +7,24 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
 import org.jxmapviewer.OSMTileFactoryInfo;
 import org.jxmapviewer.viewer.DefaultTileFactory;
+
 import org.jxmapviewer.viewer.TileFactory;
 import org.jxmapviewer.viewer.TileFactoryInfo;
 
-public class TileUtil {
-    Boolean isOnline;
+import static util.DebugUtil.getDebugMode;
 
-    public TileUtil(Boolean isOnline) {
+public class TileUtil {
+    boolean isOnline;
+
+    boolean isDebugMode;
+
+
+    public TileUtil(boolean isOnline) {
         this.isOnline = isOnline;
+        this.isDebugMode = getDebugMode();
     }
 
     public TileFactory getTileFactory() {
@@ -33,6 +41,7 @@ public class TileUtil {
         }
         return new DefaultTileFactory(info);
     }
+
 
     public void createZip(String sourceDirPath, String zipFilePath) throws IOException {
         File sourceDir = new File(sourceDirPath);
@@ -51,22 +60,18 @@ public class TileUtil {
         }
 
         File[] files = folder.listFiles();
-        if (files == null || files.length == 0) {
-            throw new IOException("No files to zip in directory: " + folder.getAbsolutePath());
+        if (files == null) {
+            return;
         }
 
         for (File file : files) {
+            String path = parentFolder.isEmpty() ? file.getName() : parentFolder + "/" + file.getName();
             if (file.isDirectory()) {
-                if (parentFolder.isEmpty() && file.getName().equals("tile.openstreetmap.org")) {
-                    zipDirectory(file, "", zos);
-                } else {
-                    zipDirectory(file, parentFolder + (parentFolder.isEmpty() ? "" : "/") + file.getName(), zos);
-                }
+                zipDirectory(file, path, zos);
                 continue;
             }
             try (FileInputStream fis = new FileInputStream(file)) {
-                String zipEntryName = parentFolder + "/" + file.getName();
-                zos.putNextEntry(new ZipEntry(zipEntryName));
+                zos.putNextEntry(new ZipEntry(path));
                 byte[] buffer = new byte[1024];
                 int length;
                 while ((length = fis.read(buffer)) > 0) {
