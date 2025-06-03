@@ -58,7 +58,6 @@ Navigate to the project directory and run the following command to build the pro
     `mvn clean install`
 
 ### 4. Configure environment variables
-   - Set the `GTFS_DIR` variable to the path of your GTFS data directory.
    - Set the `ROUTING_ENGINE_MYSQL_JDBC` variable to your MySQL connection string with `allowLoadLocalInfile=true&useCursorFetch=true`.
    - Set the `ROUTING_ENGINE_STORAGE_DIRECTORY` variable to the path where you want to store the extracted GTFS data.
 
@@ -106,7 +105,7 @@ Navigate to the project directory and run the following command to build the pro
 - The system will also create the necessary tables and indexes for efficient querying.
 
 ### Initializing the database through GUI
-- The GUI provides a simple interface to initialize the database. You can add the GTFS dataset directory path to the `GTFS_DIR` enviroment variable and click on the "Load GTFS Data" button to initialize the database.
+- The GUI provides a simple interface to initialize the database. You can add the GTFS dataset directory path to the `GTFS_DIR` environment variable and click on the "Load GTFS Data" button to initialize the database.
 - The system will extract the GTFS data and load it into the MySQL database.
 
 ## Contributors
