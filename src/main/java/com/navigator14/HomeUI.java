@@ -45,13 +45,12 @@ import map.*;
 import db.*;
 import ui.*;
 
-import static util.DebugUtli.getDebugMode;
+import static util.DebugUtil.getDebugMode;
 import static util.NavUtil.parsePoint;
 import static ui.UiHelper.*;
-import static util.WeatherUtil.createWeatherTask;
 import static util.GeoUtil.*;
 
-public class homeUI extends Application {
+public class HomeUI extends Application {
     private final BooleanProperty isOn = new SimpleBooleanProperty(false);
     private Button hideSidePanel, showSidePanel;
     private boolean firstClick = true;
@@ -63,7 +62,7 @@ public class homeUI extends Application {
     @Override
     public void start(Stage primaryStage) {
         primaryStage.setTitle("Navigator");
-        DBaccess access = DBaccessProvider.getInstance();
+        DBAccess access = DBAccessProvider.getInstance();
         BorderPane root = new BorderPane();
 
         MapIntegration mapIntegration = MapProvider.getInstance();
@@ -140,11 +139,9 @@ public class homeUI extends Application {
                         String origin = originField.getText();
                         String destination = destinationField.getText();
                         String time = timeField.getText();
-                        Date date = java.sql.Date.valueOf(dateField.getValue());
-
                         Platform.runLater(() -> label.setText("Finding routes..."));
 
-                        List<Node> result = parsePoint(origin, destination, time, date);
+                        List<Node> result = parsePoint(origin, destination, time);
 
                         Platform.runLater(() -> {
                             if (result == null) {
@@ -290,23 +287,6 @@ public class homeUI extends Application {
         clearButton.setVisible(false);
 
         bindElements(timeContainer, dateContainer, clearButton, originField, destinationField);
-
-        Text temperatureLabel = new Text("0°C");
-        temperatureLabel.setFill(Color.WHITE);
-        temperatureLabel.setStyle("-fx-font: 20 Ubuntu; -fx-font-weight: normal;");
-        temperatureLabel.xProperty().bind(root.widthProperty().multiply(0.215)); // Positioning
-        temperatureLabel.yProperty().bind(root.heightProperty().multiply(0.06)); // Positioning
-        leftPane.getChildren().add(temperatureLabel);
-
-        ImageView weatherIcon = new ImageView();
-        weatherIcon.setFitWidth(40); // Set icon size
-        weatherIcon.setFitHeight(40);
-        weatherIcon.xProperty().bind(root.widthProperty().multiply(0.18)); // Positioning
-        weatherIcon.yProperty().bind(root.heightProperty().multiply(0.025)); // Positioning
-        leftPane.getChildren().add(weatherIcon);
-
-        Task<Void> weatherTask = createWeatherTask(41.9028, 12.4964, temperatureLabel, weatherIcon);
-        new Thread(weatherTask).start();
 
         JXMapViewer map = mapIntegration.getMap();
 

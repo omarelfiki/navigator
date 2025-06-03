@@ -2,7 +2,7 @@ package util;
 
 import java.time.LocalTime;
 
-import static util.DebugUtli.getDebugMode;
+import static util.DebugUtil.getDebugMode;
 
 public class TimeUtil {
     public static double calculateTimePastMidnight(String s){

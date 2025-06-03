@@ -9,7 +9,7 @@ import java.util.List;
 public class RoutingTest {
     public static void main(String[] args) {
         AStarRouterV router = new AStarRouterV();
-        DBaccess db = DBaccessProvider.getInstance();
+        DBAccess db = DBAccessProvider.getInstance();
         if (db == null) {
             System.err.println("DBaccessProvider returned null.");
             return;

@@ -21,11 +21,11 @@ import java.nio.file.Path;
 import db.*;
 import javafx.stage.FileChooser;
 
-public class settingsUI {
+public class SettingsUI {
     private final BorderPane root;
     private final Pane leftPane;
 
-    public settingsUI(BorderPane root, Pane leftPane) {
+    public SettingsUI(BorderPane root, Pane leftPane) {
         this.root = root;
         this.leftPane = leftPane;
     }
@@ -198,7 +198,7 @@ public class settingsUI {
                 ConsolePopup consolePopup = new ConsolePopup();
                 consolePopup.show();
                 new Thread(() -> {
-                    DBconfig config = new DBconfig(textField.getText());
+                    DBConfig config = new DBConfig(textField.getText());
                     config.initializeDB();
                     Platform.runLater(() -> {
                         consolePopup.close();
@@ -216,7 +216,7 @@ public class settingsUI {
             if (userField.getText().isEmpty() || passwordField.getText().isEmpty() || hostField.getText().isEmpty() || portField.getText().isEmpty()) {
                 testLabel.setText("Please check configuration.");
             } else {
-                DBaccess access = DBaccessProvider.getInstance();
+                DBAccess access = DBAccessProvider.getInstance();
                 assert access != null;
                 if (access.conn != null) {
                     testLabel.setText("Connection Established");

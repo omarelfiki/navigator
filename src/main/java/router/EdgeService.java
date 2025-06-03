@@ -6,7 +6,7 @@ import models.Trip;
 
 import java.util.ArrayList;
 import java.util.List;
-import static util.DebugUtli.getDebugMode;
+import static util.DebugUtil.getDebugMode;
 
 public class EdgeService {
     TDSImplement tds = new TDSImplement();

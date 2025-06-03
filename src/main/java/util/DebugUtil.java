@@ -4,7 +4,7 @@ import router.Node;
 
 import java.util.List;
 
-public class DebugUtli {
+public class DebugUtil {
 
     @SuppressWarnings("unused")
     public static void printHeapSize() {
@@ -37,6 +37,7 @@ public class DebugUtli {
         }
     }
 
+    @SuppressWarnings("unused")
     public static String getOS() {
         String os = System.getProperty("os.name").toLowerCase();
         System.out.println("Operating System: " + os);

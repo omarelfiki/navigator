@@ -11,7 +11,7 @@ import java.nio.charset.StandardCharsets;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import static util.DebugUtli.getDebugMode;
+import static util.DebugUtil.getDebugMode;
 
 public class GeoUtil {
     private static final String API_KEY = "AIzaSyDWUFIdOzWZeq2BsFfTMMif-VdY2YSqmKg";
@@ -48,24 +48,7 @@ public class GeoUtil {
                 "https://maps.googleapis.com/maps/api/geocode/json?address=%s&key=%s",
                 encodedAddress, API_KEY
         );
-
-        URI uri = URI.create(urlStr);
-        URL url = uri.toURL();
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setRequestMethod("GET");
-
-        BufferedReader in = new BufferedReader(
-                new InputStreamReader(conn.getInputStream())
-        );
-
-        String inputLine;
-        StringBuilder response = new StringBuilder();
-        while ((inputLine = in.readLine()) != null) {
-            response.append(inputLine);
-        }
-        in.close();
-
-        JSONObject json = new JSONObject(response.toString());
+        JSONObject json = getResultsFromUrl(urlStr);
         return json.getJSONArray("results");
     }
     public static double distance(double lat1, double lon1, double lat2, double lon2) {
@@ -94,23 +77,7 @@ public class GeoUtil {
                     lat, lng, API_KEY
             );
 
-            URI uri = URI.create(urlStr);
-            URL url = uri.toURL();
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("GET");
-
-            BufferedReader in = new BufferedReader(
-                    new InputStreamReader(conn.getInputStream())
-            );
-
-            String inputLine;
-            StringBuilder response = new StringBuilder();
-            while ((inputLine = in.readLine()) != null) {
-                response.append(inputLine);
-            }
-            in.close();
-
-            JSONObject json = new JSONObject(response.toString());
+            JSONObject json = getResultsFromUrl(urlStr);
             JSONArray results = json.getJSONArray("results");
             if (results.isEmpty()) return null;
 
@@ -137,5 +104,25 @@ public class GeoUtil {
             if (isDebugMode) System.out.println("Invalid coordinates format");
             return null;
         }
+    }
+
+    private static JSONObject getResultsFromUrl(String urlStr) throws IOException {
+        URI uri = URI.create(urlStr);
+        URL url = uri.toURL();
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("GET");
+
+        BufferedReader in = new BufferedReader(
+                new InputStreamReader(conn.getInputStream())
+        );
+
+        String inputLine;
+        StringBuilder response = new StringBuilder();
+        while ((inputLine = in.readLine()) != null) {
+            response.append(inputLine);
+        }
+        in.close();
+
+        return new JSONObject(response.toString());
     }
 }

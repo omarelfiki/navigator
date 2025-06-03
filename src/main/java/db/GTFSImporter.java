@@ -11,16 +11,16 @@ import java.sql.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static util.DebugUtli.getDebugMode;
+import static util.DebugUtil.getDebugMode;
 
 public class GTFSImporter {
     private final String GTFS_DIR;
-    private final DBaccess access;
+    private final DBAccess access;
 
     private final boolean isDebugMode;
 
     public GTFSImporter(String GTFS_DIR) {
-        this.access = DBaccessProvider.getInstance();
+        this.access = DBAccessProvider.getInstance();
         this.GTFS_DIR = GTFS_DIR;
         this.isDebugMode = getDebugMode();
 

@@ -2,14 +2,14 @@ package db;
 
 import java.sql.SQLException;
 
-import static util.DebugUtli.getDebugMode;
+import static util.DebugUtil.getDebugMode;
 
-public class DBaccessProvider {
-    private static DBaccess instance;
+public class DBAccessProvider {
+    private static DBAccess instance;
 
-    private DBaccessProvider() {}
+    private DBAccessProvider() {}
 
-    public static synchronized DBaccess getInstance() {
+    public static synchronized DBAccess getInstance() {
         boolean isDebugMode = getDebugMode();
         if (instance == null) {
             // Fetch connection details from environment variables
@@ -18,7 +18,7 @@ public class DBaccessProvider {
                 if (isDebugMode) System.err.println("Error: Environment variable ROUTING_ENGINE_MYSQL_JDBC is not set.");
                 return null;
             }
-            instance = new DBaccess(connectionString);
+            instance = new DBAccess(connectionString);
             instance.connect();
             if (instance.conn == null) {
                 if (isDebugMode) System.err.println("Error: Unable to establish a connection to the database.");

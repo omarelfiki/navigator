@@ -31,7 +31,7 @@ public class UiHelper {
     }
 
     public static void showSettingsMenu(BorderPane root, Pane leftPane, VBox vbox_left) {
-        settingsUI settingsUI = new settingsUI(root, leftPane);
+        SettingsUI settingsUI = new SettingsUI(root, leftPane);
         Pane settingsPane = settingsUI.createSettingsMenu();
         vbox_left.getChildren().add(settingsPane);
     }

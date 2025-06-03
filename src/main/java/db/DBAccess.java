@@ -2,9 +2,9 @@ package db;
 
 import java.sql.*;
 
-import static util.DebugUtli.getDebugMode;
+import static util.DebugUtil.getDebugMode;
 
-public class DBaccess {
+public class DBAccess {
     public String dbName;
     public String connectionString;
     public Connection conn;
@@ -12,12 +12,12 @@ public class DBaccess {
 
 
     @SuppressWarnings("unused")
-    public DBaccess(String host, String port, String user, String password, String dbName) {
+    public DBAccess(String host, String port, String user, String password, String dbName) {
         this("jdbc:mysql://" + user + ":" + password + "@" + host + ":" + port + "/" + dbName);
         this.isDebugMode = getDebugMode();
     }
 
-    public DBaccess(String connectionString) {
+    public DBAccess(String connectionString) {
         this.connectionString = connectionString;
         this.isDebugMode = getDebugMode();
     }

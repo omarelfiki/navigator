@@ -6,15 +6,15 @@ import java.sql.*;
 import java.util.*;
 import java.util.List;
 
-import static util.DebugUtli.getDebugMode;
+import static util.DebugUtil.getDebugMode;
 
 public class TDSImplement implements TransitDataService {
     private final boolean isDebugMode;
-    private final DBaccess db;
+    private final DBAccess db;
 
     public TDSImplement() {
         this.isDebugMode = getDebugMode();
-        this.db = DBaccessProvider.getInstance();
+        this.db = DBAccessProvider.getInstance();
         if (db == null) {
             if (isDebugMode) System.err.println("Error: Database access instance is null.");
         }
@@ -315,7 +315,7 @@ public class TDSImplement implements TransitDataService {
     @SuppressWarnings("SqlInjection")
     public ArrayList<Stop> getNearbyStops(double lat, double lon, double radiusMeters) {
         ArrayList<Stop> stopsWithinRadius = new ArrayList<>();
-        DBaccess db = DBaccessProvider.getInstance();
+        DBAccess db = DBAccessProvider.getInstance();
         boolean isDebugMode = getDebugMode();
         if (db == null) {
             if (isDebugMode) System.err.println("Error: Database access instance is null.");

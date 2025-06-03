@@ -9,12 +9,12 @@ import java.util.Objects;
 import com.leastfixedpoint.json.JSONReader;
 import com.leastfixedpoint.json.JSONSyntaxError;
 import com.leastfixedpoint.json.JSONWriter;
-import db.DBconfig;
+import db.DBConfig;
 import models.Request;
 import router.AStarRouterV;
 import router.Node;
 
-import static util.DebugUtli.getDebugMode;
+import static util.DebugUtil.getDebugMode;
 import static util.TimeUtil.parseTime;
 
 public class RoutingEngine {
@@ -102,7 +102,7 @@ public class RoutingEngine {
             sendError("File does not exist");
             return true;
         }
-        DBconfig dbConfig = new DBconfig(load);
+        DBConfig dbConfig = new DBConfig(load);
         dbConfig.initializeDB();
         return false;
     }

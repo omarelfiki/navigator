@@ -6,18 +6,18 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Objects;
 import java.net.URISyntaxException;
-import static util.DebugUtli.getDebugMode;
+import static util.DebugUtil.getDebugMode;
 
 
-public class DBconfig {
-    private final DBaccess access;
+public class DBConfig {
+    private final DBAccess access;
 
     private final String GTFS_PATH;
 
     private final boolean isDebugMode;
 
-    public DBconfig(String filePath) {
-        this.access = DBaccessProvider.getInstance();
+    public DBConfig(String filePath) {
+        this.access = DBAccessProvider.getInstance();
         GTFS_PATH = filePath;
         isDebugMode = getDebugMode();
     }
@@ -91,7 +91,7 @@ public class DBconfig {
                 if (isDebugMode) System.err.println("Accessing GTFS schema SQL file");
                 try {
                     String sqlFilePath = java.nio.file.Paths.get(
-                            Objects.requireNonNull(getClass().getClassLoader().getResource("newschema.sql")).toURI()
+                            Objects.requireNonNull(getClass().getClassLoader().getResource("new_schema.sql")).toURI()
                     ).toString();
                     String sql = new String(java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(sqlFilePath)));
                     try (java.sql.Statement statement = access.conn.createStatement()) {

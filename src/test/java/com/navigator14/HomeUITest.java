@@ -18,7 +18,7 @@ public class HomeUITest extends ApplicationTest {
 
     @Override
     public void start(Stage stage) {
-        new homeUI().start(stage);
+        new HomeUI().start(stage);
     }
 
     @Test

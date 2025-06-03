@@ -19,7 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Objects;
 
-import static util.DebugUtli.getDebugMode;
+import static util.DebugUtil.getDebugMode;
 
 public class MapIntegration {
     JXMapViewer map;

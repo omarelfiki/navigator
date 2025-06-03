@@ -8,7 +8,7 @@ import java.util.zip.*;
 public class ZipExtractor {
     @SuppressWarnings("resource")
     public static void extractZipToDirectory(String zipFilePath, String destinationDir) throws IOException {
-        boolean isDebugMode = DebugUtli.getDebugMode();
+        boolean isDebugMode = DebugUtil.getDebugMode();
         File zipFile = new File(zipFilePath);
         if (!zipFile.exists()) {
             throw new FileNotFoundException("Zip file not found: " + zipFilePath);
