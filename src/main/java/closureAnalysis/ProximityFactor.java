@@ -3,7 +3,6 @@ package closureAnalysis;
 import models.Stop;
 import util.GeoUtil;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -32,7 +31,7 @@ public class ProximityFactor {
     }
 
     // Calculates proximity factor Ps for each stop
-    public static void calculateProximityFactor(ArrayList<Stop> allStops, List<TouristicLocations> monuments) {
+    public static void calculateProximityFactor(List<Stop> allStops, List<TouristicLocations> monuments) {
         for (Stop stop : allStops) {
             double stopLat = stop.getStopLat();
             double stopLon = stop.getStopLon();

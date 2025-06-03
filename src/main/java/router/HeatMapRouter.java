@@ -1,6 +1,6 @@
 package router;
 
-import db.NearbyStops;
+import db.TDSImplement;
 import models.HeatPoint;
 import models.Stop;
 
@@ -19,13 +19,15 @@ public class HeatMapRouter {
     final double LIMIT    = 2700;   // 45-minute ceiling in seconds
     final double SENTINEL = 2701;   // marks “beyond limit”
 
+    final TDSImplement tds = new TDSImplement();
+
     public Map<String, Node> buildWithWalk(double latStart, double lonStart, String startTime) {
         Node ORIGIN = new Node("origin", startTime, null, "WALK", null);
         ORIGIN.stop = new Stop("origin", "START", latStart, lonStart);
         PriorityQueue<Node> pq = new PriorityQueue<>(Comparator.comparingDouble(n -> n.g));
 
         // bootstrap – first walking leg (cap immediately)
-        for (Stop s : NearbyStops.getNearbyStops(latStart, lonStart, 500)) {
+        for (Stop s : tds.getNearbyStops(latStart, lonStart, 500)) {
             double walk = WalkingTime.getWalkingTime(latStart, lonStart,
                     s.stopLat, s.stopLon);
             Node n = new Node(s.stopId, addTime(startTime, walk), ORIGIN, "WALK", null);
@@ -76,7 +78,7 @@ public class HeatMapRouter {
                 new PriorityQueue<>(Comparator.comparingDouble(n -> n.g));
 
         /* bootstrap — first walking leg */
-        for (Stop s : NearbyStops.getNearbyStops(latStart, lonStart, 500)) {
+        for (Stop s : tds.getNearbyStops(latStart, lonStart, 500)) {
             double walk = WalkingTime.getWalkingTime(latStart, lonStart,
                     s.stopLat, s.stopLon);
             Node n = new Node(s.stopId, addTime(startTime, walk), ORIGIN, "WALK", null);

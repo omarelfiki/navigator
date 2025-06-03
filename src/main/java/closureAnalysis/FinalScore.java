@@ -2,7 +2,6 @@ package closureAnalysis;
 
 import models.Stop;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class FinalScore {
@@ -12,7 +11,7 @@ public class FinalScore {
     private static double weightEs = 0.35; // Weight for stop essentiality
     private static double weightDs = 0.20; // Weight for stop population density
 
-    public static void calculateFinalScore(ArrayList<Stop> allStops, List<TouristicLocations> monuments) {
+    public static void calculateFinalScore(List<Stop> allStops, List<TouristicLocations> monuments) {
 
         // Calculate proximity factor Ps for each stop
         ProximityFactor.calculateProximityFactor(allStops, monuments);

@@ -3,7 +3,6 @@ package closureAnalysis;
 import db.TDSImplement;
 import models.Stop;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -12,7 +11,8 @@ public class RunResult {
     public static void main(String[] args) {
 
         // Access data
-        ArrayList<Stop> allStops = TDSImplement.getAllStopsFromDatabase();
+        TDSImplement tds = new TDSImplement();
+        List<Stop> allStops = tds.getAllStops();
         List<TouristicLocations> monuments = ProximityFactor.getMonuments();
 
         // Calculate all scores

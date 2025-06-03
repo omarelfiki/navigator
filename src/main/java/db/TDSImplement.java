@@ -311,41 +311,39 @@ public class TDSImplement implements TransitDataService {
         stopTime.stopSequence = rs.getInt("stop_sequence");
         return stopTime;
     }
-
-    public static ArrayList<Stop> getAllStopsFromDatabase() {
-        ArrayList<Stop> allStops = new ArrayList<>();
+    @Override
+    @SuppressWarnings("SqlInjection")
+    public ArrayList<Stop> getNearbyStops(double lat, double lon, double radiusMeters) {
+        ArrayList<Stop> stopsWithinRadius = new ArrayList<>();
         DBaccess db = DBaccessProvider.getInstance();
         boolean isDebugMode = getDebugMode();
-
         if (db == null) {
             if (isDebugMode) System.err.println("Error: Database access instance is null.");
-            return allStops;
+            return stopsWithinRadius;
         }
-
         String useDbQuery = "USE " + db.dbName;
         try (Statement stmt = db.conn.createStatement()) {
             stmt.execute(useDbQuery);
         } catch (SQLException e) {
-            if (isDebugMode) System.err.println("SQL Error (use db): " + e.getMessage());
+            if (isDebugMode) System.err.println("SQL Error: " + e.getMessage());
         }
-
-        String query = "SELECT stop_id, stop_name, stop_lat, stop_lon FROM stops";
-        try (Statement stmt = db.conn.createStatement();
-             ResultSet rs = stmt.executeQuery(query)) {
+        String procedureCall = "{CALL get_closest_stops(?, ?, ?)}";
+        try (CallableStatement stmt = db.conn.prepareCall(procedureCall)) {
+            stmt.setDouble(1, lat);
+            stmt.setDouble(2, lon);
+            stmt.setDouble(3, radiusMeters);
+            ResultSet rs = stmt.executeQuery();
 
             while (rs.next()) {
                 String stopID = rs.getString("stop_id");
                 String stopName = rs.getString("stop_name");
                 double stopLat = rs.getDouble("stop_lat");
                 double stopLon = rs.getDouble("stop_lon");
-
-                allStops.add(new Stop(stopID, stopName, stopLat, stopLon));
+                stopsWithinRadius.add(new Stop(stopID, stopName, stopLat, stopLon));
             }
-
         } catch (SQLException e) {
-            if (isDebugMode) System.err.println("SQL Error (getAllStops): " + e.getMessage());
+            if (isDebugMode) System.err.println("SQL Error: " + e.getMessage());
         }
-
-        return allStops;
+        return stopsWithinRadius;
     }
 }

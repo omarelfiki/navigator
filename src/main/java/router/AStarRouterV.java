@@ -2,7 +2,6 @@ package router;
 
 import java.util.*;
 
-import db.NearbyStops;
 import db.TDSImplement;
 import models.*;
 import util.*;
@@ -14,13 +13,15 @@ public class AStarRouterV {
 
     boolean debugMode = false;
 
+    TDSImplement tds = new TDSImplement();
+
     public List<Node> findFastestPath(double latStart, double lonStart, double latStop, double lonStop, String startTime, List<String> excludedStops) {
         if (debugMode) System.err.println("Starting point" + latStart + " " + lonStart);
         Node STARTING_NODE = new Node("start", startTime, null, "WALK", null);
         STARTING_NODE.stop = new Stop("start", "STARTING POINT", latStart, lonStart);
-        ArrayList<Stop> startStops = NearbyStops.getNearbyStops(latStart, lonStart, 500);
+        ArrayList<Stop> startStops = tds.getNearbyStops(latStart, lonStart, 500);
         if (debugMode) System.err.println("Start stops: " + startStops.size());
-        ArrayList<Stop> stopStops = NearbyStops.getNearbyStops(latStop, lonStop, 500);
+        ArrayList<Stop> stopStops = tds.getNearbyStops(latStop, lonStop, 500);
         Node STOP_NODE = new Node("stop", "12:00:00", null, "WALK", null);
         STOP_NODE.stop = new Stop("stop", "END_POINT", latStop, lonStop);
         if (debugMode) System.err.println("Stop stops: " + stopStops.size());

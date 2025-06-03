@@ -6,7 +6,6 @@ import models.Trip;
 
 import java.util.ArrayList;
 import java.util.List;
-import static db.NearbyStops.getNearbyStops;
 import static util.DebugUtli.getDebugMode;
 
 public class EdgeService {
@@ -20,7 +19,7 @@ public class EdgeService {
         Stop startStop = tds.getStop(node.stopId);
 
         // add stops that can be reached by walking
-        List<Stop> walkingDistanceStops = getNearbyStops(startStop.stopLat, startStop.stopLon, 250);
+        List<Stop> walkingDistanceStops = tds.getNearbyStops(startStop.stopLat, startStop.stopLon, 250);
         //create edges for each of these stops
         for (Stop stop : walkingDistanceStops) {
             if (!stop.stopId.equals(node.stopId)) {
