@@ -62,7 +62,7 @@ public class AStarRouterV {
                 return reconstructPath(STOP_NODE);
             }
 
-            List<Edge> edges = edgeService.getEdges(current);
+            List<Edge> edges = edgeService.getEdges(current, 0);
 
             for (Edge edge : edges) {
                 String toStopId = edge.getToStopId();

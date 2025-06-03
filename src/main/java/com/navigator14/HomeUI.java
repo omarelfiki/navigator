@@ -22,9 +22,7 @@ import javafx.stage.Stage;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.shape.Circle;
-
 import java.awt.geom.Point2D;
-
 import models.HeatPoint;
 import org.jxmapviewer.JXMapViewer;
 import org.jxmapviewer.painter.CompoundPainter;
@@ -36,15 +34,12 @@ import router.AStarRouterV;
 import router.HeatMapRouter;
 import util.NetworkUtil;
 import router.Node;
-
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
-
 import map.WayPoint;
 import map.*;
 import db.*;
 import ui.*;
-
 import static util.DebugUtil.getDebugMode;
 import static util.NavUtil.parsePoint;
 import static ui.UiHelper.*;
@@ -500,8 +495,8 @@ public class HomeUI extends Application {
         return new Task<>() {
             @Override
             protected Void call() {
-                HeatMapRouter router = new HeatMapRouter();
-                List<HeatPoint> heatPoints = router.toHeatPoints(router.buildWithoutWalk(lat, lon, "9:30:00"));
+                HeatMapRouter router = new HeatMapRouter(0);
+                List<HeatPoint> heatPoints = router.build(lat, lon, "9:30:00");
                 JXMapViewer baseMap = MapProvider.getInstance().getMap();
                 HeatMapPainter heatMapPainter = new HeatMapPainter(heatPoints);
                 @SuppressWarnings("unchecked")

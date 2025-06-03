@@ -58,9 +58,8 @@ class TransferEdge implements Edge {
     }
 
     public String getToStopId() { return toStopId; }
-    public String getDepartureTime() { return departureTime; }
-    public String getArrivalTime() { return arrivalTime; }
     public String getMode() { return mode; }
     public Trip getTrip() { return trip; }
     public double getWeight() { return weight; }
+    public String getArrivalTime() { return arrivalTime; }
 }

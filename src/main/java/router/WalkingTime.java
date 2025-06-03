@@ -11,9 +11,4 @@ public class WalkingTime {
        return distance / 1.39;
     }
 
-    public static boolean isWalkable(double latFrom, double longFrom, double latTo, double longTo) {
-        double distance = GeoUtil.distance(latFrom, longFrom, latTo, longTo);
-        return distance <= 200.0;
-    }
-
 }
