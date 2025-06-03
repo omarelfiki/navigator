@@ -14,24 +14,11 @@ public class DBconfig {
 
     private final String GTFS_PATH;
 
-    private final int filetype; // 0 for dir (UI), 1 for zip (Routing Engine)
-    //dir will be deprecated in the future
-
     private final boolean isDebugMode;
 
-    //ui constructor
-    public DBconfig(DBaccess access) {
-        this.access = access;
-        this.GTFS_PATH = System.getenv("GTFS_DIR");
-        filetype = 0;
-        isDebugMode = getDebugMode();
-    }
-
-    //routing engine constructor
     public DBconfig(String filePath) {
         this.access = DBaccessProvider.getInstance();
         GTFS_PATH = filePath;
-        filetype = 1;
         isDebugMode = getDebugMode();
     }
 
@@ -51,21 +38,14 @@ public class DBconfig {
                 if (isDebugMode) System.err.println("Initializing triggers...");
                 initializeTriggers();
 
-                if (isDebugMode) System.err.println("Loading GTFS data...");
-                switch (filetype) {
-                    case 0 -> {
-                        if (isDebugMode) System.err.println("Loading GTFS data from directory: " + GTFS_PATH);
-                        GTFSImporter importer = new GTFSImporter(GTFS_PATH);
-                        importer.importGTFS();
-                    }
-                    case 1 -> {
-                        if (isDebugMode) System.err.println("Loading GTFS data from zip file: " + GTFS_PATH);
-                        String tempDir = System.getenv("ROUTING_ENGINE_STORAGE_DIRECTORY");
-                        ZipExtractor.extractZipToDirectory(GTFS_PATH, tempDir);
-                        GTFSImporter importer = new GTFSImporter(tempDir);
-                        importer.importGTFS();
-                    }
+                if (isDebugMode) System.err.println("Loading GTFS data from zip file: " + GTFS_PATH);
+                String tempDir = System.getenv("ROUTING_ENGINE_STORAGE_DIRECTORY");
+                if (tempDir == null || tempDir.isEmpty()) {
+                    tempDir = System.getProperty("java.io.tmpdir");
                 }
+                ZipExtractor.extractZipToDirectory(GTFS_PATH, tempDir);
+                GTFSImporter importer = new GTFSImporter(tempDir);
+                importer.importGTFS();
                 if (isDebugMode) System.err.println("GTFS data loaded successfully.");
 
                 if (isDebugMode) System.err.println("Database initialization completed.");

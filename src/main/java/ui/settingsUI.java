@@ -19,6 +19,7 @@ import java.nio.file.Path;
 
 
 import db.*;
+import javafx.stage.FileChooser;
 
 public class settingsUI {
     private final BorderPane root;
@@ -54,10 +55,25 @@ public class settingsUI {
         textField.setPromptText("Path to GTFS zip file");
         textField.layoutXProperty().bind(root.widthProperty().multiply(0.017)); // 78/1280
         textField.layoutYProperty().bind(root.heightProperty().multiply(0.144)); // 120/832
-        textField.prefWidthProperty().bind(root.widthProperty().multiply(0.24)); // 300/1280
+        textField.prefWidthProperty().bind(root.widthProperty().multiply(0.22)); // 300/1280
         textField.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
+        textField.setEditable(false);
         settingsMenu.getChildren().add(textField);
-        textField.setText(System.getProperty("GTFS_DIR"));
+
+        Button fileSelectorButton = new Button("...");
+        fileSelectorButton.layoutXProperty().bind(root.widthProperty().multiply(0.24)); // 330/1280
+        fileSelectorButton.layoutYProperty().bind(root.heightProperty().multiply(0.144)); // 120/832
+        fileSelectorButton.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
+        fileSelectorButton.setOnAction(_ -> {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Select GTFS Zip File");
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("ZIP Files", "*.zip"));
+            java.io.File selectedFile = fileChooser.showOpenDialog(settingsMenu.getScene().getWindow());
+            if (selectedFile != null) {
+                textField.setText(selectedFile.getAbsolutePath());
+            }
+        });
+        settingsMenu.getChildren().add(fileSelectorButton);
 
         Text label2 = new Text("MySQL Connection Details");
         label2.setTextAlignment(TextAlignment.CENTER);
@@ -157,7 +173,6 @@ public class settingsUI {
         infoLabel.prefHeightProperty().bind(root.heightProperty().multiply(0.035)); // 30/832
         settingsMenu.getChildren().add(infoLabel);
 
-
         Button test = new Button("Test MySQL Connection");
         test.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
         test.layoutXProperty().bind(root.widthProperty().multiply(0.017)); // 78/1280
@@ -175,18 +190,15 @@ public class settingsUI {
         importButton.setOnAction(_ -> {
             if (textField.getText().isEmpty()) {
                 testLabel.setText("Please check GTFS Path.");
-            } else if (!Files.isDirectory(Path.of(textField.getText()))) {
-                testLabel.setText("Not a directory.");
             } else if (!Files.exists(Path.of(textField.getText()))) {
                 testLabel.setText("File does not exist.");
             } else if (!Files.isReadable(Path.of(textField.getText()))) {
                 testLabel.setText("File is not readable.");
             } else {
-                System.setProperty("GTFS_DIR", textField.getText());
                 ConsolePopup consolePopup = new ConsolePopup();
                 consolePopup.show();
                 new Thread(() -> {
-                    DBconfig config = new DBconfig(DBaccessProvider.getInstance());
+                    DBconfig config = new DBconfig(textField.getText());
                     config.initializeDB();
                     Platform.runLater(() -> {
                         consolePopup.close();
