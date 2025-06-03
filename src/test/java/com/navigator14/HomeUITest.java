@@ -1,7 +1,9 @@
 package com.navigator14;
 
+import javafx.scene.control.Button;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import org.junit.jupiter.api.Test;
 import org.testfx.framework.junit5.ApplicationTest;
@@ -93,5 +95,20 @@ public class HomeUITest extends ApplicationTest {
         WaitForAsyncUtils.sleep(20, TimeUnit.SECONDS);
 
         assertThat(lookup(".text").queryText().getText()).doesNotContain("No route found");
+    }
+
+    @Test
+    public void HeatMapTest() {
+        Pane togglePane = lookup("#togglePane").query();
+        clickOn(togglePane);
+
+        TextField originField = lookup("#originField").query();
+        clickOn(originField).write("Rome");
+
+        Button searchButton = lookup("#searchButton").query();
+        clickOn(searchButton);
+
+        WaitForAsyncUtils.sleep(60, TimeUnit.SECONDS);
+
     }
 }
