@@ -15,9 +15,9 @@ public class PathCompressor {
         for (int i = 1; i < path.size(); i++) {
             Node currentNode = path.get(i);
 
-            boolean sameTrip = segmentEnd.trip == null
-                    ? currentNode.trip == null
-                    : segmentEnd.trip.equals(currentNode.trip);
+            boolean sameTrip = segmentEnd.getTrip() == null
+                    ? currentNode.getTrip() == null
+                    : segmentEnd.getTrip().equals(currentNode.getTrip());
 
             if (sameTrip) {
                 segmentEnd = currentNode;

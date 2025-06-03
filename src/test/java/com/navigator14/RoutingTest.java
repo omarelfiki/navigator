@@ -20,9 +20,9 @@ public class RoutingTest {
         if (path != null) {
             System.out.println("Path found:");
             for (Node node : path) {
-                System.out.println(node.stopId+" "  + node.arrivalTime +" "+ node.mode + " TRIP " );
-                if(node.trip != null) {
-                    System.out.println("Trip ID: " + node.trip.tripId);
+                System.out.println(node.getStopId()+" "  + node.getArrivalTime() +" "+ node.getMode() + " TRIP " );
+                if(node.getTrip() != null) {
+                    System.out.println("Trip ID: " + node.getTrip().tripId());
 
                 }
             }

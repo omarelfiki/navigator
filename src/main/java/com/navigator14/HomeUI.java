@@ -417,10 +417,10 @@ public class HomeUI extends Application {
         Set<String> modes = new LinkedHashSet<>(); // To avoid duplicates
         Node current = destinationNode;
         while (current != null) {
-            if (current.mode != null && !current.mode.isBlank()) {
-                modes.add(current.mode);
+            if (current.getMode() != null && !current.getMode().isBlank()) {
+                modes.add(current.getMode());
             }
-            current = current.parent;
+            current = current.getParent();
         }
 
         Text transportTitle = new Text("Modes of Transport:");

@@ -34,7 +34,7 @@ public class AStarRouterV {
             return reconstructPath(STOP_NODE);
         }
 
-        PriorityQueue<Node> pq = new PriorityQueue<>(Comparator.comparingDouble(n -> n.g + n.h));
+        PriorityQueue<Node> pq = new PriorityQueue<>(Comparator.comparingDouble(n -> n.getG() + n.getH()));
 
         for (Stop stop : startStops) {
             if (excludedStops.contains(stop.getStopId())) {
@@ -44,9 +44,9 @@ public class AStarRouterV {
             double walkTime = WalkingTime.getWalkingTime(latStart, lonStart, stop.getStopLat(), stop.getStopLon());
             if (debugMode) System.err.println("Walking time to stop: " + stop.getStopId() + " " + walkTime);
             String arrivalTime = addTime(startTime, walkTime);
-            Node node = new Node(stop.stopId, arrivalTime, STARTING_NODE, "WALK", null);
+            Node node = new Node(stop.getStopId(), arrivalTime, STARTING_NODE, "WALK", null);
             node.g = walkTime;
-            updateBestCost(stop.stopId, node.g);
+            updateBestCost(stop.getStopId(), node.getG());
             pq.add(node);
         }
 
@@ -55,10 +55,10 @@ public class AStarRouterV {
             if (isAtGoal(current, stopStops)) {
                 STOP_NODE.parent = current;
                 TDSImplement tds = new TDSImplement();
-                Stop currentStop = tds.getStop(current.stopId);
+                Stop currentStop = tds.getStop(current.getStopId());
 
-                double walking_time_to_end = WalkingTime.getWalkingTime(currentStop.getStopLat(), currentStop.getStopLon(), STOP_NODE.stop.getStopLat(), STOP_NODE.stop.getStopLon());
-                STOP_NODE.arrivalTime = addTime(current.arrivalTime, walking_time_to_end);
+                double walking_time_to_end = WalkingTime.getWalkingTime(currentStop.getStopLat(), currentStop.getStopLon(), STOP_NODE.getStop().getStopLat(), STOP_NODE.getStop().getStopLon());
+                STOP_NODE.arrivalTime = addTime(current.getArrivalTime(), walking_time_to_end);
                 return reconstructPath(STOP_NODE);
             }
 
@@ -73,15 +73,15 @@ public class AStarRouterV {
                 String arrivalTime = edge.getArrivalTime();
                 double weight = edge.getWeight();
 
-                if (current.g + weight + 5 < bestKnownCostTo(toStopId)) {
+                if (current.getG() + weight + 5 < bestKnownCostTo(toStopId)) {
                     Node nextNode = new Node(toStopId, arrivalTime, current, edge.getMode(), edge.getTrip());
-                    double latitude = nextNode.stop.getStopLat();
-                    double longitude = nextNode.stop.getStopLon();
-                    nextNode.g = current.g + weight;
+                    double latitude = nextNode.getStop().getStopLat();
+                    double longitude = nextNode.getStop().getStopLon();
+                    nextNode.g = current.getG() + weight;
 
                     nextNode.h = GeoUtil.distance(latitude, longitude, latStop, lonStop) / 2.8;
                     pq.add(nextNode);
-                    updateBestCost(toStopId, nextNode.g);
+                    updateBestCost(toStopId, nextNode.getG());
                 }
             }
         }
@@ -101,7 +101,7 @@ public class AStarRouterV {
 
     private boolean isAtGoal(Node current, List<Stop> stopStops) {
         for (Stop stop : stopStops) {
-            if (current.stopId.equals(stop.getStopId())) {
+            if (current.getStopId().equals(stop.getStopId())) {
                 return true;
             }
         }
@@ -112,7 +112,7 @@ public class AStarRouterV {
         List<Node> path = new ArrayList<>();
         while (current != null) {
             path.add(current);
-            current = current.parent;
+            current = current.getParent();
         }
         Collections.reverse(path);
         return path;

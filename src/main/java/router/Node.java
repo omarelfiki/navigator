@@ -5,7 +5,17 @@ import models.Stop;
 import models.Trip;
 
 public class Node {
+    Stop stop;
+    private final String stopId;
+    String arrivalTime;
+    double g;
+    double h;
+    Node parent;
+    private final String mode;
+    private final Trip trip;
+
     TDSImplement tds = new TDSImplement();
+
     public Node(String stopId, String arrivalTime, Node parent, String mode, Trip trip) {
         this.stopId = stopId;
         this.arrivalTime = arrivalTime;
@@ -15,14 +25,38 @@ public class Node {
         this.stop = tds.getStop(stopId);
 
     }
-    public Stop stop;
-    public String stopId;
-    public String arrivalTime;
-    double g;
-    double h;
-    public Node parent;
-    public String mode;
-    public Trip trip;
+
+    public Stop getStop() {
+        return stop;
+    }
+
+    public String getStopId() {
+        return stopId;
+    }
+
+    public String getArrivalTime() {
+        return arrivalTime;
+    }
+
+    public double getG() {
+        return g;
+    }
+
+    public double getH() {
+        return h;
+    }
+
+    public Node getParent() {
+        return parent;
+    }
+
+    public String getMode() {
+        return mode;
+    }
+
+    public Trip getTrip() {
+        return trip;
+    }
 
     @Override
     public String toString() {

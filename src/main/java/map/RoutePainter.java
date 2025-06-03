@@ -39,16 +39,16 @@ public class RoutePainter implements Painter<JXMapViewer> {
         boolean first = true;
 
         for (Node node : path) {
-            GeoPosition position = new GeoPosition(node.stop.stopLat, node.stop.stopLon);
+            GeoPosition position = new GeoPosition(node.getStop().getStopLat(), node.getStop().getStopLon());
             Point2D pt = map.getTileFactory().geoToPixel(position, map.getZoom());
 
             if (first) {
                 first = false;
             } else {
-                if ("WALK".equals(node.mode)) {
+                if ("WALK".equals(node.getMode())) {
                     g.setStroke(new BasicStroke(2, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{5, 5}, 0)); // Dashed line
                     g.setColor(Color.BLUE); // Color for walking
-                } else if ("TRANSFER".equals(node.mode)) {
+                } else if ("TRANSFER".equals(node.getMode())) {
                     g.setStroke(new BasicStroke(5)); // Solid line
                     g.setColor(Color.RED); // Color for transfers
                 } else {

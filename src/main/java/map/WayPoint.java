@@ -24,7 +24,7 @@ public class WayPoint {
 
     for (int i = 0; i < path.size(); i++) {
         Node node = path.get(i);
-        double[] coords = {node.stop.stopLat, node.stop.stopLon};
+        double[] coords = {node.getStop().getStopLat(), node.getStop().getStopLon()};
         GeoPosition position = new GeoPosition(coords[0], coords[1]);
 
         if (i == 0 || i == path.size() - 1) {

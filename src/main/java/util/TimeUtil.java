@@ -5,14 +5,6 @@ import java.time.LocalTime;
 import static util.DebugUtil.getDebugMode;
 
 public class TimeUtil {
-    public static double calculateTimePastMidnight(String s){
-        // calculate the seconds past midnight from format hh::mm:ss
-        String[] timeParts = s.split(":");
-        int hours = Integer.parseInt(timeParts[0]);
-        int minutes = Integer.parseInt(timeParts[1]);
-        int seconds = Integer.parseInt(timeParts[2]);
-        return hours * 3600 + minutes * 60 + seconds;
-    }
     public static double calculateDifference(String s1,String s2){
         // calculate the difference between two times in seconds
         LocalTime time1 = LocalTime.parse(s1);

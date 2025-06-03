@@ -8,58 +8,67 @@ import models.Trip;
 import static util.TimeUtil.calculateDifference;
 
 class TransferEdge implements Edge {
-    String toStopId;
-    String fromStopId;
-    String departureTime; // Time I arrive at fromStopId
-    String arrivalTime;   // Time I arrive at toStopId
-    double weight;
-    String mode;
-    Trip trip;
-    Stop startStop;
-    Stop endStop;
-    double waitingTime;
-    double rideTime;
-    StopTime currentStopTime;
-    StopTime nextStopTime;
-    String rideStartTime;
-
-    TDSImplement tds = new TDSImplement();
+    private final String toStopId;
+    private final String fromStopId;
+    private final String departureTime; // Time I arrive at fromStopId
+    private final String arrivalTime;   // Time I arrive at toStopId
+    private final double weight;
+    private final Trip trip;
+    private final String rideStartTime;
 
     public TransferEdge(String fromStopId, String departureTime, Trip trip) {
         this.fromStopId = fromStopId;
         this.departureTime = departureTime; // when I arrive at this stop (and start waiting)
         this.trip = trip;
 
-        this.startStop = tds.getStop(fromStopId);
-        this.currentStopTime = tds.getCurrentStopTime(trip, startStop, departureTime);
-        this.nextStopTime = tds.getNextStopTime(currentStopTime);
+        TDSImplement tds = new TDSImplement();
+        Stop startStop = tds.getStop(fromStopId);
+        StopTime currentStopTime = tds.getCurrentStopTime(trip, startStop, departureTime);
+        StopTime nextStopTime = tds.getNextStopTime(currentStopTime);
 
         if (nextStopTime == null) {
-            throw new IllegalArgumentException("No next stop time found for trip " + trip.tripId +
+            throw new IllegalArgumentException("No next stop time found for trip " + trip.tripId() +
                     " at stop " + fromStopId + " after time " + departureTime);
         }
 
-
-        this.toStopId = nextStopTime.getStop().getStopId();
-        this.endStop = nextStopTime.getStop();
-        this.arrivalTime = nextStopTime.getArrivalTime();
+        this.toStopId = nextStopTime.stop().getStopId();
+        this.arrivalTime = nextStopTime.arrivalTime();
 
         // WAIT = time between my arrival at stop and trip's departure
-        this.waitingTime = calculateDifference(this.departureTime, currentStopTime.getDepartureTime());
-        this.rideStartTime = currentStopTime.getDepartureTime();
+        double waitingTime = calculateDifference(this.departureTime, currentStopTime.departureTime());
+        this.rideStartTime = currentStopTime.departureTime();
         // RIDE = time from bus departure to bus arrival at next stop
-        this.rideTime = calculateDifference(currentStopTime.getDepartureTime(), nextStopTime.getArrivalTime());
+        double rideTime = calculateDifference(currentStopTime.departureTime(), nextStopTime.arrivalTime());
 
         // WEIGHT = total cost
         //this.weight = timeUtil.calculateDifference(this.departureTime, this.arrivalTime); // or waitingTime + rideTime
-        this.weight =  0.6*waitingTime + rideTime;  // encourage transfers
-
-        this.mode = "TRANSFER";
+        this.weight = 0.6 * waitingTime + rideTime;  // encourage transfers
     }
 
-    public String getToStopId() { return toStopId; }
-    public String getMode() { return mode; }
-    public Trip getTrip() { return trip; }
-    public double getWeight() { return weight; }
-    public String getArrivalTime() { return arrivalTime; }
+    @Override
+    public String getToStopId() {
+        return toStopId;
+    }
+    @Override
+    public String getMode() {
+        // Mode of transport for this edge
+        return "TRANSFER";
+    }
+    @Override
+    public Trip getTrip() {
+        return trip;
+    }
+    @Override
+    public double getWeight() {
+        return weight;
+    }
+    @Override
+    public String getArrivalTime() {return arrivalTime;}
+    @Override
+    public String getDepartureTime() {return departureTime;}
+    @Override
+    public String getFromStopId() {return fromStopId;}
+
+    public String getRideStartTime() {return rideStartTime;}
+
 }

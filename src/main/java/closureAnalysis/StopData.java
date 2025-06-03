@@ -7,6 +7,7 @@ public class StopData {
     private double ds;  // Population density factor
     private double score; // Final combined score
 
+
     // Getters and Setters
     public double getFs() { return fs; }
     public void setFs(double fs) { this.fs = fs; }

@@ -39,34 +39,34 @@ public class HeatMapRouter {
     private Map<String, Node> builder(double latStart, double lonStart, String startTime) {
         Node ORIGIN = new Node("origin", startTime, null, "WALK", null);
         ORIGIN.stop = new Stop("origin", "START", latStart, lonStart);
-        PriorityQueue<Node> pq = new PriorityQueue<>(Comparator.comparingDouble(n -> n.g));
+        PriorityQueue<Node> pq = new PriorityQueue<>(Comparator.comparingDouble(Node::getG));
 
         // bootstrap – first walking leg (cap immediately)
         for (Stop s : tds.getNearbyStops(latStart, lonStart, 500)) {
             double walk = WalkingTime.getWalkingTime(latStart, lonStart,
-                    s.stopLat, s.stopLon);
-            Node n = new Node(s.stopId, addTime(startTime, walk), ORIGIN, "WALK", null);
+                    s.getStopLat(), s.getStopLon());
+            Node n = new Node(s.getStopId(), addTime(startTime, walk), ORIGIN, "WALK", null);
             n.g = Math.min(walk, LIMIT);
             pq.add(n);
-            bestCost.put(s.stopId, n.g);
+            bestCost.put(s.getStopId(), n.getG());
         }
 
         int totalStops = 5000; // testing cap — remove or replace later
 
         while (!pq.isEmpty()) {
             Node cur = pq.poll();
-            if (settled.containsKey(cur.stopId)) continue;
-            settled.put(cur.stopId, cur);
+            if (settled.containsKey(cur.getStopId())) continue;
+            settled.put(cur.getStopId(), cur);
 
             if (debug && settled.size() % 10_000 == 0)
                 System.err.printf("Settled %,d stops …%n", settled.size());
 
             if (settled.size() == totalStops) break;
-            if (cur.g >= LIMIT) continue;           // do NOT expand over-limit nodes
+            if (cur.getG() >= LIMIT) continue;           // do NOT expand over-limit nodes
 
             ArrayList<Edge> edges = (type == 0) ? edgeService.getEdges(cur, 0) : edgeService.getEdges(cur, 1);
             for (Edge e : edges) {
-                double tentative = cur.g + e.getWeight();
+                double tentative = cur.getG() + e.getWeight();
                 double g = (tentative > LIMIT) ? SENTINEL : tentative;
 
                 String to = e.getToStopId();
@@ -85,7 +85,7 @@ public class HeatMapRouter {
     public List<HeatPoint> toHeatPoints(Map<String, Node> nodes){
         List<HeatPoint> hp = new ArrayList<>(nodes.size());
         for (Node n : nodes.values()) { //just as a reminder , also hello little Easter egg:)
-            hp.add(new HeatPoint(n.stop.getStopLat(), n.stop.getStopLon(), n.g/60)); // g is seconds (SENTINEL = 2701s =>45 min)
+            hp.add(new HeatPoint(n.getStop().getStopLat(), n.getStop().getStopLon(), n.getG()/60)); // g is seconds (SENTINEL = 2701s =>45 min)
         }
         return hp;
     }

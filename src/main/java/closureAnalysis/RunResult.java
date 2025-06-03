@@ -9,10 +9,8 @@ import java.util.List;
 public class RunResult {
 
     public static void main(String[] args) {
-
         // Access data
-        TDSImplement tds = new TDSImplement();
-        List<Stop> allStops = tds.getAllStops();
+        List<Stop> allStops = new TDSImplement().getAllStops();
         List<TouristicLocations> monuments = ProximityFactor.getMonuments();
 
         // Calculate all scores
@@ -21,7 +19,7 @@ public class RunResult {
         // Sort by score (lowest = best candidates for closure)
         allStops.sort(Comparator.comparingDouble(Stop::getScore));
 
-        // Print top 3 stops with lowest scores
+        // Print top 3 stops with the lowest scores
         System.out.println("Top 3 stops to consider for closure:");
         for (int i = 0; i < 3; i++) {
             Stop stop = allStops.get(i);

@@ -17,32 +17,32 @@ public class EdgeService {
     public ArrayList<Edge> getEdges(Node node, int mode) {
         isDebugMode = getDebugMode();
         ArrayList<Edge> edges = new ArrayList<>();
-        Stop startStop = tds.getStop(node.stopId);
+        Stop startStop = tds.getStop(node.getStopId());
 
+        //mode 0: with walking, mode 1: without walking
         if (mode == 0) {
             // add stops that can be reached by walking
-            List<Stop> walkingDistanceStops = tds.getNearbyStops(startStop.stopLat, startStop.stopLon, 250);
+            List<Stop> walkingDistanceStops = tds.getNearbyStops(startStop.getStopLat(), startStop.getStopLon(), 250);
             //create edges for each of these stops
             for (Stop stop : walkingDistanceStops) {
-                if (!stop.stopId.equals(node.stopId)) {
+                if (!stop.getStopId().equals(node.getStopId())) {
                     WalkingEdge edge = new WalkingEdge(
-                            startStop.stopId,
-                            stop.stopId,
-                            node.arrivalTime
+                            startStop.getStopId(),
+                            stop.getStopId(),
+                            node.getArrivalTime()
                     );
-                    if (isDebugMode) System.out.println("Walking " + edge.fromStopId + " to " + edge.toStopId + " weight " + edge.weight + " at " + edge.departureTime + " to " + edge.arrivalTime);
                     edges.add(edge);
                 }
             }
         }
 
         // add the stop that can be reached directly by following the same route
-        if (node.trip != null) {
+        if (node.getTrip() != null) {
             try {
                 TripEdge tripEdge = new TripEdge(
-                        startStop.stopId,
-                        node.arrivalTime,
-                        node.trip
+                        startStop.getStopId(),
+                        node.getArrivalTime(),
+                        node.getTrip()
                 );
                 edges.add(tripEdge);
             } catch (IllegalArgumentException e) {
@@ -53,18 +53,18 @@ public class EdgeService {
 
 
         //add transfer edges
-        List<Trip> upcomingTrips = tds.getUpcomingDistinctRouteTrips(node.stopId, node.arrivalTime);
+        List<Trip> upcomingTrips = tds.getUpcomingDistinctRouteTrips(node.getStopId(), node.getArrivalTime());
         if (isDebugMode) System.err.println("upcoming trips: " + upcomingTrips.size());
         for (Trip trip : upcomingTrips) {
             try {
-                TransferEdge transferEdge = new TransferEdge(startStop.stopId, node.arrivalTime, trip);
+                TransferEdge transferEdge = new TransferEdge(startStop.getStopId(), node.getArrivalTime(), trip);
                 edges.add(transferEdge);
-                if (isDebugMode) System.err.println("Transfer " + transferEdge.fromStopId + " to " + transferEdge.toStopId +
-                        " weight " + transferEdge.weight + " by route " + transferEdge.trip.getRoute().routeId +
-                        " at " + transferEdge.departureTime + " waiting until " + transferEdge.rideStartTime +
-                        " to " + transferEdge.arrivalTime);
+                if (isDebugMode) System.err.println("Transfer " + transferEdge.getFromStopId() + " to " + transferEdge.getToStopId() +
+                        " weight " + transferEdge.getWeight() + " by route " + transferEdge.getTrip().route().routeId() +
+                        " at " + transferEdge.getDepartureTime() + " waiting until " + transferEdge.getRideStartTime() +
+                        " to " + transferEdge.getArrivalTime());
             } catch (IllegalArgumentException e) {
-                if (isDebugMode) System.err.println("Skipping trip " + trip.tripId + ": " + e.getMessage());
+                if (isDebugMode) System.err.println("Skipping trip " + trip.tripId() + ": " + e.getMessage());
             }
         }
 

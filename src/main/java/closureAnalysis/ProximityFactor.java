@@ -40,8 +40,8 @@ public class ProximityFactor {
             boolean nearMonument = false;
 
             for (TouristicLocations monument : monuments) {
-                double monumentLat = monument.getLat();
-                double monumentLon = monument.getLon();
+                double monumentLat = monument.lat();
+                double monumentLon = monument.lon();
 
                 double distance = GeoUtil.distance(stopLat, stopLon, monumentLat, monumentLon);
 

@@ -4,8 +4,10 @@ import util.ZipExtractor;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Objects;
 import java.net.URISyntaxException;
+
 import static util.DebugUtil.getDebugMode;
 
 
@@ -28,10 +30,13 @@ public class DBConfig {
             if (isDebugMode) System.err.println("Starting database initialization...");
             if (access.conn != null && !access.conn.isClosed()) {
                 if (isDebugMode) System.err.println("Insuring clear database...");
-                access.conn.createStatement().execute("DROP DATABASE IF EXISTS " + access.dbName);
-                access.conn.createStatement().execute("CREATE DATABASE " + access.dbName);
-                access.conn.createStatement().execute("USE " + access.dbName);
-
+                try (Statement stmt = access.conn.createStatement()) {
+                    stmt.execute("DROP DATABASE IF EXISTS `" + access.dbName.replace("`", "``") + "`");
+                    stmt.execute("CREATE DATABASE `" + access.dbName.replace("`", "``") + "`");
+                    stmt.execute("USE `" + access.dbName.replace("`", "``") + "`");
+                } catch (SQLException e) {
+                    System.err.println("SQL Error (Disabling Foreign Key Checks): " + e.getMessage());
+                }
                 if (isDebugMode) System.err.println("Initializing tables...");
                 initializeTables();
 
@@ -50,7 +55,8 @@ public class DBConfig {
 
                 if (isDebugMode) System.err.println("Database initialization completed.");
             } else {
-                if (isDebugMode) System.err.println("Stopping database initialization: connection to the database is not established.");
+                if (isDebugMode)
+                    System.err.println("Stopping database initialization: connection to the database is not established.");
             }
         } catch (SQLException e) {
             System.err.println("SQL Initialization Error: " + e.getMessage());
@@ -72,13 +78,13 @@ public class DBConfig {
                     }
                 } catch (java.io.IOException e) {
                     System.err.println("Error reading SQL file: " + e.getMessage());
-                }
-                catch (URISyntaxException e) {
+                } catch (URISyntaxException e) {
                     System.err.println("Error reading SQL path file: " + e.getMessage());
                 }
                 if (isDebugMode) System.err.println("GTFS data model trigger created successfully.");
             } else {
-                if (isDebugMode) System.err.println("Stopping trigger initialization: connection to the database is not established.");
+                if (isDebugMode)
+                    System.err.println("Stopping trigger initialization: connection to the database is not established.");
             }
         } catch (SQLException e) {
             System.err.println("SQL Trigger Error: " + e.getMessage());
@@ -108,7 +114,8 @@ public class DBConfig {
                 }
                 if (isDebugMode) System.err.println("GTFS data model table created successfully.");
             } else {
-                if (isDebugMode) System.err.println("Stopping table initialization: connection to the database is not established.");
+                if (isDebugMode)
+                    System.err.println("Stopping table initialization: connection to the database is not established.");
             }
         } catch (SQLException e) {
             System.err.println("SQL Table Init Error: " + e.getMessage());
