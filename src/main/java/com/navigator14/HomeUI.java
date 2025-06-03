@@ -10,7 +10,6 @@ import javafx.concurrent.Task;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.DatePicker;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -19,14 +18,11 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.shape.Circle;
 import java.awt.geom.Point2D;
+
 import models.HeatPoint;
 import org.jxmapviewer.JXMapViewer;
 import org.jxmapviewer.painter.CompoundPainter;
-import org.jxmapviewer.viewer.DefaultWaypoint;
 import org.jxmapviewer.viewer.GeoPosition;
 import org.jxmapviewer.viewer.Waypoint;
 import org.jxmapviewer.viewer.WaypointPainter;
@@ -34,12 +30,15 @@ import router.AStarRouterV;
 import router.HeatMapRouter;
 import util.NetworkUtil;
 import router.Node;
+
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+
 import map.WayPoint;
 import map.*;
 import db.*;
 import ui.*;
+
 import static util.DebugUtil.getDebugMode;
 import static util.NavUtil.parsePoint;
 import static ui.UiHelper.*;
@@ -50,8 +49,6 @@ public class HomeUI extends Application {
     private Button hideSidePanel, showSidePanel;
     private boolean firstClick = true;
     private final Set<Waypoint> waypoints = new HashSet<>();
-    private DefaultWaypoint originWaypoint;
-    private DefaultWaypoint destinationWaypoint;
     private final WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<>();
 
     @Override
@@ -59,10 +56,6 @@ public class HomeUI extends Application {
         primaryStage.setTitle("Navigator");
         DBAccess access = DBAccessProvider.getInstance();
         BorderPane root = new BorderPane();
-
-        MapIntegration mapIntegration = MapProvider.getInstance();
-        StackPane mapPane = mapIntegration.createMapPane();
-        root.setCenter(mapPane);
 
         Pane leftPane = new Pane();
         VBox vbox_left = new VBox();
@@ -79,39 +72,52 @@ public class HomeUI extends Application {
         title.yProperty().bind(root.heightProperty().multiply(0.06)); // 50/832
         leftPane.getChildren().add(title);
 
-        StackPane startGroup = createTextFieldWithIcon("↗", "Starting Point");
+        StackPane startGroup = createTextFieldWithIcon("↗", "Origin","originField");
         bindPosition(startGroup, root, 0.09);
         leftPane.getChildren().add(startGroup);
 
-        StackPane endGroup = createTextFieldWithIcon("↙", "Destination");
+        StackPane endGroup = createTextFieldWithIcon("↙", "Destination", "destinationField");
         bindPosition(endGroup, root, 0.18);
         leftPane.getChildren().add(endGroup);
 
-        endGroup.visibleProperty().bind(isOn.not());
+        StackPane timeContainer = createDateTimeContainer("⏰", "Time", 0.1, 0.12, root, 1);
+        StackPane goButtonContainer = createButtonContainer(root, 0.06, 0.061);
+        HBox combinedContainer = getCombinedContainer(root, 0.2, 0.061, 0.05, 0.28, timeContainer, goButtonContainer);
+        leftPane.getChildren().add(combinedContainer);
 
         TextField originField = (TextField) ((HBox) startGroup.getChildren().getFirst()).getChildren().get(1);
         TextField destinationField = (TextField) ((HBox) endGroup.getChildren().getFirst()).getChildren().get(1);
-
-        StackPane timeContainer = createDateTimeContainer("⏰", "Time", 0.026, 0.12, 0.036, root, 1);
-        StackPane dateContainer = createDateTimeContainer("🗓️", "Date", 0.11, 0.132, 0.061, root, 0);
-        leftPane.getChildren().addAll(timeContainer, dateContainer);
-
         TextField timeField = (TextField) ((HBox) timeContainer.getChildren().getFirst()).getChildren().get(1);
-        DatePicker dateField = (DatePicker) ((HBox) dateContainer.getChildren().getFirst()).getChildren().getFirst();
+        Button goButton = (Button) ((HBox) goButtonContainer.getChildren().getFirst()).getChildren().getFirst();
 
-        Button flipButton = createFlipButton(root, originField, destinationField, dateField, timeField);
+        Button flipButton = createFlipButton(root, originField, destinationField, timeField);
         leftPane.getChildren().add(flipButton);
+
         flipButton.visibleProperty().bind(isOn.not());
+        endGroup.visibleProperty().bind(isOn.not());
+
+        MapIntegration mapIntegration = MapProvider.getInstance();
+        StackPane mapPane = mapIntegration.createMapPane();
+        JXMapViewer map = mapIntegration.getMap();
+        map.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                Point2D point = e.getPoint();
+                GeoPosition geoPosition = map.convertPointToGeoPosition(point);
+                double lat = geoPosition.getLatitude();
+                double lon = geoPosition.getLongitude();
+                updateCoordinateFields(lat, lon, originField, destinationField);
+            }
+        });
+        root.setCenter(mapPane);
 
         BooleanBinding filled = Bindings.createBooleanBinding(
                 () -> !originField.getText().isEmpty() &&
                         !destinationField.getText().isEmpty() &&
-                        !timeField.getText().isEmpty() &&
-                        dateField.getValue() != null,
+                        !timeField.getText().isEmpty(),
                 originField.textProperty(),
                 destinationField.textProperty(),
-                timeField.textProperty(),
-                dateField.valueProperty()
+                timeField.textProperty()
         );
 
         Text label = new Text("Navigate to see public transport \n options");
@@ -122,11 +128,10 @@ public class HomeUI extends Application {
         label.yProperty().bind(root.heightProperty().multiply(0.48)); // 400/832
         leftPane.getChildren().add(label);
 
-
         AtomicReference<StackPane> resultPaneRef = new AtomicReference<>(new StackPane());
         leftPane.getChildren().add(resultPaneRef.get());
 
-        dateField.valueProperty().addListener((_, _, _) -> {
+        goButton.setOnAction(_ -> {
             if (filled.get()) {
                 Task<Void> task = new Task<>() {
                     @Override
@@ -134,6 +139,7 @@ public class HomeUI extends Application {
                         String origin = originField.getText();
                         String destination = destinationField.getText();
                         String time = timeField.getText();
+
                         Platform.runLater(() -> label.setText("Finding routes..."));
 
                         List<Node> result = parsePoint(origin, destination, time);
@@ -163,59 +169,10 @@ public class HomeUI extends Application {
         Line line = getLine(root);
         leftPane.getChildren().add(line);
 
-        // Background rectangle (toggle track)
-        Rectangle background = new Rectangle();
-        background.widthProperty().bind(root.widthProperty().multiply(0.047)); // 60/1280
-        background.heightProperty().bind(root.heightProperty().multiply(0.036)); // 30/832
-        background.setArcWidth(30);
-        background.setArcHeight(30);
-        background.setFill(Color.LIGHTGRAY);
+        createSidePanelButtons(root, leftPane, mapPane);
 
-        //Button to hide side panel
-        hideSidePanel = new Button("←");
-        hideSidePanel.layoutXProperty().bind(root.widthProperty().multiply(0.245));
-        hideSidePanel.layoutYProperty().bind(root.heightProperty().multiply(0.46));
-        hideSidePanel.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
-        hideSidePanel.setOnAction(_ -> {
-            toggleLeftBar(leftPane);
-            hideSidePanel.setVisible(false);
-            showSidePanel.setVisible(true);
-        });
-        leftPane.getChildren().add(hideSidePanel);
-
-        // Button to show side panel (initially hidden)
-        showSidePanel = new Button("→");
-        showSidePanel.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
-        showSidePanel.setVisible(false);
-        mapPane.getChildren().add(showSidePanel);
-        StackPane.setAlignment(showSidePanel, Pos.CENTER_LEFT);
-        showSidePanel.translateXProperty().bind(root.widthProperty().multiply(0.01));
-        showSidePanel.translateYProperty().bind(root.heightProperty().multiply(-0.04));
-        showSidePanel.setOnAction(_ -> {
-            toggleLeftBar(leftPane);
-            showSidePanel.setVisible(false);
-            hideSidePanel.setVisible(true);
-        });
-
-        // Toggle circle (switch knob)
-        Circle knob = new Circle();
-        knob.radiusProperty().bind(root.widthProperty().multiply(0.012)); // 15/1280
-        knob.setFill(Color.WHITE);
-        knob.layoutXProperty().bind(root.widthProperty().multiply(0.023)); // 30/1280
-        knob.translateXProperty().bind(Bindings.when(isOn).then(root.widthProperty().multiply(0.012)).otherwise(root.widthProperty().multiply(-0.012))); // 15/1280 or -15/1280
-        knob.translateYProperty().bind(root.heightProperty().multiply(0.018)); // 15/832
-
-        // Pane to hold the switch
-        Pane togglePane = new Pane(background, knob);
-        togglePane.prefWidthProperty().bind(root.widthProperty().multiply(0.047)); // 60/1280
-        togglePane.prefHeightProperty().bind(root.heightProperty().multiply(0.036)); // 30/832
-        togglePane.layoutXProperty().bind(root.widthProperty().multiply(0.015)); // 20/1280
-        togglePane.layoutYProperty().bind(root.heightProperty().multiply(0.913).add(20)); // 760/832 + 20
-
-        // Handle click event
-        togglePane.setOnMouseClicked(_ -> toggleSwitch(background));
+        Pane togglePane = createToggleSwitch(root, isOn);
         leftPane.getChildren().add(togglePane);
-        togglePane.setId("togglePane");
 
         Text toggleText = new Text("Heatmap Mode");
         toggleText.setFill(Color.WHITE);
@@ -224,21 +181,7 @@ public class HomeUI extends Application {
         toggleText.yProperty().bind(root.heightProperty().multiply(0.935).add(20)); // 778/832 + 20
         leftPane.getChildren().add(toggleText);
 
-        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/settingsIcon.png")));
-        ImageView imageView = new ImageView(image);
-        imageView.fitWidthProperty().bind(root.widthProperty().multiply(0.02)); // 25/1280
-        imageView.fitHeightProperty().bind(root.heightProperty().multiply(0.03)); // 25/832
-
-        Button settings = new Button("", imageView);
-        settings.layoutXProperty().bind(root.widthProperty().multiply(0.219)); // 280/1280
-        settings.layoutYProperty().bind(root.heightProperty().multiply(0.913).add(20)); // 760/832 + 20
-        settings.prefWidthProperty().bind(root.widthProperty().multiply(0.039)); // 50/1280
-        settings.prefHeightProperty().bind(root.heightProperty().multiply(0.036)); // 30/832
-        settings.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
-        settings.setOnAction(_ -> {
-            toggleLeftBar(leftPane);
-            showSettingsMenu(root, leftPane, vbox_left);
-        });
+        Button settings = getSettingsButton(root, leftPane, vbox_left);
         leftPane.getChildren().add(settings);
 
         Button searchButton = new Button("Search");
@@ -247,10 +190,10 @@ public class HomeUI extends Application {
         searchButton.layoutXProperty().bind(root.widthProperty().multiply(0.02));
         searchButton.layoutYProperty().bind(root.heightProperty().multiply(0.85));
         searchButton.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
-        setHeatMapListener(searchButton,originField, isOn, label);
-        leftPane.getChildren().add(searchButton);
+        setHeatMapListener(searchButton, originField, isOn, label);
         searchButton.setVisible(false);
         searchButton.setId("searchButton");
+        leftPane.getChildren().add(searchButton);
 
         // Clear fields button
         Button clearButton = new Button("Clear");
@@ -265,14 +208,12 @@ public class HomeUI extends Application {
             } else {
                 destinationField.clear();
                 timeField.clear();
-                dateField.setValue(null);
                 label.setText("Navigate to see public transport \n options");
                 label.setVisible(true);
                 resultPaneRef.get().setVisible(false);
-                destinationWaypoint = null;
+
             }
             originField.clear();
-            originWaypoint = null;
             WayPoint.clearRoute();
             AStarRouterV router = new AStarRouterV();
             router.reset();
@@ -281,20 +222,7 @@ public class HomeUI extends Application {
         leftPane.getChildren().add(clearButton);
         clearButton.setVisible(false);
 
-        bindElements(timeContainer, dateContainer, clearButton, originField, destinationField);
-
-        JXMapViewer map = mapIntegration.getMap();
-
-        map.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent e) {
-                Point2D point = e.getPoint();
-                GeoPosition geoPosition = map.convertPointToGeoPosition(point);
-                double lat = geoPosition.getLatitude();
-                double lon = geoPosition.getLongitude();
-                updateCoordinateFields(lat, lon, originField, destinationField);
-            }
-        });
+        bindElements(timeContainer, goButtonContainer, clearButton, originField, destinationField);
 
         isOn.addListener((_, _, _) -> {
             if (isOn.get()) {
@@ -324,56 +252,6 @@ public class HomeUI extends Application {
             ErrorPopup.showError("SQL Error", "Database connection failed. Please check your configuration.");
         }
 
-        originField.setId("originField");
-        destinationField.setId("destinationField");
-        timeField.setId("timeField");
-        dateField.setId("dateField");
-    }
-
-
-
-    private void toggleSwitch(Rectangle background) {
-        isOn.set(!isOn.get());
-        if (isOn.get()) {
-            background.setFill(Color.LIMEGREEN);
-            if (originWaypoint != null) {
-                waypoints.clear();
-                waypoints.add(originWaypoint);
-                waypointPainter.setWaypoints(waypoints);
-                JXMapViewer map = MapProvider.getInstance().getMap();
-                map.setOverlayPainter(waypointPainter);
-
-            }
-            firstClick = true;
-        } else {
-            background.setFill(Color.LIGHTGRAY);
-            if (destinationWaypoint != null && originWaypoint != null) {
-                waypoints.clear();
-                waypoints.add(originWaypoint);
-                waypoints.add(destinationWaypoint);
-                waypointPainter.setWaypoints(waypoints);
-                JXMapViewer map = MapProvider.getInstance().getMap();
-                map.setOverlayPainter(waypointPainter);
-            }
-        }
-    }
-
-    // this method to add the markers on the clicks
-    private void addMarkerOnClicks(double lat, double lon, boolean isOrigin) {
-        MapIntegration mapIntegration = MapProvider.getInstance();
-        JXMapViewer map = mapIntegration.getMap();
-        GeoPosition geoPosition = new GeoPosition(lat, lon);
-        if (isOrigin) {
-            waypoints.clear();
-            WayPoint.clearRoute();
-            originWaypoint = new DefaultWaypoint(geoPosition);
-            waypoints.add(originWaypoint);
-        } else {
-            destinationWaypoint = new DefaultWaypoint(geoPosition);
-            waypoints.add(destinationWaypoint);
-        }
-        waypointPainter.setWaypoints(waypoints);
-        map.setOverlayPainter(waypointPainter);
     }
 
     // this method to update the fields
@@ -381,7 +259,7 @@ public class HomeUI extends Application {
         // Format the coordinates
         String coordinateText = String.format("%.6f, %.6f", lat, lon);
         if (firstClick && originField.getText().isEmpty()) {
-            addMarkerOnClicks(lat, lon, true);
+            addMarkerOnClicks(lat, lon, true, waypoints, waypointPainter);
             Platform.runLater(() -> {
                 if (NetworkUtil.isNetworkAvailable()) {
                     String address = getAddress(lat, lon);
@@ -392,7 +270,7 @@ public class HomeUI extends Application {
                 firstClick = false;
             });
         } else if (!firstClick && destinationField.getText().isEmpty()) {
-            addMarkerOnClicks(lat, lon, false);
+            addMarkerOnClicks(lat, lon, false, waypoints, waypointPainter);
             Platform.runLater(() -> {
                 if (NetworkUtil.isNetworkAvailable()) {
                     String address = getAddress(lat, lon);
@@ -469,11 +347,10 @@ public class HomeUI extends Application {
 //        }
 //        return null;
 //    }
-
     private void setHeatMapListener(Button submit, TextField originField, BooleanProperty isOn, Text label) {
         submit.setOnAction(_ -> {
             if (isOn.get()) {
-               Platform.runLater(() -> label.setText("Creating Heatmap..."));
+                Platform.runLater(() -> label.setText("Creating Heatmap..."));
                 double[] coordinates = getCoordinatesFromAddress(originField.getText());
                 if (coordinates == null) {
                     Platform.runLater(() -> label.setText("Invalid address. Please try again."));
@@ -481,7 +358,7 @@ public class HomeUI extends Application {
                 }
                 double lat = coordinates[0];
                 double lon = coordinates[1];
-                addMarkerOnClicks(lat, lon, true);
+                addMarkerOnClicks(lat, lon, true, waypoints, waypointPainter);
 
                 Task<Void> routerTask = createRouterTask(lat, lon);
                 routerTask.setOnSucceeded(_ -> Platform.runLater(() -> label.setText("Heatmap Created")));
@@ -505,6 +382,34 @@ public class HomeUI extends Application {
                 return null;
             }
         };
+    }
+
+    private void createSidePanelButtons(BorderPane root, Pane leftPane, StackPane mapPane) {
+        // Button to hide side panel
+        hideSidePanel = new Button("←");
+        hideSidePanel.layoutXProperty().bind(root.widthProperty().multiply(0.245));
+        hideSidePanel.layoutYProperty().bind(root.heightProperty().multiply(0.033));
+        hideSidePanel.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
+        hideSidePanel.setOnAction(_ -> {
+            toggleLeftBar(leftPane);
+            hideSidePanel.setVisible(false);
+            showSidePanel.setVisible(true);
+        });
+        leftPane.getChildren().add(hideSidePanel);
+
+        // Button to show side panel (initially hidden)
+        showSidePanel = new Button("→");
+        showSidePanel.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
+        showSidePanel.setVisible(false);
+        mapPane.getChildren().add(showSidePanel);
+        StackPane.setAlignment(showSidePanel, Pos.CENTER_LEFT);
+        showSidePanel.translateXProperty().bind(root.widthProperty().multiply(0.01));
+        showSidePanel.translateYProperty().bind(root.heightProperty().multiply(-0.04));
+        showSidePanel.setOnAction(_ -> {
+            toggleLeftBar(leftPane);
+            showSidePanel.setVisible(false);
+            hideSidePanel.setVisible(true);
+        });
     }
 
     public static void main(String[] args) {
