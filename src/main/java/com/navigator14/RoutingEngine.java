@@ -136,41 +136,45 @@ public class RoutingEngine {
 
     private List<Map<String, Object>> parseResult(List<Node> path, Request request) {
         return path.stream().map(node -> {
+            String startTime;
+            String endTime = node.getArrivalTime(); // current node arrival
+            String formattedStartTime;
+
+            if (node.getParent() == null) {
+                startTime = request.time(); // trip start
+                formattedStartTime = TimeUtil.removeSecondsSafe(request.time());
+            } else {
+                startTime = node.getParent().getArrivalTime(); // parent = previous node
+                formattedStartTime = TimeUtil.removeSecondsSafe(startTime);
+            }
+
+            // Calculate duration in minutes
+            String parsedStart = TimeUtil.parseTime(startTime);
+            String parsedEnd = TimeUtil.parseTime(endTime);
+            int seconds = (int) TimeUtil.calculateDifference(
+                    TimeUtil.parseTime(startTime),
+                    TimeUtil.parseTime(endTime)
+            );
+            int durationMinutes = (seconds > 0) ? Math.max(1, seconds / 60) : 0;
+
+
             if (Objects.equals(node.getMode(), "WALK")) {
-                if(node.getParent() == null) {
-                    return Map.of(
-                            "mode", "walk",
-                            "to", Map.of("lat", request.latStart(), "lon", request.lonStart()),
-                            "duration", 0,
-                            "startTime", TimeUtil.removeSecondsSafe(request.time())
-                    );
-                }
+                Map<String, Object> to = (node.getParent() == null)
+                        ? Map.of("lat", request.latStart(), "lon", request.lonStart())
+                        : Map.of("lat", node.getStop().getStopLat(), "lon", node.getStop().getStopLon());
+
                 return Map.of(
                         "mode", "walk",
-                        "to", Map.of("lat", node.getStop().getStopLat(), "lon", node.getStop().getStopLon()),
-                        "duration", 0,
-                        "startTime", TimeUtil.removeSecondsSafe(node.getArrivalTime())
+                        "to", to,
+                        "duration", durationMinutes,
+                        "startTime", formattedStartTime
                 );
-            } else if (Objects.equals(node.getMode(), "SAME_TRIP")) {
+            } else if (Objects.equals(node.getMode(), "SAME_TRIP") || Objects.equals(node.getMode(), "TRANSFER")) {
                 return Map.of(
                         "mode", "ride",
                         "to", Map.of("lat", node.getStop().getStopLat(), "lon", node.getStop().getStopLon()),
-                        "duration", 0,
-                        "startTime", TimeUtil.removeSecondsSafe(node.getArrivalTime()),
-                        "stop", node.getStop().getStopName(),
-                        "route", Map.of(
-                                "operator", node.getTrip().route().agency() != null ? node.getTrip().route().agency().agencyName() : "N/A",
-                                "shortName", node.getTrip().route().routeShortName(),
-                                "longName", node.getTrip().route().routeLongName(),
-                                "headSign", node.getTrip().headSign() == null ? "N/A" : node.getTrip().headSign()
-                        )
-                );
-            } else if (Objects.equals(node.getMode(), "TRANSFER")) {
-                return Map.of(
-                        "mode", "ride",
-                        "to", Map.of("lat", node.getStop().getStopLat(), "lon", node.getStop().getStopLon()),
-                        "duration", 0,
-                        "startTime", TimeUtil.removeSecondsSafe(node.getArrivalTime()),
+                        "duration", durationMinutes,
+                        "startTime", formattedStartTime,
                         "stop", node.getStop().getStopName(),
                         "route", Map.of(
                                 "operator", node.getTrip().route().agency() != null ? node.getTrip().route().agency().agencyName() : "N/A",
@@ -180,9 +184,11 @@ public class RoutingEngine {
                         )
                 );
             }
+
             return null;
         }).filter(Objects::nonNull).toList();
     }
+
 }
 // {"routeFrom":{"lat":41.904,"lon":12.5004},"to":{"lat":41.8791,"lon":12.5221},"startingAt":"09:30"} - test case
 //  Roma Termini - Vatican test case below
