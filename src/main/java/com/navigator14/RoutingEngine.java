@@ -142,7 +142,7 @@ public class RoutingEngine {
                             "mode", "walk",
                             "to", Map.of("lat", request.latStart(), "lon", request.lonStart()),
                             "duration", 0,
-                            "startTime", request.time()
+                            "startTime", TimeUtil.removeSecondsSafe(request.time())
                     );
                 }
                 return Map.of(
