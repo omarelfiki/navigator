@@ -3,10 +3,19 @@ package models;
 public record StopTime(Stop stop, Trip trip, String departureTime, String arrivalTime, int stopSequence) {
     public StopTime {
         if (stop == null) {
-            stop = new Stop("unknown", "Unknown Stop", 0.0, 0.0);
+            stop = new Stop();
         }
         if (trip == null) {
-            trip = new Trip("unknown", new Route("unknown", null, "N/A", "Unknown"), "Unknown Trip");
+            trip = new Trip();
+        }
+        if (departureTime == null || departureTime.isEmpty()) {
+            departureTime = "00:00:00";
+        }
+        if (arrivalTime == null || arrivalTime.isEmpty()) {
+            arrivalTime = "00:00:00";
+        }
+        if (stopSequence < 0) {
+            stopSequence = 0;
         }
     }
 

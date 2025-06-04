@@ -23,10 +23,8 @@ public class Node {
         this.arrivalTime = arrivalTime;
         this.parent = parent;
         this.mode = mode;
-        this.trip = trip;
-        Stop targetStop = tds.getStop(stopId);
-        this.stop = Objects.requireNonNullElseGet(targetStop, () -> new Stop(stopId, "Unknown Stop", 0.0, 0.0)); // Fallback if stop is not found
-
+        this.trip = Objects.requireNonNullElseGet(trip, Trip::new); // Fallback if trip is not provided
+        this.stop = Objects.requireNonNullElseGet(tds.getStop(stopId), Stop::new); // Fallback if stop is not found
     }
 
     public Stop getStop() {
