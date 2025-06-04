@@ -1,42 +1,86 @@
 package util;
-import router.Node;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class PathCompressor {
-    public static List<Node> compressPath(List<Node> path) {
-        List<Node> compressedPath = new ArrayList<>();
-        if (path == null || path.isEmpty()) return compressedPath;
 
-        Node segmentStart = path.get(0);
-        Node segmentEnd = segmentStart;
+    public static List<Map<String, Object>> compress(List<Map<String, Object>> path) {
+        // Apply both walk and ride compression
+        return compressRides(compressWalks(path));
+    }
 
-        for (int i = 1; i < path.size(); i++) {
-            Node currentNode = path.get(i);
+    public static List<Map<String, Object>> compressWalks(List<Map<String, Object>> path) {
+        List<Map<String, Object>> result = new ArrayList<>();
+        Map<String, Object> currentWalk = null;
 
-            boolean sameTrip = segmentEnd.getTrip() == null
-                    ? currentNode.getTrip() == null
-                    : segmentEnd.getTrip().equals(currentNode.getTrip());
+        for (Map<String, Object> segment : path) {
+            String mode = (String) segment.get("mode");
 
-            if (sameTrip) {
-                segmentEnd = currentNode;
-            } else {
-                compressedPath.add(segmentStart);
-                if (!segmentStart.equals(segmentEnd)) {
-                    compressedPath.add(segmentEnd);
+            if ("walk".equals(mode)) {
+                if (currentWalk == null) {
+                    currentWalk = new HashMap<>(segment);
+                } else {
+                    currentWalk.put("to", segment.get("to"));
                 }
-                segmentStart = currentNode;
-                segmentEnd = currentNode;
+            } else {
+                if (currentWalk != null) {
+                    result.add(currentWalk);
+                    currentWalk = null;
+                }
+                result.add(segment);
             }
         }
 
-        compressedPath.add(segmentStart);
-        if (!segmentStart.equals(segmentEnd)) {
-            compressedPath.add(segmentEnd);
+        if (currentWalk != null) {
+            result.add(currentWalk);
         }
 
-        return compressedPath;
+        return result;
     }
 
+    public static List<Map<String, Object>> compressRides(List<Map<String, Object>> path) {
+        List<Map<String, Object>> result = new ArrayList<>();
+        Map<String, Object> currentRide = null;
+
+        for (Map<String, Object> segment : path) {
+            String mode = (String) segment.get("mode");
+
+            if ("ride".equals(mode)) {
+                if (currentRide == null) {
+                    currentRide = new HashMap<>(segment);
+                } else {
+                    Map<String, Object> currentRoute = (Map<String, Object>) currentRide.get("route");
+                    Map<String, Object> nextRoute = (Map<String, Object>) segment.get("route");
+
+                    if (routesMatch(currentRoute, nextRoute)) {
+                        currentRide.put("to", segment.get("to"));
+                        currentRide.put("stop", segment.get("stop"));
+                        currentRide.put("startTime", segment.get("startTime"));
+                    } else {
+                        result.add(currentRide);
+                        currentRide = new HashMap<>(segment);
+                    }
+                }
+            } else {
+                if (currentRide != null) {
+                    result.add(currentRide);
+                    currentRide = null;
+                }
+                result.add(segment);
+            }
+        }
+
+        if (currentRide != null) {
+            result.add(currentRide);
+        }
+
+        return result;
+    }
+
+    private static boolean routesMatch(Map<String, Object> route1, Map<String, Object> route2) {
+        return Objects.equals(route1.get("operator"), route2.get("operator")) &&
+                Objects.equals(route1.get("shortName"), route2.get("shortName")) &&
+                Objects.equals(route1.get("longName"), route2.get("longName")) &&
+                Objects.equals(route1.get("headSign"), route2.get("headSign"));
+    }
 }

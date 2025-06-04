@@ -13,6 +13,7 @@ import db.DBConfig;
 import models.Request;
 import router.AStarRouterV;
 import router.Node;
+import util.PathCompressor;
 
 import static util.DebugUtil.getDebugMode;
 import static util.TimeUtil.parseTime;
@@ -81,6 +82,7 @@ public class RoutingEngine {
                         continue;
                     }
                     List<Map<String, Object>> result = parseResult(path, requestR);
+                    result = PathCompressor.compress(result);
                     sendOk(result);
                     continue;
                 }
@@ -137,7 +139,7 @@ public class RoutingEngine {
                 if(node.getParent() == null) {
                     return Map.of(
                             "mode", "walk",
-                            "to", Map.of("lat", 12.123, "lon", 12.123),
+                            "to", Map.of("lat", request.latStart(), "lon", request.lonStart()),
                             "duration", 0,
                             "startTime", request.time()
                     );
