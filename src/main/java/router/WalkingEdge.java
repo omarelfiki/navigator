@@ -4,6 +4,8 @@ import db.TDSImplement;
 import models.Stop;
 import models.Trip;
 
+import java.util.Objects;
+
 import static util.TimeUtil.addTime;
 import static router.WalkingTime.getWalkingTime;
 
@@ -23,8 +25,8 @@ public class WalkingEdge implements Edge {
         this.toStopId = toStopId;
         this.fromStopId = fromStopId;
         TDSImplement tds = new TDSImplement();
-        this.startStop = tds.getStop(fromStopId);
-        this.endStop = tds.getStop(toStopId);
+        this.startStop = Objects.requireNonNullElseGet(tds.getStop(fromStopId), Stop::new); // Fallback if stop is not found
+        this.endStop = Objects.requireNonNullElseGet(tds.getStop(toStopId), Stop::new); // Fallback if stop is not found
         this.departureTime = departureTime;
         this.walkTime = computeWalkingTime();
         this.arrivalTime = computeArrivalTime();

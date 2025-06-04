@@ -1,8 +1,10 @@
 package closureAnalysis;
 
+import db.TDSImplement;
 import models.Stop;
 
 import java.util.List;
+import java.util.Map;
 
 public class FinalScore {
 
@@ -11,7 +13,10 @@ public class FinalScore {
     private static double weightEs = 0.35; // Weight for stop essentiality
     private static double weightDs = 0.20; // Weight for stop population density
 
-    public static void calculateFinalScore(List<Stop> allStops, List<TouristicLocations> monuments) {
+    public static void calculateFinalScore(List<Stop> allStops, List<TouristicLocations> monuments, Map<String, Integer> stopRouteCounts) {
+
+        // Calculate frequency factor Fs for each stop
+        FrequencyFactor.calculateFrequencyFactor(allStops, stopRouteCounts);
 
         // Calculate proximity factor Ps for each stop
         ProximityFactor.calculateProximityFactor(allStops, monuments);

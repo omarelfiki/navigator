@@ -276,4 +276,32 @@ public Agency getAgency(String agencyId) {
     }
     return null;
 }
+    @Override
+    @SuppressWarnings("SqlResolve")
+    public Map<String, Integer> getStopRouteCounts() {
+        Map<String, Integer> stopRouteCounts = new HashMap<>();
+
+        String sql = """
+        SELECT stop_id, COUNT(DISTINCT t.route_id) AS route_count
+        FROM stop_times st
+        JOIN trips t ON st.trip_id = t.trip_id
+        GROUP BY stop_id
+    """;
+
+        try (PreparedStatement ps = db.conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                String stopId = rs.getString("stop_id");
+                int routeCount = rs.getInt("route_count");
+                stopRouteCounts.put(stopId, routeCount);
+            }
+
+        } catch (SQLException e) {
+            if (isDebugMode) System.err.println("SQL Error in getStopRouteCounts: " + e.getMessage());
+        }
+
+        return stopRouteCounts;
+    }
+
 }

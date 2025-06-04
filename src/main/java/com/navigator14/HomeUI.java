@@ -13,21 +13,20 @@ import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
+
 import javafx.stage.Stage;
 import java.awt.geom.Point2D;
 
-import models.HeatPoint;
 import org.jxmapviewer.JXMapViewer;
-import org.jxmapviewer.painter.CompoundPainter;
 import org.jxmapviewer.viewer.GeoPosition;
 import org.jxmapviewer.viewer.Waypoint;
 import org.jxmapviewer.viewer.WaypointPainter;
+import map.*;
 import router.AStarRouterV;
-import router.HeatMapRouter;
+import ui.*;
 import util.NetworkUtil;
 import router.Node;
 
@@ -35,9 +34,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import map.WayPoint;
-import map.*;
 import db.*;
-import ui.*;
 
 import static util.DebugUtil.getDebugMode;
 import static util.NavUtil.parsePoint;
@@ -46,10 +43,10 @@ import static util.GeoUtil.*;
 
 public class HomeUI extends Application {
     private final BooleanProperty isOn = new SimpleBooleanProperty(false);
-    private Button hideSidePanel, showSidePanel;
     private boolean firstClick = true;
     private final Set<Waypoint> waypoints = new HashSet<>();
     private final WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<>();
+    private AtomicReference<StackPane> resultPaneRef;
 
     @Override
     public void start(Stage primaryStage) {
@@ -58,18 +55,13 @@ public class HomeUI extends Application {
         BorderPane root = new BorderPane();
 
         Pane leftPane = new Pane();
-        VBox vbox_left = new VBox();
-        vbox_left.getChildren().add(leftPane);
+        VBox vbox_left = new VBox(leftPane);
         root.setLeft(vbox_left);
 
         Rectangle leftBar = getLeftBar(root);
         leftPane.getChildren().add(leftBar);
 
-        Text title = new Text("Navigator");
-        title.setFill(Color.WHITE);
-        title.setStyle("-fx-font: 28 Ubuntu;");
-        title.xProperty().bind(root.widthProperty().multiply(0.015)); // 20/1280
-        title.yProperty().bind(root.heightProperty().multiply(0.06)); // 50/832
+        Text title = getNewLabel("Navigator", root, Color.WHITE, 28, 0.015, 0.06, null);
         leftPane.getChildren().add(title);
 
         StackPane startGroup = createTextFieldWithIcon("↗", "Origin","originField");
@@ -99,16 +91,7 @@ public class HomeUI extends Application {
         MapIntegration mapIntegration = MapProvider.getInstance();
         StackPane mapPane = mapIntegration.createMapPane();
         JXMapViewer map = mapIntegration.getMap();
-        map.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent e) {
-                Point2D point = e.getPoint();
-                GeoPosition geoPosition = map.convertPointToGeoPosition(point);
-                double lat = geoPosition.getLatitude();
-                double lon = geoPosition.getLongitude();
-                updateCoordinateFields(lat, lon, originField, destinationField);
-            }
-        });
+        addMapListener(map, originField, destinationField);
         root.setCenter(mapPane);
 
         BooleanBinding filled = Bindings.createBooleanBinding(
@@ -120,15 +103,11 @@ public class HomeUI extends Application {
                 timeField.textProperty()
         );
 
-        Text label = new Text("Navigate to see public transport \n options");
-        label.setTextAlignment(TextAlignment.CENTER);
-        label.setFill(Color.WHITE);
-        label.setStyle("-fx-font: 15 Ubuntu;");
-        label.xProperty().bind(root.widthProperty().multiply(0.061)); // 78/1280
-        label.yProperty().bind(root.heightProperty().multiply(0.48)); // 400/832
+        String labelText = "Navigate to see public transport \n options";
+        Text label = getNewLabel(labelText, root, Color.WHITE, 15, 0.061, 0.48, TextAlignment.CENTER);
         leftPane.getChildren().add(label);
 
-        AtomicReference<StackPane> resultPaneRef = new AtomicReference<>(new StackPane());
+        resultPaneRef = new AtomicReference<>(new StackPane());
         leftPane.getChildren().add(resultPaneRef.get());
 
         goButton.setOnAction(_ -> {
@@ -166,61 +145,25 @@ public class HomeUI extends Application {
             }
         });
 
-        Line line = getLine(root);
-        leftPane.getChildren().add(line);
+        leftPane.getChildren().add(getLine(root));
 
         createSidePanelButtons(root, leftPane, mapPane);
 
         Pane togglePane = createToggleSwitch(root, isOn);
         leftPane.getChildren().add(togglePane);
 
-        Text toggleText = new Text("Heatmap Mode");
-        toggleText.setFill(Color.WHITE);
-        toggleText.setStyle("-fx-font: 10 Ubuntu;");
-        toggleText.xProperty().bind(root.widthProperty().multiply(0.07)); // 90/1280
-        toggleText.yProperty().bind(root.heightProperty().multiply(0.935).add(20)); // 778/832 + 20
+        Text toggleText = getNewLabel("Heatmap Mode", root, Color.WHITE, 10, 0.07, 0.959, null);
         leftPane.getChildren().add(toggleText);
 
-        Button settings = getSettingsButton(root, leftPane, vbox_left);
-        leftPane.getChildren().add(settings);
+        leftPane.getChildren().add(getSettingsButton(root, leftPane, vbox_left));
 
-        Button searchButton = new Button("Search");
-        searchButton.prefWidthProperty().bind(root.widthProperty().multiply(0.07));
-        searchButton.prefHeightProperty().bind(root.heightProperty().multiply(0.04));
-        searchButton.layoutXProperty().bind(root.widthProperty().multiply(0.02));
-        searchButton.layoutYProperty().bind(root.heightProperty().multiply(0.85));
-        searchButton.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
+        Button searchButton = createButton(root, "Search", 0.02);
         setHeatMapListener(searchButton, originField, isOn, label);
-        searchButton.setVisible(false);
-        searchButton.setId("searchButton");
         leftPane.getChildren().add(searchButton);
 
-        // Clear fields button
-        Button clearButton = new Button("Clear");
-        clearButton.prefWidthProperty().bind(root.widthProperty().multiply(0.07));
-        clearButton.prefHeightProperty().bind(root.heightProperty().multiply(0.04));
-        clearButton.layoutXProperty().bind(root.widthProperty().multiply(0.1));
-        clearButton.layoutYProperty().bind(root.heightProperty().multiply(0.85));
-        clearButton.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
-        clearButton.setOnAction(_ -> {
-            if (isOn.get()) {
-                label.setText("Heatmap Mode Activated. \n Enter an origin point");
-            } else {
-                destinationField.clear();
-                timeField.clear();
-                label.setText("Navigate to see public transport \n options");
-                label.setVisible(true);
-                resultPaneRef.get().setVisible(false);
-
-            }
-            originField.clear();
-            WayPoint.clearRoute();
-            AStarRouterV router = new AStarRouterV();
-            router.reset();
-            waypoints.clear();
-        });
+        Button clearButton = createButton(root, "Clear", 0.1);
+        setClearAction(clearButton, label, destinationField, timeField, originField);
         leftPane.getChildren().add(clearButton);
-        clearButton.setVisible(false);
 
         bindElements(timeContainer, goButtonContainer, clearButton, originField, destinationField);
 
@@ -360,7 +303,7 @@ public class HomeUI extends Application {
                 double lon = coordinates[1];
                 addMarkerOnClicks(lat, lon, true, waypoints, waypointPainter);
 
-                Task<Void> routerTask = createRouterTask(lat, lon);
+                Task<Void> routerTask = createRouterTask(lat, lon, waypointPainter);
                 routerTask.setOnSucceeded(_ -> Platform.runLater(() -> label.setText("Heatmap Created")));
                 routerTask.setOnFailed(_ -> Platform.runLater(() -> label.setText("Heatmap Mode Activated. \n Enter an origin point")));
                 new Thread(routerTask).start();
@@ -368,47 +311,35 @@ public class HomeUI extends Application {
         });
     }
 
-    public Task<Void> createRouterTask(double lat, double lon) {
-        return new Task<>() {
+    public void addMapListener(JXMapViewer map, TextField originField, TextField destinationField) {
+        map.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
-            protected Void call() {
-                HeatMapRouter router = new HeatMapRouter(0);
-                List<HeatPoint> heatPoints = router.build(lat, lon, "9:30:00");
-                JXMapViewer baseMap = MapProvider.getInstance().getMap();
-                HeatMapPainter heatMapPainter = new HeatMapPainter(heatPoints);
-                @SuppressWarnings("unchecked")
-                CompoundPainter<JXMapViewer> compoundPainter = new CompoundPainter<>(heatMapPainter, waypointPainter);
-                baseMap.setOverlayPainter(compoundPainter);
-                return null;
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                Point2D point = e.getPoint();
+                GeoPosition geoPosition = map.convertPointToGeoPosition(point);
+                double lat = geoPosition.getLatitude();
+                double lon = geoPosition.getLongitude();
+                updateCoordinateFields(lat, lon, originField, destinationField);
             }
-        };
-    }
-
-    private void createSidePanelButtons(BorderPane root, Pane leftPane, StackPane mapPane) {
-        // Button to hide side panel
-        hideSidePanel = new Button("←");
-        hideSidePanel.layoutXProperty().bind(root.widthProperty().multiply(0.245));
-        hideSidePanel.layoutYProperty().bind(root.heightProperty().multiply(0.033));
-        hideSidePanel.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
-        hideSidePanel.setOnAction(_ -> {
-            toggleLeftBar(leftPane);
-            hideSidePanel.setVisible(false);
-            showSidePanel.setVisible(true);
         });
-        leftPane.getChildren().add(hideSidePanel);
+    }
+    private void setClearAction(Button clearButton, Text label, TextField destinationField, TextField timeField, TextField originField) {
+        clearButton.setOnAction(_ -> {
+            if (isOn.get()) {
+                label.setText("Heatmap Mode Activated. \n Enter an origin point");
+            } else {
+                destinationField.clear();
+                timeField.clear();
+                label.setText("Navigate to see public transport \n options");
+                label.setVisible(true);
+                resultPaneRef.get().setVisible(false);
 
-        // Button to show side panel (initially hidden)
-        showSidePanel = new Button("→");
-        showSidePanel.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
-        showSidePanel.setVisible(false);
-        mapPane.getChildren().add(showSidePanel);
-        StackPane.setAlignment(showSidePanel, Pos.CENTER_LEFT);
-        showSidePanel.translateXProperty().bind(root.widthProperty().multiply(0.01));
-        showSidePanel.translateYProperty().bind(root.heightProperty().multiply(-0.04));
-        showSidePanel.setOnAction(_ -> {
-            toggleLeftBar(leftPane);
-            showSidePanel.setVisible(false);
-            hideSidePanel.setVisible(true);
+            }
+            originField.clear();
+            WayPoint.clearRoute();
+            AStarRouterV router = new AStarRouterV();
+            router.reset();
+            waypoints.clear();
         });
     }
 
@@ -424,5 +355,4 @@ public class HomeUI extends Application {
         launch(args);
     }
 }
-
 
