@@ -5,6 +5,9 @@ import models.Stop;
 import models.StopTime;
 import models.Trip;
 
+import java.util.List;
+import java.util.Objects;
+
 import static util.TimeUtil.calculateDifference;
 
 class TransferEdge implements Edge {
@@ -18,18 +21,16 @@ class TransferEdge implements Edge {
 
     public TransferEdge(String fromStopId, String departureTime, Trip trip) {
         this.fromStopId = fromStopId;
-        this.departureTime = departureTime; // when I arrive at this stop (and start waiting)
-        this.trip = trip;
-
-        TDSImplement tds = new TDSImplement();
-        Stop startStop = tds.getStop(fromStopId);
-        StopTime currentStopTime = tds.getCurrentStopTime(trip, startStop, departureTime);
-        StopTime nextStopTime = tds.getNextStopTime(currentStopTime);
-
-        if (nextStopTime == null) {
-            throw new IllegalArgumentException("No next stop time found for trip " + trip.tripId() +
-                    " at stop " + fromStopId + " after time " + departureTime);
+        if (departureTime == null || departureTime.isEmpty()) {
+            this.departureTime = "00:00:00";
+        } else {
+            this.departureTime = departureTime; // when I arrive at this stop (and start waiting)
         }
+        this.trip = Objects.requireNonNullElseGet(trip, Trip::new); // Fallback if trip is not provided
+
+        List<StopTime> stopTimes = getNextStopTime(fromStopId, departureTime, trip);
+        StopTime currentStopTime = stopTimes.get(0);
+        StopTime nextStopTime = stopTimes.get(1);
 
         this.toStopId = nextStopTime.stop().getStopId();
         this.arrivalTime = nextStopTime.arrivalTime();
@@ -45,30 +46,61 @@ class TransferEdge implements Edge {
         this.weight = 0.6 * waitingTime + rideTime;  // encourage transfers
     }
 
+    private static List<StopTime> getNextStopTime(String fromStopId, String departureTime, Trip trip) {
+        TDSImplement tds = new TDSImplement();
+        Stop startStop = Objects.requireNonNullElseGet(tds.getStop(fromStopId), Stop::new); // Fallback if stop is not found
+        StopTime currentStopTime = tds.getCurrentStopTime(trip, startStop, departureTime);
+
+        if (currentStopTime == null) {
+            throw new IllegalArgumentException("No stop time at stop " + fromStopId + " for trip " + trip.tripId());
+        }
+
+        StopTime nextStopTime = tds.getNextStopTime(currentStopTime);
+
+        if (nextStopTime == null) {
+            throw new IllegalArgumentException("No next stop after stop " + fromStopId + " on trip " + trip.tripId() + " (possibly the last stop).");
+        }
+        return List.of(currentStopTime, nextStopTime);
+    }
+
     @Override
     public String getToStopId() {
         return toStopId;
     }
+
     @Override
     public String getMode() {
         // Mode of transport for this edge
         return "TRANSFER";
     }
+
     @Override
     public Trip getTrip() {
         return trip;
     }
+
     @Override
     public double getWeight() {
         return weight;
     }
-    @Override
-    public String getArrivalTime() {return arrivalTime;}
-    @Override
-    public String getDepartureTime() {return departureTime;}
-    @Override
-    public String getFromStopId() {return fromStopId;}
 
-    public String getRideStartTime() {return rideStartTime;}
+    @Override
+    public String getArrivalTime() {
+        return arrivalTime;
+    }
+
+    @Override
+    public String getDepartureTime() {
+        return departureTime;
+    }
+
+    @Override
+    public String getFromStopId() {
+        return fromStopId;
+    }
+
+    public String getRideStartTime() {
+        return rideStartTime;
+    }
 
 }
