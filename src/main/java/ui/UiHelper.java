@@ -144,7 +144,7 @@ public class UiHelper {
         inner.getChildren().addAll(iconCircle, textField);
 
         container.getChildren().add(inner);
-        container.setId(id);
+        textField.setId(id);
         return container;
     }
 

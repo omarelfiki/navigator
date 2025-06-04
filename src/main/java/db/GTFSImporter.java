@@ -1,8 +1,5 @@
 package db;
 
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVRecord;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -11,14 +8,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.*;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static util.DebugUtil.getDebugMode;
 
 public class GTFSImporter {
     private final String GTFS_DIR;
     private final DBAccess access;
-
     private final boolean isDebugMode;
 
     public GTFSImporter(String GTFS_DIR) {
@@ -47,27 +42,13 @@ public class GTFSImporter {
                 if (Files.exists(filePath)) {
                     if (isDebugMode) System.err.println("Importing " + filename + " into " + tableName + "...");
 
-                    if ("agency".equals(tableName)) {
-                        importAgencyWithLoadData(filePath, conn);
-                        continue;
+                    switch (tableName) {
+                        case "agency" -> importAgencyWithLoadData(filePath, conn);
+                        case "routes" -> importRouteWithLoadData(filePath, conn);
+                        case "stops" -> importStopsWithLoadData(filePath, conn);
+                        case "trips" -> importTripsWithLoadData(filePath, conn);
+                        case "stop_times" -> importStopTimesWithLoadData(filePath, conn);
                     }
-                    if ("routes".equals(tableName)) {
-                        importRouteWithLoadData(filePath, conn);
-                        continue;
-                    }
-                    if ("stops".equals(tableName)) {
-                        importStopsWithLoadData(filePath, conn);
-                        continue;
-                    }
-                    if ("trips".equals(tableName)) {
-                        importTripsWithLoadData(filePath, conn);
-                        continue;
-                    }
-                    if ("stop_times".equals(tableName)) {
-                        importStopTimesWithLoadData(filePath, conn);
-                        continue;
-                    }
-
                 } else {
                     if (isDebugMode) System.err.println("File not found: " + filePath);
                 }
@@ -79,14 +60,11 @@ public class GTFSImporter {
     @SuppressWarnings("SqlResolve")
     private void importAgencyWithLoadData(Path filePath, Connection conn) throws SQLException, IOException {
         String absolutePath = filePath.toAbsolutePath().toString().replace("\\", "/");
-
-
         String[] importantFields = {"agency_id", "agency_name"};
 
         Map<String, String> loadDataParts = prepareLoadDataParts(filePath, importantFields);
         String tempVariables = loadDataParts.get("tempVariables");
         String setBuilder = loadDataParts.get("setBuilder");
-
 
         try (Statement stmt = conn.createStatement()) {
 
@@ -98,9 +76,7 @@ public class GTFSImporter {
                     "OPTIONALLY ENCLOSED BY '\"' " +
                     "LINES TERMINATED BY '\\n' " +
                     "IGNORE 1 LINES " +
-
                     "(" + tempVariables + ") " +
-
                     setBuilder;
 
             int rows = stmt.executeUpdate(sql);
@@ -145,9 +121,7 @@ public class GTFSImporter {
 
     @SuppressWarnings("SqlResolve")
     private void importStopsWithLoadData(Path filePath, Connection conn) throws SQLException, IOException {
-
         String absolutePath = filePath.toAbsolutePath().toString().replace("\\", "/");
-
         String[] importantFields = {"stop_id", "stop_name", "stop_lat", "stop_lon", "stop_code"};
 
         Map<String, String> loadDataParts = prepareLoadDataParts(filePath, importantFields);
@@ -177,9 +151,7 @@ public class GTFSImporter {
     @SuppressWarnings("SqlResolve")
     private void importTripsWithLoadData(Path filePath, Connection conn) throws SQLException, IOException {
         String absolutePath = filePath.toAbsolutePath().toString().replace("\\", "/");
-
         String[] importantFields = {"trip_id", "route_id", "service_id", "trip_short_name", "trip_headsign"};
-
 
         Map<String, String> loadDataParts = prepareLoadDataParts(filePath, importantFields);
         String tempVariables = loadDataParts.get("tempVariables");
@@ -263,6 +235,7 @@ public class GTFSImporter {
         loadDataParts.put("setBuilder", setBuilder.toString());
         return loadDataParts;
     }
+
     //Helper method to read the CSV headers
     private List<String> readCsvHeaders(Path filePath) throws IOException {
         List<String> headers = new ArrayList<>();
