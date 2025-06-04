@@ -15,6 +15,8 @@ public class AStarRouterV {
 
     TDSImplement tds = new TDSImplement();
 
+
+
     public List<Node> findFastestPath(double latStart, double lonStart, double latStop, double lonStop, String startTime, List<String> excludedStops) {
         if (debugMode) System.err.println("Starting point" + latStart + " " + lonStart);
         Node STARTING_NODE = new Node("start", startTime, null, "WALK", null);
@@ -29,7 +31,7 @@ public class AStarRouterV {
 
         double walkingTimeOnly = WalkingTime.getWalkingTime(latStart, lonStart, latStop, lonStop);
         System.err.println("Walking time only: " + walkingTimeOnly);
-        if(walkingTimeOnly<420){
+        if (walkingTimeOnly < 420) {
             STOP_NODE.parent = STARTING_NODE;
             return reconstructPath(STOP_NODE);
         }
@@ -50,16 +52,25 @@ public class AStarRouterV {
             pq.add(node);
         }
 
-        while (!pq.isEmpty()) {
-            Node current = pq.poll();
-            if (isAtGoal(current, stopStops)) {
-                STOP_NODE.parent = current;
-                TDSImplement tds = new TDSImplement();
-                Stop currentStop = tds.getStop(current.getStopId());
+        Node bestGoalNode = null;
+        double bestGoalCost = Double.MAX_VALUE;
 
-                double walking_time_to_end = WalkingTime.getWalkingTime(currentStop.getStopLat(), currentStop.getStopLon(), STOP_NODE.getStop().getStopLat(), STOP_NODE.getStop().getStopLon());
-                STOP_NODE.arrivalTime = addTime(current.getArrivalTime(), walking_time_to_end);
-                return reconstructPath(STOP_NODE);
+        while (!pq.isEmpty()) {
+            Node current = pq.peek();
+
+            if (bestGoalNode != null && (current.getG() + current.getH()) > bestGoalCost) {
+                break; // Early exit: no better path can be found
+            }
+
+            current = pq.poll();
+
+            if (isAtGoal(current, stopStops)) {
+                double estimatedTotalCost = current.getG();
+                if (estimatedTotalCost < bestGoalCost) {
+                    bestGoalCost = estimatedTotalCost;
+                    bestGoalNode = current;
+                }
+                continue; // Keep exploring to find better goal
             }
 
             List<Edge> edges = edgeService.getEdges(current, 0);
@@ -78,16 +89,26 @@ public class AStarRouterV {
                     double latitude = nextNode.getStop().getStopLat();
                     double longitude = nextNode.getStop().getStopLon();
                     nextNode.g = current.getG() + weight;
-
                     nextNode.h = GeoUtil.distance(latitude, longitude, latStop, lonStop) / 2.8;
                     pq.add(nextNode);
                     updateBestCost(toStopId, nextNode.getG());
                 }
             }
         }
+
+        if (bestGoalNode != null) {
+            STOP_NODE.parent = bestGoalNode;
+            Stop currentStop = tds.getStop(bestGoalNode.getStopId());
+            double walking_time_to_end = WalkingTime.getWalkingTime(currentStop.getStopLat(), currentStop.getStopLon(), STOP_NODE.getStop().getStopLat(), STOP_NODE.getStop().getStopLon());
+            STOP_NODE.arrivalTime = addTime(bestGoalNode.getArrivalTime(), walking_time_to_end);
+            return reconstructPath(STOP_NODE);
+        }
+
         if (debugMode) System.err.println("best costs for visited nodes: " + bestCosts);
         return null;
     }
+
+
 
     public double bestKnownCostTo(String stopId) {
         return bestCosts.getOrDefault(stopId, Double.MAX_VALUE); // Default to infinity if no cost is known
