@@ -35,7 +35,7 @@ public class Node {
     }
 
     public String getArrivalTime() {
-        return arrivalTime;
+         return arrivalTime;
     }
 
     public double getG() {
