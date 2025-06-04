@@ -135,59 +135,57 @@ public class RoutingEngine {
     }
 
     private List<Map<String, Object>> parseResult(List<Node> path, Request request) {
-        return path.stream().map(node -> {
-            String startTime;
-            String endTime = node.getArrivalTime(); // current node arrival
-            String formattedStartTime;
+        List<Map<String, Object>> result = new ArrayList<>();
 
-            if (node.getParent() == null) {
-                startTime = request.time(); // trip start
-                formattedStartTime = TimeUtil.removeSecondsSafe(request.time());
-            } else {
-                startTime = node.getParent().getArrivalTime(); // parent = previous node
-                formattedStartTime = TimeUtil.removeSecondsSafe(startTime);
-            }
+        for (int i = 0; i < path.size() - 1; i++) {
+            Node current = path.get(i);
+            Node next = path.get(i + 1);
 
-            // Calculate duration in minutes
-            String parsedStart = TimeUtil.parseTime(startTime);
-            String parsedEnd = TimeUtil.parseTime(endTime);
+            String startTime = current.getArrivalTime();
+            String endTime = next.getArrivalTime();
+            String formattedStartTime = TimeUtil.removeSecondsSafe(startTime);
+
             int seconds = (int) TimeUtil.calculateDifference(
                     TimeUtil.parseTime(startTime),
                     TimeUtil.parseTime(endTime)
             );
             int durationMinutes = (seconds > 0) ? Math.max(1, seconds / 60) : 0;
 
+            Map<String, Object> to = Map.of(
+                    "lat", next.getStop().getStopLat(),
+                    "lon", next.getStop().getStopLon()
+            );
 
-            if (Objects.equals(node.getMode(), "WALK")) {
-                Map<String, Object> to = (node.getParent() == null)
-                        ? Map.of("lat", request.latStart(), "lon", request.lonStart())
-                        : Map.of("lat", node.getStop().getStopLat(), "lon", node.getStop().getStopLon());
-
-                return Map.of(
+            if (Objects.equals(current.getMode(), "WALK")) {
+                if (current.getParent() == null) {
+                    to = Map.of("lat", request.latStart(), "lon", request.lonStart());
+                }
+                result.add(Map.of(
                         "mode", "walk",
                         "to", to,
                         "duration", durationMinutes,
                         "startTime", formattedStartTime
-                );
-            } else if (Objects.equals(node.getMode(), "SAME_TRIP") || Objects.equals(node.getMode(), "TRANSFER")) {
-                return Map.of(
+                ));
+            } else if (Objects.equals(current.getMode(), "SAME_TRIP") || Objects.equals(current.getMode(), "TRANSFER")) {
+                result.add(Map.of(
                         "mode", "ride",
-                        "to", Map.of("lat", node.getStop().getStopLat(), "lon", node.getStop().getStopLon()),
+                        "to", to,
                         "duration", durationMinutes,
                         "startTime", formattedStartTime,
-                        "stop", node.getStop().getStopName(),
+                        "stop", next.getStop().getStopName(),
                         "route", Map.of(
-                                "operator", node.getTrip().route().agency() != null ? node.getTrip().route().agency().agencyName() : "N/A",
-                                "shortName", node.getTrip().route().routeShortName(),
-                                "longName", node.getTrip().route().routeLongName(),
-                                "headSign", node.getTrip().headSign() == null ? "N/A" : node.getTrip().headSign()
+                                "operator", current.getTrip().route().agency() != null ? current.getTrip().route().agency().agencyName() : "N/A",
+                                "shortName", current.getTrip().route().routeShortName(),
+                                "longName", current.getTrip().route().routeLongName(),
+                                "headSign", current.getTrip().headSign() == null ? "N/A" : current.getTrip().headSign()
                         )
-                );
+                ));
             }
+        }
 
-            return null;
-        }).filter(Objects::nonNull).toList();
+        return result;
     }
+
 
 }
 // {"routeFrom":{"lat":41.904,"lon":12.5004},"to":{"lat":41.8791,"lon":12.5221},"startingAt":"09:30"} - test case
