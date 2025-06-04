@@ -4,6 +4,8 @@ import db.TDSImplement;
 import models.Stop;
 import models.Trip;
 
+import java.util.Objects;
+
 public class Node {
     Stop stop;
     private final String stopId;
@@ -22,7 +24,8 @@ public class Node {
         this.parent = parent;
         this.mode = mode;
         this.trip = trip;
-        this.stop = tds.getStop(stopId);
+        Stop targetStop = tds.getStop(stopId);
+        this.stop = Objects.requireNonNullElseGet(targetStop, () -> new Stop(stopId, "Unknown Stop", 0.0, 0.0)); // Fallback if stop is not found
 
     }
 
