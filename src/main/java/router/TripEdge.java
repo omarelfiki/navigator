@@ -5,6 +5,7 @@ import models.Stop;
 import models.StopTime;
 import models.Trip;
 
+import java.util.List;
 import java.util.Objects;
 
 import static util.TimeUtil.calculateDifference;
@@ -26,7 +27,8 @@ class TripEdge implements Edge {
         }
         this.trip = Objects.requireNonNullElseGet(trip, Trip::new);
 
-        StopTime nextStopTime = getNextStopTime(fromStopId, departureTime, trip);
+        List<StopTime> StopTimes = getNextStopTime(fromStopId, departureTime, trip);
+        StopTime nextStopTime = StopTimes.get(1);
         Stop endStop = Objects.requireNonNullElseGet(nextStopTime.stop(), Stop::new); // Fallback if stop is not found
         this.toStopId = endStop.getStopId();
 
@@ -39,7 +41,7 @@ class TripEdge implements Edge {
         this.weight = calculateDifference(this.departureTime, this.arrivalTime);
     }
 
-    private static StopTime getNextStopTime(String fromStopId, String departureTime, Trip trip) {
+    public static List<StopTime> getNextStopTime(String fromStopId, String departureTime, Trip trip) {
         TDSImplement tds = new TDSImplement();
         Stop startStop = Objects.requireNonNullElseGet(tds.getStop(fromStopId), Stop::new); // Fallback if stop is not found
         StopTime currentStopTime = tds.getCurrentStopTime(trip, startStop, departureTime);
@@ -53,7 +55,7 @@ class TripEdge implements Edge {
         if (nextStopTime == null) {
             throw new IllegalArgumentException("No next stop after stop " + fromStopId + " on trip " + trip.tripId() + " (possibly the last stop).");
         }
-        return nextStopTime;
+        return List.of(currentStopTime, nextStopTime);
     }
 
     @Override

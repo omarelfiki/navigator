@@ -1,13 +1,12 @@
 package router;
 
-import db.TDSImplement;
-import models.Stop;
 import models.StopTime;
 import models.Trip;
 
 import java.util.List;
 import java.util.Objects;
 
+import static router.TripEdge.getNextStopTime;
 import static util.TimeUtil.calculateDifference;
 
 class TransferEdge implements Edge {
@@ -44,23 +43,6 @@ class TransferEdge implements Edge {
         // WEIGHT = total cost
         //this.weight = timeUtil.calculateDifference(this.departureTime, this.arrivalTime); // or waitingTime + rideTime
         this.weight = 0.6 * waitingTime + rideTime;  // encourage transfers
-    }
-
-    private static List<StopTime> getNextStopTime(String fromStopId, String departureTime, Trip trip) {
-        TDSImplement tds = new TDSImplement();
-        Stop startStop = Objects.requireNonNullElseGet(tds.getStop(fromStopId), Stop::new); // Fallback if stop is not found
-        StopTime currentStopTime = tds.getCurrentStopTime(trip, startStop, departureTime);
-
-        if (currentStopTime == null) {
-            throw new IllegalArgumentException("No stop time at stop " + fromStopId + " for trip " + trip.tripId());
-        }
-
-        StopTime nextStopTime = tds.getNextStopTime(currentStopTime);
-
-        if (nextStopTime == null) {
-            throw new IllegalArgumentException("No next stop after stop " + fromStopId + " on trip " + trip.tripId() + " (possibly the last stop).");
-        }
-        return List.of(currentStopTime, nextStopTime);
     }
 
     @Override
