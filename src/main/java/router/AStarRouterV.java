@@ -19,9 +19,9 @@ public class AStarRouterV {
         if (debugMode) System.err.println("Starting point" + latStart + " " + lonStart);
         Node STARTING_NODE = new Node("start", startTime, null, "WALK", null);
         STARTING_NODE.stop = new Stop("start", "STARTING POINT", latStart, lonStart);
-        ArrayList<Stop> startStops = tds.getNearbyStops(latStart, lonStart, 500);
+        ArrayList<Stop> startStops = tds.getNearbyStops(latStart, lonStart, 800);
         if (debugMode) System.err.println("Start stops: " + startStops.size());
-        ArrayList<Stop> stopStops = tds.getNearbyStops(latStop, lonStop, 500);
+        ArrayList<Stop> stopStops = tds.getNearbyStops(latStop, lonStop, 800);
         Node STOP_NODE = new Node("stop", "12:00", null, "WALK", null);
         STOP_NODE.stop = new Stop("stop", "END_POINT", latStop, lonStop);
         if (debugMode) System.err.println("Stop stops: " + stopStops.size());
