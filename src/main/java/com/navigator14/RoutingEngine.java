@@ -14,6 +14,7 @@ import models.Request;
 import router.AStarRouterV;
 import router.Node;
 import util.PathCompressor;
+import util.TimeUtil;
 
 import static util.DebugUtil.getDebugMode;
 import static util.TimeUtil.parseTime;
@@ -148,14 +149,14 @@ public class RoutingEngine {
                         "mode", "walk",
                         "to", Map.of("lat", node.getStop().getStopLat(), "lon", node.getStop().getStopLon()),
                         "duration", 0,
-                        "startTime", node.getArrivalTime()
+                        "startTime", TimeUtil.removeSecondsSafe(node.getArrivalTime())
                 );
             } else if (Objects.equals(node.getMode(), "SAME_TRIP")) {
                 return Map.of(
                         "mode", "ride",
                         "to", Map.of("lat", node.getStop().getStopLat(), "lon", node.getStop().getStopLon()),
                         "duration", 0,
-                        "startTime", node.getArrivalTime(),
+                        "startTime", TimeUtil.removeSecondsSafe(node.getArrivalTime()),
                         "stop", node.getStop().getStopName(),
                         "route", Map.of(
                                 "operator", node.getTrip().route().agency() != null ? node.getTrip().route().agency().agencyName() : "N/A",
@@ -169,7 +170,7 @@ public class RoutingEngine {
                         "mode", "ride",
                         "to", Map.of("lat", node.getStop().getStopLat(), "lon", node.getStop().getStopLon()),
                         "duration", 0,
-                        "startTime", node.getArrivalTime(),
+                        "startTime", TimeUtil.removeSecondsSafe(node.getArrivalTime()),
                         "stop", node.getStop().getStopName(),
                         "route", Map.of(
                                 "operator", node.getTrip().route().agency() != null ? node.getTrip().route().agency().agencyName() : "N/A",
@@ -183,6 +184,6 @@ public class RoutingEngine {
         }).filter(Objects::nonNull).toList();
     }
 }
-// {"routeFrom":{"lat":41.904,"lon":12.5004},"to":{"lat":41.8791,"lon":12.5221},"startingAt":"09:30:00"} - test case
+// {"routeFrom":{"lat":41.904,"lon":12.5004},"to":{"lat":41.8791,"lon":12.5221},"startingAt":"09:30"} - test case
 //  Roma Termini - Vatican test case below
-// {"routeFrom":{"lat":41.900496398,"lon":12.501164662},"to":{"lat":41.906487,"lon":12.453641},"startingAt":"09:30:00"}
+// {"routeFrom":{"lat":41.900496398,"lon":12.501164662},"to":{"lat":41.906487,"lon":12.453641},"startingAt":"09:30"}
