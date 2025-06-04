@@ -2,6 +2,7 @@ package ui;
 
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
+import javafx.concurrent.Task;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.DatePicker;
@@ -14,15 +15,23 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
+import map.HeatMapPainter;
 import map.MapIntegration;
 import map.MapProvider;
 import map.WayPoint;
+import models.HeatPoint;
 import org.jxmapviewer.JXMapViewer;
+import org.jxmapviewer.painter.CompoundPainter;
 import org.jxmapviewer.viewer.DefaultWaypoint;
 import org.jxmapviewer.viewer.GeoPosition;
 import org.jxmapviewer.viewer.Waypoint;
 import org.jxmapviewer.viewer.WaypointPainter;
 import router.AStarRouterV;
+import router.HeatMapRouter;
+
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -34,6 +43,35 @@ public class UiHelper {
         boolean isVisible = leftPane.isVisible();
         leftPane.setVisible(!isVisible);
         leftPane.setManaged(!isVisible);
+    }
+
+    public static void createSidePanelButtons(BorderPane root, Pane leftPane, StackPane mapPane) {
+        // Button to hide side panel
+        Button hideSidePanel = new Button("←");
+        Button showSidePanel = new Button("→");
+
+        hideSidePanel.layoutXProperty().bind(root.widthProperty().multiply(0.245));
+        hideSidePanel.layoutYProperty().bind(root.heightProperty().multiply(0.033));
+        hideSidePanel.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
+        hideSidePanel.setOnAction(_ -> {
+            toggleLeftBar(leftPane);
+            hideSidePanel.setVisible(false);
+            showSidePanel.setVisible(true);
+        });
+        leftPane.getChildren().add(hideSidePanel);
+
+
+        showSidePanel.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
+        showSidePanel.setVisible(false);
+        mapPane.getChildren().add(showSidePanel);
+        StackPane.setAlignment(showSidePanel, Pos.CENTER_LEFT);
+        showSidePanel.translateXProperty().bind(root.widthProperty().multiply(0.01));
+        showSidePanel.translateYProperty().bind(root.heightProperty().multiply(-0.04));
+        showSidePanel.setOnAction(_ -> {
+            toggleLeftBar(leftPane);
+            showSidePanel.setVisible(false);
+            hideSidePanel.setVisible(true);
+        });
     }
 
     public static void bindPosition(Region node, Pane root, double yRatio) {
@@ -293,5 +331,43 @@ public class UiHelper {
         }
         waypointPainter.setWaypoints(waypoints);
         map.setOverlayPainter(waypointPainter);
+    }
+
+    public static Task<Void> createRouterTask(double lat, double lon, WaypointPainter<Waypoint> waypointPainter) {
+        return new Task<>() {
+            @Override
+            protected Void call() {
+                HeatMapRouter router = new HeatMapRouter(0);
+                List<HeatPoint> heatPoints = router.build(lat, lon, "9:30:00");
+                JXMapViewer baseMap = MapProvider.getInstance().getMap();
+                HeatMapPainter heatMapPainter = new HeatMapPainter(heatPoints);
+                @SuppressWarnings("unchecked")
+                CompoundPainter<JXMapViewer> compoundPainter = new CompoundPainter<>(heatMapPainter, waypointPainter);
+                baseMap.setOverlayPainter(compoundPainter);
+                return null;
+            }
+        };
+    }
+
+    public static Text getNewLabel(String text, BorderPane root, Color fill, int fontSize, double x, double y, TextAlignment alignment) {
+        Text label = new Text(text);
+        label.setFill(fill);
+        label.setTextAlignment(alignment);
+        label.setStyle("-fx-font-family: Ubuntu; -fx-font-size: " + fontSize + "px;");
+        label.xProperty().bind(root.widthProperty().multiply(x));
+        label.yProperty().bind(root.heightProperty().multiply(y));
+        return label;
+    }
+
+    public static Button createButton(BorderPane root, String label, double xFactor) {
+        Button button = new Button(label);
+        button.prefWidthProperty().bind(root.widthProperty().multiply(0.07));
+        button.prefHeightProperty().bind(root.heightProperty().multiply(0.04));
+        button.layoutXProperty().bind(root.widthProperty().multiply(xFactor));
+        button.layoutYProperty().bind(root.heightProperty().multiply(0.85));
+        button.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
+        button.setVisible(false);
+        button.setId("label");
+        return button;
     }
 }
