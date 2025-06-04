@@ -5,16 +5,19 @@ import models.Stop;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 public class RunResult {
 
     public static void main(String[] args) {
         // Access data
-        List<Stop> allStops = new TDSImplement().getAllStops();
+        TDSImplement tds = new TDSImplement();
+        List<Stop> allStops = tds.getAllStops();
+        Map<String, Integer> stopRouteCounts = tds.getStopRouteCounts();
         List<TouristicLocations> monuments = ProximityFactor.getMonuments();
 
         // Calculate all scores
-        FinalScore.calculateFinalScore(allStops, monuments);
+        FinalScore.calculateFinalScore(allStops, monuments, stopRouteCounts);
 
         // Sort by score (lowest = best candidates for closure)
         allStops.sort(Comparator.comparingDouble(Stop::getScore));
