@@ -14,6 +14,11 @@ public class Stop extends StopData {
         this.stopLat = stopLat;
         this.stopLon = stopLon;
     }
+
+    public Stop(){
+        this("N/A", "Unknown Stop", 0.0, 0.0);
+    }
+
     public String getStopId() {
         return stopId;
     }

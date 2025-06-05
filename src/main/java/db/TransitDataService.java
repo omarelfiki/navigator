@@ -3,6 +3,7 @@ package db;
 import models.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public interface TransitDataService {
     Stop getStop(String stopId);
@@ -10,4 +11,5 @@ public interface TransitDataService {
     ArrayList<Stop> getNearbyStops(double lat, double lon, double radiusMeters);
     Trip getTrip(String tripId);
     Route getRoute(String routeId);
+    Map<String, Integer> getStopRouteCounts();
 }
