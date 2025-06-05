@@ -1,5 +1,7 @@
 package util;
 
+import router.WalkingTime;
+
 import java.util.*;
 
 public class PathCompressor {
@@ -12,7 +14,9 @@ public class PathCompressor {
     public static List<Map<String, Object>> compressWalks(List<Map<String, Object>> path) {
         List<Map<String, Object>> result = new ArrayList<>();
         Map<String, Object> currentWalk = null;
-        int walkDuration = 0;
+
+        double startLat = 0, startLon = 0;
+        double endLat = 0, endLon = 0;
 
         for (Map<String, Object> segment : path) {
             String mode = (String) segment.get("mode");
@@ -20,30 +24,40 @@ public class PathCompressor {
             if ("walk".equals(mode)) {
                 if (currentWalk == null) {
                     currentWalk = new HashMap<>(segment);
-                    walkDuration = (int) segment.get("duration");
-                } else {
-                    // Update destination and accumulate duration
-                    currentWalk.put("to", segment.get("to"));
-                    walkDuration += (int) segment.get("duration");
+                    Map<String, Object> to = (Map<String, Object>) segment.get("to");
+                    startLat = (double) currentWalk.getOrDefault("fromLat", to.get("lat")); // fallback
+                    startLon = (double) currentWalk.getOrDefault("fromLon", to.get("lon")); // fallback
                 }
+
+                Map<String, Object> to = (Map<String, Object>) segment.get("to");
+                endLat = (double) to.get("lat");
+                endLon = (double) to.get("lon");
+
+                // Always update destination
+                currentWalk.put("to", to);
             } else {
                 if (currentWalk != null) {
-                    currentWalk.put("duration", walkDuration);
+                    // Compute actual walking duration based on distance
+                    double walkingTime = WalkingTime.getWalkingTime(startLat, startLon, endLat, endLon);
+                    int duration = Math.max(1, (int) Math.round(walkingTime / 60.0));
+                    currentWalk.put("duration", duration);
                     result.add(currentWalk);
                     currentWalk = null;
-                    walkDuration = 0;
                 }
                 result.add(segment);
             }
         }
 
         if (currentWalk != null) {
-            currentWalk.put("duration", walkDuration);
+            double walkingTime = WalkingTime.getWalkingTime(startLat, startLon, endLat, endLon);
+            int duration = Math.max(1, (int) Math.round(walkingTime / 60.0));
+            currentWalk.put("duration", duration);
             result.add(currentWalk);
         }
 
         return result;
     }
+
 
 
     public static List<Map<String, Object>> compressRides(List<Map<String, Object>> path) {
