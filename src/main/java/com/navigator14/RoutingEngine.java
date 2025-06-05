@@ -144,8 +144,9 @@ public class RoutingEngine {
             Node current = path.get(i);
             Node next = path.get(i + 1);
 
-            String startTime = current.getArrivalTime();
-            String endTime = next.getArrivalTime();
+            String startTime = current.getParent() != null ? current.getParent().getArrivalTime() : current.getArrivalTime();
+            String endTime = current.getArrivalTime();
+
             String formattedStartTime = TimeUtil.removeSecondsSafe(startTime);
 
             int seconds = (int) TimeUtil.calculateDifference(
