@@ -6,6 +6,7 @@ import models.Trip;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static util.DebugUtil.getDebugMode;
 
@@ -17,7 +18,7 @@ public class EdgeService {
     public ArrayList<Edge> getEdges(Node node, int mode) {
         isDebugMode = getDebugMode();
         ArrayList<Edge> edges = new ArrayList<>();
-        Stop startStop = tds.getStop(node.getStopId());
+        Stop startStop = Objects.requireNonNullElseGet(tds.getStop(node.getStopId()), Stop::new);
 
         //mode 0: with walking, mode 1: without walking
         if (mode == 0) {

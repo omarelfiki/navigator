@@ -38,7 +38,8 @@ public class RoutingEngine {
         if (debug != null) {
             System.setProperty("debug", debug);
         } else {
-            if (isDebugMode) System.err.println("Environment variable 'debug' is not set. Debug mode is enabled by default.");
+            if (isDebugMode) System.err.println("WARNING: Environment variable 'debug' is not set. Debug mode is disabled by default.");
+            System.setProperty("debug", "false");
         }
         new RoutingEngine().run();
     }
