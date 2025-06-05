@@ -75,17 +75,6 @@ public class RoutingEngine {
                         sendError("Invalid time format");
                         continue;
                     }
-                    // Handle case where start and end coordinates are identical
-                    if (requestR.latStart() == requestR.latEnd() && requestR.lonStart() == requestR.lonEnd()) {
-                        List<Map<String, Object>> samePointResponse = List.of(Map.of(
-                                "mode", "walk",
-                                "to", Map.of("lat", requestR.latEnd(), "lon", requestR.lonEnd()),
-                                "startTime", requestR.time(),
-                                "duration", 0
-                        ));
-                        sendOk(samePointResponse);
-                        continue;
-                    }
 
 
                     List<String> avoidedStops = new ArrayList<>();
