@@ -276,4 +276,41 @@ public Agency getAgency(String agencyId) {
     }
     return null;
 }
+    public List<Trip> getAllTrips() {
+        List<Trip> trips = new ArrayList<>();
+        String sql = "SELECT trip_id, route_id, trip_headsign FROM trips";
+        try (
+                PreparedStatement ps = db.conn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                String tripId = rs.getString("trip_id");
+                Route route = getRoute(rs.getString("route_id"));
+                String headSign = rs.getString("trip_headsign");
+                trips.add(new Trip(tripId, route, headSign));
+            }
+        } catch (SQLException e) {
+            if (isDebugMode) System.err.println("SQL Error in getAllTrips: " + e.getMessage());
+        }
+        return trips;
+    }
+
+    public List<StopTime> getStopTimesForTrip(String tripId) {
+        List<StopTime> stopTimes = new ArrayList<>();
+        String sql = "SELECT stop_id, arrival_time, departure_time, stop_sequence FROM stop_times WHERE trip_id = ? ORDER BY stop_sequence";
+        try (PreparedStatement ps = db.conn.prepareStatement(sql)) {
+            ps.setString(1, tripId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Stop stop = getStop(rs.getString("stop_id"));
+                Trip trip = getTrip(tripId);
+                String arrivalTime = rs.getString("arrival_time");
+                String departureTime = rs.getString("departure_time");
+                int stopSequence = rs.getInt("stop_sequence");
+                stopTimes.add(new StopTime(stop, trip, departureTime, arrivalTime, stopSequence));
+            }
+        } catch (SQLException e) {
+            if (isDebugMode) System.err.println("SQL Error in getStopTimesForTrip: " + e.getMessage());
+        }
+        return stopTimes;
+    }
 }
