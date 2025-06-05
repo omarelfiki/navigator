@@ -13,5 +13,5 @@ BEGIN
     FROM stops s
     HAVING distance <= radius
     ORDER BY distance
-    LIMIT 7;
+    LIMIT 15;
 END

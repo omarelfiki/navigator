@@ -13,6 +13,8 @@ import db.DBConfig;
 import models.Request;
 import router.AStarRouterV;
 import router.Node;
+import util.PathCompressor;
+import util.TimeUtil;
 
 import static util.DebugUtil.getDebugMode;
 import static util.TimeUtil.parseTime;
@@ -73,6 +75,8 @@ public class RoutingEngine {
                         sendError("Invalid time format");
                         continue;
                     }
+
+
                     List<String> avoidedStops = new ArrayList<>();
                     AStarRouterV router = new AStarRouterV();
                     List<Node> path = router.findFastestPath(requestR.latStart(), requestR.lonStart(), requestR.latEnd(), requestR.lonEnd(), requestR.time(),avoidedStops);
@@ -81,6 +85,7 @@ public class RoutingEngine {
                         continue;
                     }
                     List<Map<String, Object>> result = parseResult(path, requestR);
+                    result = PathCompressor.compress(result);
                     sendOk(result);
                     continue;
                 }
@@ -132,55 +137,59 @@ public class RoutingEngine {
     }
 
     private List<Map<String, Object>> parseResult(List<Node> path, Request request) {
-        return path.stream().map(node -> {
-            if (Objects.equals(node.getMode(), "WALK")) {
-                if(node.getParent() == null) {
-                    return Map.of(
-                            "mode", "walk",
-                            "to", Map.of("lat", 12.123, "lon", 12.123),
-                            "duration", 0,
-                            "startTime", request.time()
-                    );
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        for (int i = 0; i < path.size() - 1; i++) {
+            Node current = path.get(i);
+            Node next = path.get(i + 1);
+
+            String startTime = current.getArrivalTime();
+            String endTime = next.getArrivalTime();
+            String formattedStartTime = TimeUtil.removeSecondsSafe(startTime);
+
+            int seconds = (int) TimeUtil.calculateDifference(
+                    TimeUtil.parseTime(startTime),
+                    TimeUtil.parseTime(endTime)
+            );
+            int durationMinutes = (seconds > 0) ? Math.max(1, seconds / 60) : 0;
+
+            Map<String, Object> to = Map.of(
+                    "lat", next.getStop().getStopLat(),
+                    "lon", next.getStop().getStopLon()
+            );
+
+            if (Objects.equals(current.getMode(), "WALK")) {
+                if (current.getParent() == null) {
+                    to = Map.of("lat", request.latStart(), "lon", request.lonStart());
                 }
-                return Map.of(
+                result.add(Map.of(
                         "mode", "walk",
-                        "to", Map.of("lat", node.getStop().getStopLat(), "lon", node.getStop().getStopLon()),
-                        "duration", 0,
-                        "startTime", node.getArrivalTime()
-                );
-            } else if (Objects.equals(node.getMode(), "SAME_TRIP")) {
-                return Map.of(
+                        "to", to,
+                        "duration", durationMinutes,
+                        "startTime", formattedStartTime
+                ));
+            } else if (Objects.equals(current.getMode(), "SAME_TRIP") || Objects.equals(current.getMode(), "TRANSFER")) {
+                result.add(Map.of(
                         "mode", "ride",
-                        "to", Map.of("lat", node.getStop().getStopLat(), "lon", node.getStop().getStopLon()),
-                        "duration", 0,
-                        "startTime", node.getArrivalTime(),
-                        "stop", node.getStop().getStopName(),
+                        "to", to,
+                        "duration", durationMinutes,
+                        "startTime", formattedStartTime,
+                        "stop", next.getStop().getStopName(),
                         "route", Map.of(
-                                "operator", node.getTrip().route().agency() != null ? node.getTrip().route().agency().agencyName() : "N/A",
-                                "shortName", node.getTrip().route().routeShortName(),
-                                "longName", node.getTrip().route().routeLongName(),
-                                "headSign", node.getTrip().headSign() == null ? "N/A" : node.getTrip().headSign()
+                                "operator", current.getTrip().route().agency() != null ? current.getTrip().route().agency().agencyName() : "N/A",
+                                "shortName", current.getTrip().route().routeShortName(),
+                                "longName", current.getTrip().route().routeLongName(),
+                                "headSign", current.getTrip().headSign() == null ? "N/A" : current.getTrip().headSign()
                         )
-                );
-            } else if (Objects.equals(node.getMode(), "TRANSFER")) {
-                return Map.of(
-                        "mode", "ride",
-                        "to", Map.of("lat", node.getStop().getStopLat(), "lon", node.getStop().getStopLon()),
-                        "duration", 0,
-                        "startTime", node.getArrivalTime(),
-                        "stop", node.getStop().getStopName(),
-                        "route", Map.of(
-                                "operator", node.getTrip().route().agency() != null ? node.getTrip().route().agency().agencyName() : "N/A",
-                                "shortName", node.getTrip().route().routeShortName(),
-                                "longName", node.getTrip().route().routeLongName(),
-                                "headSign", node.getTrip().headSign() == null ? "N/A" : node.getTrip().headSign()
-                        )
-                );
+                ));
             }
-            return null;
-        }).filter(Objects::nonNull).toList();
+        }
+
+        return result;
     }
+
+
 }
-// {"routeFrom":{"lat":41.904,"lon":12.5004},"to":{"lat":41.8791,"lon":12.5221},"startingAt":"09:30:00"} - test case
+// {"routeFrom":{"lat":41.904,"lon":12.5004},"to":{"lat":41.8791,"lon":12.5221},"startingAt":"09:30"} - test case
 //  Roma Termini - Vatican test case below
-// {"routeFrom":{"lat":41.900496398,"lon":12.501164662},"to":{"lat":41.906487,"lon":12.453641},"startingAt":"09:30:00"}
+// {"routeFrom":{"lat":41.900496398,"lon":12.501164662},"to":{"lat":41.906487,"lon":12.453641},"startingAt":"09:28"}

@@ -5,6 +5,9 @@ import models.Stop;
 import models.StopTime;
 import models.Trip;
 
+import java.util.List;
+import java.util.Objects;
+
 import static util.TimeUtil.calculateDifference;
 
 class TripEdge implements Edge {
@@ -17,11 +20,30 @@ class TripEdge implements Edge {
 
     public TripEdge(String fromStopId, String departureTime, Trip trip) {
         this.fromStopId = fromStopId;
-        this.departureTime = departureTime;
-        this.trip = trip;
+        if (departureTime == null || departureTime.isEmpty()) {
+           this.departureTime = "00:00:00";
+        } else {
+            this.departureTime = departureTime;
+        }
+        this.trip = Objects.requireNonNullElseGet(trip, Trip::new);
 
+        List<StopTime> StopTimes = getNextStopTime(fromStopId, departureTime, trip);
+        StopTime nextStopTime = StopTimes.get(1);
+        Stop endStop = Objects.requireNonNullElseGet(nextStopTime.stop(), Stop::new); // Fallback if stop is not found
+        this.toStopId = endStop.getStopId();
+
+        if (nextStopTime.arrivalTime() == null || nextStopTime.arrivalTime().isEmpty()) {
+            this.arrivalTime = "00:00:00";
+        } else {
+            this.arrivalTime = nextStopTime.arrivalTime();
+        }
+
+        this.weight = calculateDifference(this.departureTime, this.arrivalTime);
+    }
+
+    public static List<StopTime> getNextStopTime(String fromStopId, String departureTime, Trip trip) {
         TDSImplement tds = new TDSImplement();
-        Stop startStop = tds.getStop(fromStopId);
+        Stop startStop = Objects.requireNonNullElseGet(tds.getStop(fromStopId), Stop::new); // Fallback if stop is not found
         StopTime currentStopTime = tds.getCurrentStopTime(trip, startStop, departureTime);
 
         if (currentStopTime == null) {
@@ -33,11 +55,7 @@ class TripEdge implements Edge {
         if (nextStopTime == null) {
             throw new IllegalArgumentException("No next stop after stop " + fromStopId + " on trip " + trip.tripId() + " (possibly the last stop).");
         }
-
-        Stop endStop = nextStopTime.stop();
-        this.toStopId = endStop.getStopId();
-        this.arrivalTime = nextStopTime.arrivalTime();
-        this.weight = calculateDifference(this.departureTime, this.arrivalTime);
+        return List.of(currentStopTime, nextStopTime);
     }
 
     @Override

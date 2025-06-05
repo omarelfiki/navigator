@@ -59,4 +59,11 @@ public class TimeUtil {
 
         return String.format("%02d:%02d:%02d", hours, minutes, seconds);
     }
+    public static String removeSecondsSafe(String time) {
+        try {
+            return time != null && time.length() >= 5 ? time.substring(0, 5) : time;
+        } catch (Exception e) {
+            return time;
+        }
+    }
 }
