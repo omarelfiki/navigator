@@ -46,7 +46,26 @@ public class MapIntegration {
         map = new JXMapViewer();
         map.setTileFactory(tileFactory);
         map.setZoom(6);
-        map.setAddressLocation(new GeoPosition(41.9028, 12.4964)); // Rome
+
+        String start_location = System.getenv("START_COORDS");
+        if (start_location != null && !start_location.isEmpty()) {
+            String[] parts = start_location.split(",");
+            if (parts.length == 2) {
+                try {
+                    double lat = Double.parseDouble(parts[0].trim());
+                    double lon = Double.parseDouble(parts[1].trim());
+                    map.setAddressLocation(new GeoPosition(lat, lon));
+                } catch (NumberFormatException e) {
+                    if (isDebugMode) System.err.println("Invalid start location format: " + start_location);
+                    map.setAddressLocation(new GeoPosition(41.9028, 12.4964));
+                }
+            } else {
+                if (isDebugMode) System.err.println("Invalid start location format: " + start_location);
+                map.setAddressLocation(new GeoPosition(41.9028, 12.4964));
+            }
+        } else {
+            map.setAddressLocation(new GeoPosition(41.9028, 12.4964)); // Rome
+        }
 
         MouseInputListener panListener = new PanMouseInputListener(map);
         map.addMouseListener(panListener);

@@ -38,7 +38,8 @@ public class RoutingEngine {
         if (debug != null) {
             System.setProperty("debug", debug);
         } else {
-            if (isDebugMode) System.err.println("Environment variable 'debug' is not set. Debug mode is enabled by default.");
+            if (isDebugMode) System.err.println("WARNING: Environment variable 'debug' is not set. Debug mode is disabled by default.");
+            System.setProperty("debug", "false");
         }
         new RoutingEngine().run();
     }
@@ -143,8 +144,9 @@ public class RoutingEngine {
             Node current = path.get(i);
             Node next = path.get(i + 1);
 
-            String startTime = current.getArrivalTime();
-            String endTime = next.getArrivalTime();
+            String startTime = current.getParent() != null ? current.getParent().getArrivalTime() : current.getArrivalTime();
+            String endTime = current.getArrivalTime();
+
             String formattedStartTime = TimeUtil.removeSecondsSafe(startTime);
 
             int seconds = (int) TimeUtil.calculateDifference(
@@ -159,16 +161,19 @@ public class RoutingEngine {
             );
 
             if (Objects.equals(current.getMode(), "WALK")) {
-                if (current.getParent() == null) {
-                    to = Map.of("lat", request.latStart(), "lon", request.lonStart());
-                }
+                double fromLat = current.getParent() == null ? request.latStart() : current.getParent().getStop().getStopLat();
+                double fromLon = current.getParent() == null ? request.lonStart() : current.getParent().getStop().getStopLon();
+
                 result.add(Map.of(
                         "mode", "walk",
                         "to", to,
                         "duration", durationMinutes,
-                        "startTime", formattedStartTime
+                        "startTime", formattedStartTime,
+                        "fromLat", fromLat,
+                        "fromLon", fromLon
                 ));
-            } else if (Objects.equals(current.getMode(), "SAME_TRIP") || Objects.equals(current.getMode(), "TRANSFER")) {
+            }
+            else if (Objects.equals(current.getMode(), "SAME_TRIP") || Objects.equals(current.getMode(), "TRANSFER")) {
                 result.add(Map.of(
                         "mode", "ride",
                         "to", to,

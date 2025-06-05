@@ -24,7 +24,7 @@ public class RunResult {
 
         // Print top 3 stops with the lowest scores
         System.out.println("Top 3 stops to consider for closure:");
-        for (int i = 0; i < 3; i++) {
+        for (int i = allStops.size() - 1; i >= allStops.size()-200; i--) {
             Stop stop = allStops.get(i);
             System.out.printf("Stop ID: %s | Name: %s | Score: %.3f%n",
                     stop.getStopId(), stop.getStopName(), stop.getScore());

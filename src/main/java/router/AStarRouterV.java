@@ -6,18 +6,15 @@ import db.TDSImplement;
 import models.*;
 import util.*;
 
+import static router.EdgeService.getEdges;
+import static util.DebugUtil.getDebugMode;
 import static util.TimeUtil.*;
 
 public class AStarRouterV {
     Map<String, Double> bestCosts = new HashMap<>();
-
-    boolean debugMode = false;
-
-    TDSImplement tds = new TDSImplement();
-
-
-
     public List<Node> findFastestPath(double latStart, double lonStart, double latStop, double lonStop, String startTime, List<String> excludedStops) {
+        boolean debugMode = getDebugMode();
+        TDSImplement tds = new TDSImplement();
         reset();
         if (debugMode) System.err.println("Starting point" + latStart + " " + lonStart);
         Node STARTING_NODE = new Node("start", startTime, null, "WALK", null);
@@ -28,7 +25,6 @@ public class AStarRouterV {
         Node STOP_NODE = new Node("stop", null, null, "WALK", null);
         STOP_NODE.stop = new Stop("stop", "END_POINT", latStop, lonStop);
         if (debugMode) System.err.println("Stop stops: " + stopStops.size());
-        EdgeService edgeService = new EdgeService();
 
         double walkingTimeOnly = WalkingTime.getWalkingTime(latStart, lonStart, latStop, lonStop);
 //        System.err.println("Walking time only: " + walkingTimeOnly);
@@ -67,6 +63,7 @@ public class AStarRouterV {
             current = pq.poll();
 
             if (isAtGoal(current, stopStops)) {
+                assert current != null;
                 double estimatedTotalCost = current.getG();
                 if (estimatedTotalCost < bestGoalCost) {
                     bestGoalCost = estimatedTotalCost;
@@ -75,7 +72,8 @@ public class AStarRouterV {
                 continue; // Keep exploring to find better goal
             }
 
-            List<Edge> edges = edgeService.getEdges(current, 0);
+            assert current != null;
+            List<Edge> edges = getEdges(current, 0);
 
             for (Edge edge : edges) {
                 String toStopId = edge.getToStopId();
@@ -116,14 +114,12 @@ public class AStarRouterV {
             if (walkingTimeOnly <= totalAStarTime) {
                 STOP_NODE.parent = STARTING_NODE;
                 STOP_NODE.arrivalTime = addTime(startTime, walkingTimeOnly);
-                return reconstructPath(STOP_NODE);
             } else {
                 STOP_NODE.parent = bestGoalNode;
                 STOP_NODE.arrivalTime = addTime(bestGoalNode.getArrivalTime(), walking_time_to_end);
-                return reconstructPath(STOP_NODE);
             }
+            return reconstructPath(STOP_NODE);
         }
-
 
         if (debugMode) System.err.println("best costs for visited nodes: " + bestCosts);
         return null;
@@ -163,7 +159,5 @@ public class AStarRouterV {
     public void reset() {
         bestCosts.clear();
     }
-
-
 
 }
