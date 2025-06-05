@@ -11,13 +11,10 @@ import java.util.Objects;
 import static util.DebugUtil.getDebugMode;
 
 public class EdgeService {
-    TDSImplement tds = new TDSImplement();
-
-    boolean isDebugMode;
-
-    public ArrayList<Edge> getEdges(Node node, int mode) {
-        isDebugMode = getDebugMode();
+    public static ArrayList<Edge> getEdges(Node node, int mode) {
+        boolean isDebugMode = getDebugMode();
         ArrayList<Edge> edges = new ArrayList<>();
+        TDSImplement tds = new TDSImplement();
         Stop startStop = Objects.requireNonNullElseGet(tds.getStop(node.getStopId()), Stop::new);
 
         //mode 0: with walking, mode 1: without walking
