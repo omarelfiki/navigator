@@ -8,9 +8,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import router.Node;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class TripIntel {
     public final String mode;
@@ -24,7 +22,7 @@ public class TripIntel {
     }
 
 
-    private int turnTimeToInt(String sTime) {
+    private static int turnTimeToInt(String sTime) {
         String[] splitTimes = sTime.split(":");
         int hours = Integer.parseInt(splitTimes[0]);
         int minutes = Integer.parseInt(splitTimes[1]);
@@ -33,7 +31,7 @@ public class TripIntel {
         return hours * 3600 + minutes * 60 + seconds;
     }
 
-    private int[] splitTimes(int totalSeconds) {
+    private static int[] splitTimes(int totalSeconds) {
         int[] timeArray = new int[2];
         int currentMinutes = totalSeconds / 60;
         int currentSeconds = totalSeconds % 60;
@@ -42,7 +40,7 @@ public class TripIntel {
         return timeArray;
     }
 
-    private StackPane displayTransportModes(Node destinationNode, BorderPane root) {
+    public static StackPane displayTransportModes(Node destinationNode, BorderPane root) {
         // StackPane creation and styling - do not change
         StackPane resultPane = new StackPane();
         resultPane.setStyle("-fx-background-color: rgba(0, 0, 0, 0.5); -fx-padding: 10;");
@@ -137,13 +135,56 @@ public class TripIntel {
         resultPane.getChildren().add(contentBox);
         return resultPane;
     }
+
+//    private StackPane displayTransportModes(Node destinationNode, BorderPane root) {
+//        // StackPane creation and styling - do not change
+//        StackPane resultPane = new StackPane();
+//        resultPane.setStyle("-fx-background-color: rgba(0, 0, 0, 0.5); -fx-padding: 10;");
+//        resultPane.setAlignment(Pos.CENTER);
+//        resultPane.setPrefSize(300, 200);
+//        resultPane.setTranslateX(root.getWidth() * 0.02); // 10/1280
+//        resultPane.setTranslateY(root.getHeight() * 0.4); // 80/832
+//
+//        Set<String> modes = new LinkedHashSet<>(); // To avoid duplicates
+//        Node current = destinationNode;
+//        while (current != null) {
+//            if (current.getMode() != null && !current.getMode().isBlank()) {
+//                modes.add(current.getMode());
+//            }
+//            current = current.getParent();
+//        }
+//
+//        Text transportTitle = new Text("Modes of Transport:");
+//        transportTitle.setStyle("-fx-font: 16 Ubuntu; -fx-fill: white;");
+//
+//        VBox contentBox = new VBox(10);
+//        contentBox.setAlignment(Pos.CENTER);
+//        contentBox.getChildren().add(transportTitle);
+//
+//        for (String mode : modes) {
+//            HBox row = new HBox(10);
+//            row.setAlignment(Pos.CENTER);
+//
+//            Text modeText = new Text(mode);
+//            modeText.setStyle("-fx-font: 14 Ubuntu; -fx-fill: white;");
+//            row.getChildren().add(modeText);
+//
+//            // ImageView icon = getModeIcon(mode);
+//            // if (icon != null) row.getChildren().add(icon);
+//
+//            contentBox.getChildren().add(row);
+//        }
+//
+//        resultPane.getChildren().add(contentBox);
+//        return resultPane;
+//    }
 }
 
 //    private ImageView getModeIcon(String mode) {
 //        try {
 //            String iconPath = switch (mode.toLowerCase()) {
 
-/// /             add pictures, after case include path
+//             add pictures, after case include path
 //                case "bus" ->
 //                case "walk" ->
 //                case "metro" ->

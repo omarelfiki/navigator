@@ -36,6 +36,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import map.WayPoint;
 import db.*;
 
+import static ui.TripIntel.displayTransportModes;
 import static util.DebugUtil.getDebugMode;
 import static util.NavUtil.parsePoint;
 import static ui.UiHelper.*;
@@ -229,48 +230,6 @@ public class HomeUI extends Application {
         }
     }
 
-    private StackPane displayTransportModes(Node destinationNode, BorderPane root) {
-        // StackPane creation and styling - do not change
-        StackPane resultPane = new StackPane();
-        resultPane.setStyle("-fx-background-color: rgba(0, 0, 0, 0.5); -fx-padding: 10;");
-        resultPane.setAlignment(Pos.CENTER);
-        resultPane.setPrefSize(300, 200);
-        resultPane.setTranslateX(root.getWidth() * 0.02); // 10/1280
-        resultPane.setTranslateY(root.getHeight() * 0.4); // 80/832
-
-        Set<String> modes = new LinkedHashSet<>(); // To avoid duplicates
-        Node current = destinationNode;
-        while (current != null) {
-            if (current.getMode() != null && !current.getMode().isBlank()) {
-                modes.add(current.getMode());
-            }
-            current = current.getParent();
-        }
-
-        Text transportTitle = new Text("Modes of Transport:");
-        transportTitle.setStyle("-fx-font: 16 Ubuntu; -fx-fill: white;");
-
-        VBox contentBox = new VBox(10);
-        contentBox.setAlignment(Pos.CENTER);
-        contentBox.getChildren().add(transportTitle);
-
-        for (String mode : modes) {
-            HBox row = new HBox(10);
-            row.setAlignment(Pos.CENTER);
-
-            Text modeText = new Text(mode);
-            modeText.setStyle("-fx-font: 14 Ubuntu; -fx-fill: white;");
-            row.getChildren().add(modeText);
-
-            // ImageView icon = getModeIcon(mode);
-            // if (icon != null) row.getChildren().add(icon);
-
-            contentBox.getChildren().add(row);
-        }
-
-        resultPane.getChildren().add(contentBox);
-        return resultPane;
-    }
 
 //    private ImageView getModeIcon(String mode) {
 //        try {
