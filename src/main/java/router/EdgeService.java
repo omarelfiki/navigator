@@ -6,18 +6,16 @@ import models.Trip;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static util.DebugUtil.getDebugMode;
 
 public class EdgeService {
-    TDSImplement tds = new TDSImplement();
-
-    boolean isDebugMode;
-
-    public ArrayList<Edge> getEdges(Node node, int mode) {
-        isDebugMode = getDebugMode();
+    public static ArrayList<Edge> getEdges(Node node, int mode) {
+        boolean isDebugMode = getDebugMode();
         ArrayList<Edge> edges = new ArrayList<>();
-        Stop startStop = tds.getStop(node.getStopId());
+        TDSImplement tds = new TDSImplement();
+        Stop startStop = Objects.requireNonNullElseGet(tds.getStop(node.getStopId()), Stop::new);
 
         //mode 0: with walking, mode 1: without walking
         if (mode == 0) {
@@ -37,7 +35,7 @@ public class EdgeService {
         }
 
         // add the stop that can be reached directly by following the same route
-        if (node.getTrip() != null) {
+        if (!node.getTrip().tripId().equals("N/A")) {
             try {
                 TripEdge tripEdge = new TripEdge(
                         startStop.getStopId(),

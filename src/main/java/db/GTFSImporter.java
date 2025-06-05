@@ -46,7 +46,16 @@ public class GTFSImporter {
                         case "agency" -> importAgencyWithLoadData(filePath, conn);
                         case "routes" -> importRouteWithLoadData(filePath, conn);
                         case "stops" -> importStopsWithLoadData(filePath, conn);
-                        case "trips" -> importTripsWithLoadData(filePath, conn);
+                        case "trips" -> {
+                            Path trips2Path = Paths.get(GTFS_DIR, "trips2.txt");
+                            if (Files.exists(trips2Path)) {
+                                Path mergedTrips = mergeTripsFiles(filePath, trips2Path);
+                                importTripsWithLoadData(mergedTrips, conn);
+                                Files.deleteIfExists(mergedTrips);
+                            } else {
+                                importTripsWithLoadData(filePath, conn);
+                            }
+                        }
                         case "stop_times" -> importStopTimesWithLoadData(filePath, conn);
                     }
                 } else {
@@ -249,5 +258,27 @@ public class GTFSImporter {
             }
         }
         return headers;
+    }
+
+    private Path mergeTripsFiles(Path tripsFile, Path trips2File) throws IOException {
+        Path mergedTrips = Files.createTempFile("merged_trips", ".txt");
+        try (BufferedReader reader1 = Files.newBufferedReader(tripsFile);
+             BufferedReader reader2 = Files.newBufferedReader(trips2File);
+             java.io.BufferedWriter writer = Files.newBufferedWriter(mergedTrips)) {
+            String header = reader1.readLine();
+            writer.write(header);
+            writer.newLine();
+            String line;
+            while ((line = reader1.readLine()) != null) {
+                writer.write(line);
+                writer.newLine();
+            }
+            reader2.readLine();
+            while ((line = reader2.readLine()) != null) {
+                writer.write(line);
+                writer.newLine();
+            }
+        }
+        return mergedTrips;
     }
 }

@@ -175,6 +175,7 @@ public class HomeUI extends Application {
                 if (!searchButton.isVisible()) {
                     searchButton.setVisible(true);
                 }
+                waypoints.clear();
             } else {
                 title.setText("Navigator");
                 label.setText("Navigate to see public transport \n options");
@@ -183,6 +184,8 @@ public class HomeUI extends Application {
                 if (searchButton.isVisible()) {
                     searchButton.setVisible(false);
                 }
+                map.setOverlayPainter(waypointPainter);
+                waypoints.clear();
             }
         });
 
