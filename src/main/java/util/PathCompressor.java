@@ -8,7 +8,7 @@ public class PathCompressor {
 
     public static List<Map<String, Object>> compress(List<Map<String, Object>> path) {
         // Apply both walk and ride compression
-        return compressRides(compressWalks(path));
+        return compressWalks(path);
     }
 
     public static List<Map<String, Object>> compressWalks(List<Map<String, Object>> path) {
