@@ -97,12 +97,31 @@ public class AStarRouterV {
         }
 
         if (bestGoalNode != null) {
-            STOP_NODE.parent = bestGoalNode;
             Stop currentStop = tds.getStop(bestGoalNode.getStopId());
-            double walking_time_to_end = WalkingTime.getWalkingTime(currentStop.getStopLat(), currentStop.getStopLon(), STOP_NODE.getStop().getStopLat(), STOP_NODE.getStop().getStopLon());
-            STOP_NODE.arrivalTime = addTime(bestGoalNode.getArrivalTime(), walking_time_to_end);
-            return reconstructPath(STOP_NODE);
+            double walking_time_to_end = WalkingTime.getWalkingTime(
+                    currentStop.getStopLat(),
+                    currentStop.getStopLon(),
+                    STOP_NODE.getStop().getStopLat(),
+                    STOP_NODE.getStop().getStopLon());
+
+            double totalAStarTime = bestGoalNode.getG() + walking_time_to_end;
+
+            if (debugMode) {
+                System.err.println("A* total time: " + totalAStarTime);
+                System.err.println("Direct walking time: " + walkingTimeOnly);
+            }
+
+            if (walkingTimeOnly <= totalAStarTime) {
+                STOP_NODE.parent = STARTING_NODE;
+                STOP_NODE.arrivalTime = addTime(startTime, walkingTimeOnly);
+                return reconstructPath(STOP_NODE);
+            } else {
+                STOP_NODE.parent = bestGoalNode;
+                STOP_NODE.arrivalTime = addTime(bestGoalNode.getArrivalTime(), walking_time_to_end);
+                return reconstructPath(STOP_NODE);
+            }
         }
+
 
         if (debugMode) System.err.println("best costs for visited nodes: " + bestCosts);
         return null;
