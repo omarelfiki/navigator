@@ -37,7 +37,7 @@ public class EdgeService {
         }
 
         // add the stop that can be reached directly by following the same route
-        if (node.getTrip() != null) {
+        if (!node.getTrip().tripId().equals("N/A")) {
             try {
                 TripEdge tripEdge = new TripEdge(
                         startStop.getStopId(),
