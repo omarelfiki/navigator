@@ -22,21 +22,21 @@ public class AStarRouterV {
         if (debugMode) System.err.println("Starting point" + latStart + " " + lonStart);
         Node STARTING_NODE = new Node("start", startTime, null, "WALK", null);
         STARTING_NODE.stop = new Stop("start", "STARTING POINT", latStart, lonStart);
-        ArrayList<Stop> startStops = tds.getNearbyStops(latStart, lonStart, 800);
+        ArrayList<Stop> startStops = tds.getNearbyStops(latStart, lonStart, 1500);
         if (debugMode) System.err.println("Start stops: " + startStops.size());
-        ArrayList<Stop> stopStops = tds.getNearbyStops(latStop, lonStop, 800);
+        ArrayList<Stop> stopStops = tds.getNearbyStops(latStop, lonStop, 1500);
         Node STOP_NODE = new Node("stop", null, null, "WALK", null);
         STOP_NODE.stop = new Stop("stop", "END_POINT", latStop, lonStop);
         if (debugMode) System.err.println("Stop stops: " + stopStops.size());
         EdgeService edgeService = new EdgeService();
 
         double walkingTimeOnly = WalkingTime.getWalkingTime(latStart, lonStart, latStop, lonStop);
-        System.err.println("Walking time only: " + walkingTimeOnly);
-        if (walkingTimeOnly < 420) {
-            STOP_NODE.parent = STARTING_NODE;
-            STOP_NODE.arrivalTime = addTime(startTime, walkingTimeOnly);
-            return reconstructPath(STOP_NODE);
-        }
+//        System.err.println("Walking time only: " + walkingTimeOnly);
+//        if (walkingTimeOnly < 420) {
+//            STOP_NODE.parent = STARTING_NODE;
+//            STOP_NODE.arrivalTime = addTime(startTime, walkingTimeOnly);
+//            return reconstructPath(STOP_NODE);
+//        }
 
         PriorityQueue<Node> pq = new PriorityQueue<>(Comparator.comparingDouble(n -> n.getG() + n.getH()));
 
