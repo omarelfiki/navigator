@@ -228,65 +228,62 @@ public class TDSImplement implements TransitDataService {
         }
         try (Statement stmt = db.conn.createStatement()) {
             stmt.execute("USE `" + db.dbName.replace("`", "``") + "`");
-        } catch(SQLException e) {
-        if (isDebugMode) System.err.println("SQL Error in getNearbyStops: " + e.getMessage());
+        } catch (SQLException e) {
+            if (isDebugMode) System.err.println("SQL Error in getNearbyStops: " + e.getMessage());
         }
 
-    String procedureCall = "{CALL get_closest_stops(?, ?, ?)}";
-        try(
-    CallableStatement stmt = db.conn.prepareCall(procedureCall))
+        String procedureCall = "{CALL get_closest_stops(?, ?, ?)}";
+        try (
+                CallableStatement stmt = db.conn.prepareCall(procedureCall)) {
+            stmt.setDouble(1, lat);
+            stmt.setDouble(2, lon);
+            stmt.setDouble(3, radiusMeters);
+            ResultSet rs = stmt.executeQuery();
 
-    {
-        stmt.setDouble(1, lat);
-        stmt.setDouble(2, lon);
-        stmt.setDouble(3, radiusMeters);
-        ResultSet rs = stmt.executeQuery();
-
-        while (rs.next()) {
-            String stopID = rs.getString("stop_id");
-            String stopName = rs.getString("stop_name");
-            double stopLat = rs.getDouble("stop_lat");
-            double stopLon = rs.getDouble("stop_lon");
-            stopsWithinRadius.add(new Stop(stopID, stopName, stopLat, stopLon));
+            while (rs.next()) {
+                String stopID = rs.getString("stop_id");
+                String stopName = rs.getString("stop_name");
+                double stopLat = rs.getDouble("stop_lat");
+                double stopLon = rs.getDouble("stop_lon");
+                stopsWithinRadius.add(new Stop(stopID, stopName, stopLat, stopLon));
+            }
+        } catch (
+                SQLException e) {
+            if (isDebugMode) System.err.println("SQL Error in getNearbyStops: " + e.getMessage());
         }
-    } catch(
-    SQLException e)
-
-    {
-        if (isDebugMode) System.err.println("SQL Error in getNearbyStops: " + e.getMessage());
-    }
         return stopsWithinRadius;
-}
+    }
 
-public Agency getAgency(String agencyId) {
-    if (db == null) {
-        if (isDebugMode) System.err.println("Error: Database access instance is null.");
+    public Agency getAgency(String agencyId) {
+        if (db == null) {
+            if (isDebugMode) System.err.println("Error: Database access instance is null.");
+            return null;
+        }
+        String sql = "SELECT agency_id, agency_name FROM agency WHERE agency_id = ?";
+        try (
+                PreparedStatement ps = db.conn.prepareStatement(sql)) {
+            ps.setString(1, agencyId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return new Agency(agencyId, rs.getString("agency_name"));
+            }
+        } catch (SQLException e) {
+            if (isDebugMode) System.err.println("SQL Error in getAgency: " + e.getMessage());
+        }
         return null;
     }
-    String sql = "SELECT agency_id, agency_name FROM agency WHERE agency_id = ?";
-    try (
-            PreparedStatement ps = db.conn.prepareStatement(sql)) {
-        ps.setString(1, agencyId);
-        ResultSet rs = ps.executeQuery();
-        if (rs.next()) {
-            return new Agency(agencyId, rs.getString("agency_name"));
-        }
-    } catch (SQLException e) {
-        if (isDebugMode) System.err.println("SQL Error in getAgency: " + e.getMessage());
-    }
-    return null;
-}
+
     @Override
     @SuppressWarnings("SqlResolve")
     public Map<String, Integer> getStopRouteCounts() {
         Map<String, Integer> stopRouteCounts = new HashMap<>();
 
         String sql = """
-        SELECT stop_id, COUNT(DISTINCT t.route_id) AS route_count
-        FROM stop_times st
-        JOIN trips t ON st.trip_id = t.trip_id
-        GROUP BY stop_id
-    """;
+                    SELECT stop_id, COUNT(DISTINCT t.route_id) AS route_count
+                    FROM stop_times st
+                    JOIN trips t ON st.trip_id = t.trip_id
+                    GROUP BY stop_id
+                """;
 
         try (PreparedStatement ps = db.conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -302,6 +299,44 @@ public Agency getAgency(String agencyId) {
         }
 
         return stopRouteCounts;
+    }
+
+    public List<Trip> getAllTrips() {
+        List<Trip> trips = new ArrayList<>();
+        String sql = "SELECT trip_id, route_id, trip_headsign FROM trips";
+        try (
+                PreparedStatement ps = db.conn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                String tripId = rs.getString("trip_id");
+                Route route = getRoute(rs.getString("route_id"));
+                String headSign = rs.getString("trip_headsign");
+                trips.add(new Trip(tripId, route, headSign));
+            }
+        } catch (SQLException e) {
+            if (isDebugMode) System.err.println("SQL Error in getAllTrips: " + e.getMessage());
+        }
+        return trips;
+    }
+
+    public List<StopTime> getStopTimesForTrip(String tripId) {
+        List<StopTime> stopTimes = new ArrayList<>();
+        String sql = "SELECT stop_id, arrival_time, departure_time, stop_sequence FROM stop_times WHERE trip_id = ? ORDER BY stop_sequence";
+        try (PreparedStatement ps = db.conn.prepareStatement(sql)) {
+            ps.setString(1, tripId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Stop stop = getStop(rs.getString("stop_id"));
+                Trip trip = getTrip(tripId);
+                String arrivalTime = rs.getString("arrival_time");
+                String departureTime = rs.getString("departure_time");
+                int stopSequence = rs.getInt("stop_sequence");
+                stopTimes.add(new StopTime(stop, trip, departureTime, arrivalTime, stopSequence));
+            }
+        } catch (SQLException e) {
+            if (isDebugMode) System.err.println("SQL Error in getStopTimesForTrip: " + e.getMessage());
+        }
+        return stopTimes;
     }
 
 }
