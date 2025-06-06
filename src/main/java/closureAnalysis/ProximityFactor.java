@@ -35,7 +35,7 @@ public class ProximityFactor {
 
                 double distance = GeoUtil.distance(stopLat, stopLon, monumentLat, monumentLon);
 
-                if (distance <= 100) {
+                if (distance <= 500) {
                     pf.setPs(1.0);
 //                    nearMonument = true;
                     break;
