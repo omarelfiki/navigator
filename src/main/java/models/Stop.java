@@ -9,6 +9,7 @@ public class Stop extends StopData {
     private final double stopLon;
 
     public Stop(String stopId, String stopName, double stopLat, double stopLon) {
+        super(stopId);
         this.stopId = stopId;
         this.stopName = stopName;
         this.stopLat = stopLat;

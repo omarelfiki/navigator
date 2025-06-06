@@ -6,7 +6,7 @@ public class StopData {
     private double es;  // Essentiality factor
     private double ds;  // Population density factor
     private double score; // Final combined score
-    private String stopId; // Unique identifier for the stop
+    private final String stopId; // Unique identifier for the stop
     public StopData(String stopId) {
         this.stopId = stopId;
         this.fs = 0.0;
