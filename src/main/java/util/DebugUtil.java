@@ -1,10 +1,54 @@
 package util;
 
-import router.Node;
-
-import java.util.List;
 
 public class DebugUtil {
+    public static void init() {
+        String debug = System.getenv("debug");
+        if (debug != null) {
+            System.setProperty("debug", debug);
+        } else {
+            sendWarning("Debug mode not defined in environment, debug mode is enabled by default");
+            System.setProperty("debug", "true");
+        }
+    }
+
+    public static void sendSuccess(String message) {
+        if (getDebugMode()) {
+            System.err.println("SUCCESS: " + getStack() + message);
+        }
+    }
+
+    public static void sendError(String message) {
+        if (getDebugMode()) {
+            System.err.println("ERROR: " + getStack() + message);
+        }
+    }
+
+    public static void sendError(String message, Exception e) {
+        if (getDebugMode()) {
+            System.err.println("ERROR: " + getStack() + message + " - Exception: " + e.getMessage());
+        }
+
+    }
+
+    public static void sendInfo(String message) {
+        if (getDebugMode()) {
+            System.err.println("INFO: " + getStack() + message);
+        }
+    }
+
+    public static void sendWarning(String message) {
+        if (getDebugMode()) {
+            System.err.println("WARNING: " + getStack() + message);
+        }
+    }
+
+    private static String getStack() {
+        StackTraceElement[] stack = Thread.currentThread().getStackTrace();
+        String method = stack[3].getMethodName();
+        String className = stack[3].getClassName();
+        return "[" + className + "." + method + "] ";
+    }
 
     @SuppressWarnings("unused")
     public static void printHeapSize() {
@@ -15,20 +59,9 @@ public class DebugUtil {
         System.out.println("Maximum Heap Size: " + maxHeap + " MB");
     }
 
-    @SuppressWarnings("unused")
-    public static void printNode(Node node) {
-        System.out.println(node.toString());
-    }
 
-    @SuppressWarnings("unused")
-    public static void printPath(List<Node> path) {
-        for (Node node : path) {
-            System.out.println(node.toString());
-        }
-    }
 
-    @SuppressWarnings("unused")
-    public static boolean getDebugMode() {
+    private static boolean getDebugMode() {
         String debug = System.getProperty("debug");
         if (debug == null) {
             return true;
@@ -36,11 +69,5 @@ public class DebugUtil {
             return Boolean.parseBoolean(debug);
         }
     }
-
-    @SuppressWarnings("unused")
-    public static String getOS() {
-        String os = System.getProperty("os.name").toLowerCase();
-        System.out.println("Operating System: " + os);
-        return os;
-    }
 }
+

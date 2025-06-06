@@ -16,7 +16,7 @@ import router.Node;
 import util.PathCompressor;
 import util.TimeUtil;
 
-import static util.DebugUtil.getDebugMode;
+import static util.DebugUtil.init;
 import static util.TimeUtil.parseTime;
 
 public class RoutingEngine {
@@ -33,14 +33,7 @@ public class RoutingEngine {
     }
 
     public static void main(String[] args) throws IOException {
-        String debug = System.getenv("debug");
-        boolean isDebugMode = getDebugMode();
-        if (debug != null) {
-            System.setProperty("debug", debug);
-        } else {
-            if (isDebugMode) System.err.println("WARNING: Environment variable 'debug' is not set. Debug mode is disabled by default.");
-            System.setProperty("debug", "false");
-        }
+        init();
         new RoutingEngine().run();
     }
 
@@ -195,6 +188,3 @@ public class RoutingEngine {
 
 
 }
-// {"routeFrom":{"lat":41.904,"lon":12.5004},"to":{"lat":41.8791,"lon":12.5221},"startingAt":"09:30"} - test case
-//  Roma Termini - Vatican test case below
-// {"routeFrom":{"lat":41.900496398,"lon":12.501164662},"to":{"lat":41.906487,"lon":12.453641},"startingAt":"09:28"}

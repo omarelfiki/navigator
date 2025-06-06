@@ -8,7 +8,7 @@ import java.sql.Statement;
 import java.util.Objects;
 import java.net.URISyntaxException;
 
-import static util.DebugUtil.getDebugMode;
+import static util.DebugUtil.*;
 
 
 public class DBConfig {
@@ -16,34 +16,31 @@ public class DBConfig {
 
     private final String GTFS_PATH;
 
-    private final boolean isDebugMode;
-
     public DBConfig(String filePath) {
         this.access = DBAccessProvider.getInstance();
         GTFS_PATH = filePath;
-        isDebugMode = getDebugMode();
     }
 
     @SuppressWarnings("SqlInjection")
     public void initializeDB() {
         try {
-            if (isDebugMode) System.err.println("Starting database initialization...");
+            sendInfo("Starting database initialization...");
             if (access.conn != null && !access.conn.isClosed()) {
-                if (isDebugMode) System.err.println("Insuring clear database...");
+                sendInfo("Insuring clear database...");
                 try (Statement stmt = access.conn.createStatement()) {
                     stmt.execute("DROP DATABASE IF EXISTS `" + access.dbName.replace("`", "``") + "`");
                     stmt.execute("CREATE DATABASE `" + access.dbName.replace("`", "``") + "`");
                     stmt.execute("USE `" + access.dbName.replace("`", "``") + "`");
                 } catch (SQLException e) {
-                    System.err.println("SQL Error (Disabling Foreign Key Checks): " + e.getMessage());
+                    sendError("SQL Error (Disabling Foreign Key Checks): " , e);
                 }
-                if (isDebugMode) System.err.println("Initializing tables...");
+                sendInfo("Initializing tables...");
                 initializeTables();
 
-                if (isDebugMode) System.err.println("Initializing triggers...");
+                sendInfo("Initializing triggers...");
                 initializeTriggers();
 
-                if (isDebugMode) System.err.println("Loading GTFS data from zip file: " + GTFS_PATH);
+                sendInfo("Loading GTFS data from zip file: " + GTFS_PATH);
                 String tempDir = System.getenv("ROUTING_ENGINE_STORAGE_DIRECTORY");
                 if (tempDir == null || tempDir.isEmpty()) {
                     tempDir = System.getProperty("java.io.tmpdir");
@@ -51,24 +48,24 @@ public class DBConfig {
                 ZipExtractor.extractZipToDirectory(GTFS_PATH, tempDir);
                 GTFSImporter importer = new GTFSImporter(tempDir);
                 importer.importGTFS();
-                if (isDebugMode) System.err.println("GTFS data loaded successfully.");
+                sendSuccess("GTFS data loaded successfully.");
 
-                if (isDebugMode) System.err.println("Database initialization completed.");
+                sendSuccess("Database initialization completed successfully.");
             } else {
-                if (isDebugMode)
-                    System.err.println("Stopping database initialization: connection to the database is not established.");
+                sendError("Database connection is not established. Please check your connection settings.");
             }
         } catch (SQLException e) {
-            System.err.println("SQL Initialization Error: " + e.getMessage());
+            sendError("FATAL SQL Initialization Error: ", e);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            sendError("FATAL IO Error during GTFS import: ", e);
+            throw new RuntimeException();
         }
     }
 
     public void initializeTriggers() {
         try {
             if (access.conn != null && !access.conn.isClosed()) {
-                if (isDebugMode) System.err.println("Accessing GTFS trigger SQL file");
+                sendInfo("Accessing GTFS trigger SQL file");
                 try {
                     String sqlFilePath = java.nio.file.Paths.get(Objects.requireNonNull(getClass().getClassLoader().getResource("gtfs_triggers.sql")).toURI()).toString();
                     String sql = new String(java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(sqlFilePath)));
@@ -77,24 +74,23 @@ public class DBConfig {
                         statement.execute(sql.trim());
                     }
                 } catch (java.io.IOException e) {
-                    System.err.println("Error reading SQL file: " + e.getMessage());
+                    sendError("Error reading SQL file", e);
                 } catch (URISyntaxException e) {
-                    System.err.println("Error reading SQL path file: " + e.getMessage());
+                    sendError("Error reading SQL path", e);
                 }
-                if (isDebugMode) System.err.println("GTFS data model trigger created successfully.");
+                sendSuccess("GTFS data model trigger created successfully.");
             } else {
-                if (isDebugMode)
-                    System.err.println("Stopping trigger initialization: connection to the database is not established.");
+                sendError("Stopping trigger initialization: connection to the database is not established.");
             }
         } catch (SQLException e) {
-            System.err.println("SQL Trigger Error: " + e.getMessage());
+            sendError("FATAL SQL Initialization Error: ", e);
         }
     }
 
     public void initializeTables() {
         try {
             if (access.conn != null && !access.conn.isClosed()) {
-                if (isDebugMode) System.err.println("Accessing GTFS schema SQL file");
+                sendInfo("Accessing GTFS schema SQL file");
                 try {
                     String sqlFilePath = java.nio.file.Paths.get(
                             Objects.requireNonNull(getClass().getClassLoader().getResource("new_schema.sql")).toURI()
@@ -108,17 +104,16 @@ public class DBConfig {
                         }
                     }
                 } catch (java.io.IOException e) {
-                    System.err.println("Error reading SQL file: " + e.getMessage());
+                    sendError("Error reading SQL file", e);
                 } catch (URISyntaxException e) {
-                    System.err.println("Error reading SQL pathfile: " + e.getMessage());
+                    sendError("Error reading SQL path", e);
                 }
-                if (isDebugMode) System.err.println("GTFS data model table created successfully.");
+                sendSuccess("GTFS data model tables created successfully.");
             } else {
-                if (isDebugMode)
-                    System.err.println("Stopping table initialization: connection to the database is not established.");
+                sendError("Stopping table initialization: connection to the database is not established.");
             }
         } catch (SQLException e) {
-            System.err.println("SQL Table Init Error: " + e.getMessage());
+            sendError("FATAL SQL Initialization Error: ", e);
         }
     }
 }

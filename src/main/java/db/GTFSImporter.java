@@ -9,18 +9,15 @@ import java.nio.file.Paths;
 import java.sql.*;
 import java.util.*;
 
-import static util.DebugUtil.getDebugMode;
+import static util.DebugUtil.*;
 
 public class GTFSImporter {
     private final String GTFS_DIR;
     private final DBAccess access;
-    private final boolean isDebugMode;
 
     public GTFSImporter(String GTFS_DIR) {
         this.access = DBAccessProvider.getInstance();
         this.GTFS_DIR = GTFS_DIR;
-        this.isDebugMode = getDebugMode();
-
     }
 
     public void importGTFS() throws IOException, SQLException {
@@ -40,25 +37,34 @@ public class GTFSImporter {
                 Path filePath = Paths.get(GTFS_DIR, filename);
 
                 if (Files.exists(filePath)) {
-                    if (isDebugMode) System.err.println("Importing " + filename + " into " + tableName + "...");
+                    sendInfo("Importing " + filename + " into " + tableName + "...");
 
                     switch (tableName) {
                         case "agency" -> importAgencyWithLoadData(filePath, conn);
                         case "routes" -> importRouteWithLoadData(filePath, conn);
                         case "stops" -> importStopsWithLoadData(filePath, conn);
-                        case "trips" -> importTripsWithLoadData(filePath, conn);
+                        case "trips" -> {
+                            Path trips2Path = Paths.get(GTFS_DIR, "trips2.txt");
+                            if (Files.exists(trips2Path)) {
+                                Path mergedTrips = mergeTripsFiles(filePath, trips2Path);
+                                importTripsWithLoadData(mergedTrips, conn);
+                                Files.deleteIfExists(mergedTrips);
+                            } else {
+                                importTripsWithLoadData(filePath, conn);
+                            }
+                        }
                         case "stop_times" -> importStopTimesWithLoadData(filePath, conn);
                     }
                 } else {
-                    if (isDebugMode) System.err.println("File not found: " + filePath);
+                    sendError("File not found: " + filePath);
                 }
             }
         }
-        if (isDebugMode) System.err.println("GTFS import complete.");
+        sendSuccess("GTFS import complete.");
     }
 
     @SuppressWarnings("SqlResolve")
-    private void importAgencyWithLoadData(Path filePath, Connection conn) throws SQLException, IOException {
+    private void importAgencyWithLoadData(Path filePath, Connection conn) throws IOException {
         String absolutePath = filePath.toAbsolutePath().toString().replace("\\", "/");
         String[] importantFields = {"agency_id", "agency_name"};
 
@@ -67,9 +73,7 @@ public class GTFSImporter {
         String setBuilder = loadDataParts.get("setBuilder");
 
         try (Statement stmt = conn.createStatement()) {
-
             stmt.execute("SET FOREIGN_KEY_CHECKS=0");
-
             String sql = "LOAD DATA LOCAL INFILE '" + absolutePath + "' " +
                     "INTO TABLE agency " +
                     "FIELDS TERMINATED BY ',' " +
@@ -80,14 +84,16 @@ public class GTFSImporter {
                     setBuilder;
 
             int rows = stmt.executeUpdate(sql);
-            if (isDebugMode) System.err.println("Inserted " + rows + " agencies from: " + filePath.getFileName());
+            sendInfo("Inserted " + rows + " agencies from: " + filePath.getFileName());
 
             stmt.execute("SET FOREIGN_KEY_CHECKS=1");
+        } catch (SQLException e) {
+                sendError("SQL Error during agency import: ", e);
         }
     }
 
     @SuppressWarnings("SqlResolve")
-    private void importRouteWithLoadData(Path filePath, Connection conn) throws IOException, SQLException {
+    private void importRouteWithLoadData(Path filePath, Connection conn) throws IOException {
 
         String absolutePath = filePath.toAbsolutePath().toString().replace("\\", "/");
 
@@ -113,14 +119,16 @@ public class GTFSImporter {
                     setBuilder;
 
             int rows = stmt.executeUpdate(sql);
-            if (isDebugMode) System.err.println("Inserted " + rows + " routes from: " + filePath.getFileName());
+            sendInfo("Inserted " + rows + " routes from: " + filePath.getFileName());
 
             stmt.execute("SET FOREIGN_KEY_CHECKS=1");
+        } catch (SQLException e) {
+            sendError("SQL Error during agency import: ", e);
         }
     }
 
     @SuppressWarnings("SqlResolve")
-    private void importStopsWithLoadData(Path filePath, Connection conn) throws SQLException, IOException {
+    private void importStopsWithLoadData(Path filePath, Connection conn) throws IOException {
         String absolutePath = filePath.toAbsolutePath().toString().replace("\\", "/");
         String[] importantFields = {"stop_id", "stop_name", "stop_lat", "stop_lon", "stop_code"};
 
@@ -142,14 +150,16 @@ public class GTFSImporter {
                     setBuilder;
 
             int rows = stmt.executeUpdate(sql);
-            if (isDebugMode) System.err.println("Inserted " + rows + " stops from: " + filePath.getFileName());
+            sendInfo("Inserted " + rows + " stops from: " + filePath.getFileName());
 
             stmt.execute("SET FOREIGN_KEY_CHECKS=1");
+        } catch (SQLException e) {
+            sendError("SQL Error during agency import: ", e);
         }
     }
 
     @SuppressWarnings("SqlResolve")
-    private void importTripsWithLoadData(Path filePath, Connection conn) throws SQLException, IOException {
+    private void importTripsWithLoadData(Path filePath, Connection conn) throws IOException {
         String absolutePath = filePath.toAbsolutePath().toString().replace("\\", "/");
         String[] importantFields = {"trip_id", "route_id", "service_id", "trip_short_name", "trip_headsign"};
 
@@ -172,14 +182,16 @@ public class GTFSImporter {
                     setBuilder;
 
             int rows = stmt.executeUpdate(sql);
-            if (isDebugMode) System.err.println("Inserted " + rows + " trips from: " + filePath.getFileName());
+            sendInfo("Inserted " + rows + " trips from: " + filePath.getFileName());
 
             stmt.execute("SET FOREIGN_KEY_CHECKS=1");
+        } catch (SQLException e) {
+            sendError("SQL Error during agency import: ", e);
         }
     }
 
     @SuppressWarnings("SqlResolve")
-    private void importStopTimesWithLoadData(Path filePath, Connection conn) throws SQLException, IOException {
+    private void importStopTimesWithLoadData(Path filePath, Connection conn) throws IOException {
         String absolutePath = filePath.toAbsolutePath().toString().replace("\\", "/");
 
         String[] importantFields = {"trip_id", "arrival_time", "departure_time", "stop_id", "stop_sequence"};
@@ -201,15 +213,16 @@ public class GTFSImporter {
                     setBuilder;
 
             int rows = stmt.executeUpdate(sql);
-            if (isDebugMode) System.err.println("Inserted " + rows + " stop_times from: " + filePath.getFileName());
+            sendInfo("Inserted " + rows + " stop_times from: " + filePath.getFileName());
 
             stmt.execute("SET FOREIGN_KEY_CHECKS=1");
+        } catch (SQLException e) {
+            sendError("SQL Error during agency import: ", e);
         }
     }
 
     // helper method to get build the tempVariables and Set statement for the loadData Methods
     private Map<String, String> prepareLoadDataParts(Path filePath, String[] importantFields) throws IOException {
-
         List<String> headers = readCsvHeaders(filePath);
         Map<String, String> loadDataParts = new HashMap<>();
 
@@ -249,5 +262,27 @@ public class GTFSImporter {
             }
         }
         return headers;
+    }
+
+    private Path mergeTripsFiles(Path tripsFile, Path trips2File) throws IOException {
+        Path mergedTrips = Files.createTempFile("merged_trips", ".txt");
+        try (BufferedReader reader1 = Files.newBufferedReader(tripsFile);
+             BufferedReader reader2 = Files.newBufferedReader(trips2File);
+             java.io.BufferedWriter writer = Files.newBufferedWriter(mergedTrips)) {
+            String header = reader1.readLine();
+            writer.write(header);
+            writer.newLine();
+            String line;
+            while ((line = reader1.readLine()) != null) {
+                writer.write(line);
+                writer.newLine();
+            }
+            reader2.readLine();
+            while ((line = reader2.readLine()) != null) {
+                writer.write(line);
+                writer.newLine();
+            }
+        }
+        return mergedTrips;
     }
 }

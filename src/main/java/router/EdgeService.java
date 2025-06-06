@@ -7,17 +7,12 @@ import models.Trip;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-
-import static util.DebugUtil.getDebugMode;
+import static util.DebugUtil.sendInfo;
 
 public class EdgeService {
-    TDSImplement tds = new TDSImplement();
-
-    boolean isDebugMode;
-
-    public ArrayList<Edge> getEdges(Node node, int mode) {
-        isDebugMode = getDebugMode();
+    public static ArrayList<Edge> getEdges(Node node, int mode) {
         ArrayList<Edge> edges = new ArrayList<>();
+        TDSImplement tds = new TDSImplement();
         Stop startStop = Objects.requireNonNullElseGet(tds.getStop(node.getStopId()), Stop::new);
 
         //mode 0: with walking, mode 1: without walking
@@ -47,7 +42,7 @@ public class EdgeService {
                 );
                 edges.add(tripEdge);
             } catch (IllegalArgumentException e) {
-                if (isDebugMode) System.err.println("Skipping trip continuation: " + e.getMessage());
+                sendInfo("Skipping trip continuation: " + e.getMessage());
             }
 
         }
@@ -55,17 +50,17 @@ public class EdgeService {
 
         //add transfer edges
         List<Trip> upcomingTrips = tds.getUpcomingDistinctRouteTrips(node.getStopId(), node.getArrivalTime());
-        if (isDebugMode) System.err.println("upcoming trips: " + upcomingTrips.size());
+        sendInfo("upcoming trips: " + upcomingTrips.size());
         for (Trip trip : upcomingTrips) {
             try {
                 TransferEdge transferEdge = new TransferEdge(startStop.getStopId(), node.getArrivalTime(), trip);
                 edges.add(transferEdge);
-                if (isDebugMode) System.err.println("Transfer " + transferEdge.getFromStopId() + " to " + transferEdge.getToStopId() +
+                sendInfo("Transfer " + transferEdge.getFromStopId() + " to " + transferEdge.getToStopId() +
                         " weight " + transferEdge.getWeight() + " by route " + transferEdge.getTrip().route().routeId() +
                         " at " + transferEdge.getDepartureTime() + " waiting until " + transferEdge.getRideStartTime() +
                         " to " + transferEdge.getArrivalTime());
             } catch (IllegalArgumentException e) {
-                if (isDebugMode) System.err.println("Skipping trip " + trip.tripId() + ": " + e.getMessage());
+                sendInfo("Skipping trip " + trip.tripId() + ": " + e.getMessage());
             }
         }
 

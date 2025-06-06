@@ -1,14 +1,15 @@
 package models;
 
-import closureAnalysis.StopData;
 
-public class Stop extends StopData {
+
+public class Stop{
     private final String stopId;
     private final String stopName;
     private final double stopLat;
     private final double stopLon;
 
     public Stop(String stopId, String stopName, double stopLat, double stopLon) {
+        super(stopId);
         this.stopId = stopId;
         this.stopName = stopName;
         this.stopLat = stopLat;

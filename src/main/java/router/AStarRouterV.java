@@ -6,47 +6,35 @@ import db.TDSImplement;
 import models.*;
 import util.*;
 
+import static router.EdgeService.getEdges;
+import static util.DebugUtil.*;
 import static util.TimeUtil.*;
 
 public class AStarRouterV {
     Map<String, Double> bestCosts = new HashMap<>();
-
-    boolean debugMode = false;
-
-    TDSImplement tds = new TDSImplement();
-
-
-
     public List<Node> findFastestPath(double latStart, double lonStart, double latStop, double lonStop, String startTime, List<String> excludedStops) {
+        TDSImplement tds = new TDSImplement();
         reset();
-        if (debugMode) System.err.println("Starting point" + latStart + " " + lonStart);
+        sendInfo("Starting point" + latStart + " " + lonStart);
         Node STARTING_NODE = new Node("start", startTime, null, "WALK", null);
         STARTING_NODE.stop = new Stop("start", "STARTING POINT", latStart, lonStart);
         ArrayList<Stop> startStops = tds.getNearbyStops(latStart, lonStart, 1500);
-        if (debugMode) System.err.println("Start stops: " + startStops.size());
+        sendInfo("Start stops: " + startStops.size());
         ArrayList<Stop> stopStops = tds.getNearbyStops(latStop, lonStop, 1500);
         Node STOP_NODE = new Node("stop", null, null, "WALK", null);
         STOP_NODE.stop = new Stop("stop", "END_POINT", latStop, lonStop);
-        if (debugMode) System.err.println("Stop stops: " + stopStops.size());
-        EdgeService edgeService = new EdgeService();
+        sendInfo("Stop stops: " + stopStops.size());
 
         double walkingTimeOnly = WalkingTime.getWalkingTime(latStart, lonStart, latStop, lonStop);
-//        System.err.println("Walking time only: " + walkingTimeOnly);
-//        if (walkingTimeOnly < 420) {
-//            STOP_NODE.parent = STARTING_NODE;
-//            STOP_NODE.arrivalTime = addTime(startTime, walkingTimeOnly);
-//            return reconstructPath(STOP_NODE);
-//        }
-
         PriorityQueue<Node> pq = new PriorityQueue<>(Comparator.comparingDouble(n -> n.getG() + n.getH()));
 
         for (Stop stop : startStops) {
             if (excludedStops.contains(stop.getStopId())) {
-                if (debugMode) System.err.println("Excluding start stop: " + stop.getStopId());
+                sendInfo("Excluding start stop: " + stop.getStopId());
                 continue;
             }
             double walkTime = WalkingTime.getWalkingTime(latStart, lonStart, stop.getStopLat(), stop.getStopLon());
-            if (debugMode) System.err.println("Walking time to stop: " + stop.getStopId() + " " + walkTime);
+            sendInfo("Walking time to stop: " + stop.getStopId() + " " + walkTime);
             String arrivalTime = addTime(startTime, walkTime);
             Node node = new Node(stop.getStopId(), arrivalTime, STARTING_NODE, "WALK", null);
             node.g = walkTime;
@@ -67,6 +55,7 @@ public class AStarRouterV {
             current = pq.poll();
 
             if (isAtGoal(current, stopStops)) {
+                assert current != null;
                 double estimatedTotalCost = current.getG();
                 if (estimatedTotalCost < bestGoalCost) {
                     bestGoalCost = estimatedTotalCost;
@@ -75,12 +64,13 @@ public class AStarRouterV {
                 continue; // Keep exploring to find better goal
             }
 
-            List<Edge> edges = edgeService.getEdges(current, 0);
+            assert current != null;
+            List<Edge> edges = getEdges(current, 0);
 
             for (Edge edge : edges) {
                 String toStopId = edge.getToStopId();
                 if (excludedStops.contains(toStopId)) {
-                    if (debugMode) System.err.println("Excluding stop: " + toStopId);
+                   sendInfo("Excluding stop: " + toStopId);
                     continue;
                 }
                 String arrivalTime = edge.getArrivalTime();
@@ -108,24 +98,20 @@ public class AStarRouterV {
 
             double totalAStarTime = bestGoalNode.getG() + walking_time_to_end;
 
-            if (debugMode) {
-                System.err.println("A* total time: " + totalAStarTime);
-                System.err.println("Direct walking time: " + walkingTimeOnly);
-            }
+            sendInfo("A* total time: " + totalAStarTime);
+            sendInfo("Direct walking time: " + walkingTimeOnly);
 
             if (walkingTimeOnly <= totalAStarTime) {
                 STOP_NODE.parent = STARTING_NODE;
                 STOP_NODE.arrivalTime = addTime(startTime, walkingTimeOnly);
-                return reconstructPath(STOP_NODE);
             } else {
                 STOP_NODE.parent = bestGoalNode;
                 STOP_NODE.arrivalTime = addTime(bestGoalNode.getArrivalTime(), walking_time_to_end);
-                return reconstructPath(STOP_NODE);
             }
+            return reconstructPath(STOP_NODE);
         }
 
-
-        if (debugMode) System.err.println("best costs for visited nodes: " + bestCosts);
+        sendSuccess("Best costs for visited nodes: " + bestCosts);
         return null;
     }
 
@@ -163,7 +149,5 @@ public class AStarRouterV {
     public void reset() {
         bestCosts.clear();
     }
-
-
 
 }

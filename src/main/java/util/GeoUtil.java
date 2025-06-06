@@ -11,16 +11,15 @@ import java.nio.charset.StandardCharsets;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import static util.DebugUtil.getDebugMode;
+import static util.DebugUtil.sendError;
 
 public class GeoUtil {
     private static final String API_KEY = "AIzaSyDWUFIdOzWZeq2BsFfTMMif-VdY2YSqmKg";
 
     public static double[] getCoordinatesFromAddress(String address) {
-        boolean isDebugMode = getDebugMode();
         try {
             if(!NetworkUtil.isNetworkAvailable()) {
-                if (isDebugMode) System.err.println("Geocode Error: Network is not available.");
+                sendError("Geocode Error: Network is not available.");
                 return null;
             }
 
@@ -65,10 +64,9 @@ public class GeoUtil {
     }
 
     public static String getAddress(double lat, double lng) {
-        boolean isDebugMode = getDebugMode();
         try {
             if(!NetworkUtil.isNetworkAvailable()) {
-                if (isDebugMode) System.err.println("Geocode Error: Network is not available.");
+                sendError("Geocode Error: Network is not available.");
                 return null;
             }
 
@@ -84,16 +82,15 @@ public class GeoUtil {
             return results.getJSONObject(0).getString("formatted_address");
 
         } catch (Exception e) {
-            System.err.println("Geocode Error: " + e);
+            sendError("Geocode Error: " + e);
             return null;
         }
     }
 
     public static double[] parseCoords(String coords) {
-        boolean isDebugMode = getDebugMode();
         String[] parts = coords.split(",");
         if (parts.length != 2) {
-            if (isDebugMode) System.out.println("Invalid coordinates format");
+            sendError("Invalid coordinates format");
             return null;
         }
         try {
@@ -101,7 +98,7 @@ public class GeoUtil {
             double lng = Double.parseDouble(parts[1].trim());
             return new double[]{lat, lng};
         } catch (NumberFormatException e) {
-            if (isDebugMode) System.out.println("Invalid coordinates format");
+            sendError("Invalid coordinates format");
             return null;
         }
     }
