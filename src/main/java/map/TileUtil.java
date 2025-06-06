@@ -5,7 +5,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -19,12 +18,10 @@ import static util.DebugUtil.*;
 
 public class TileUtil {
     private final boolean isOnline;
-    private final boolean useGrayscaleCache;
 
-
-    public TileUtil(boolean isOnline, boolean grayscale) {
+    public TileUtil(boolean isOnline) {
         this.isOnline = isOnline;
-        this.useGrayscaleCache = grayscale;
+
     }
 
     public TileFactory getTileFactory() {
@@ -40,40 +37,7 @@ public class TileUtil {
                 throw new RuntimeException();
             }
         }
-        if (useGrayscaleCache) {
-            String grayscalePath = Paths.get(System.getProperty("user.home"), "Archive_grayscale.zip").toUri().toString();
-            info =  new OSMTileFactoryInfo("Zip archive (grayscale)", "jar:" + grayscalePath + "!");
-        }
         return new DefaultTileFactory(info);
-    }
-
-    public void generateGrayscaleCache(String colorCacheDirPath, String grayscaleCacheDirPath) throws IOException {
-        File colorDir = new File(colorCacheDirPath);
-        File grayDir = new File(grayscaleCacheDirPath);
-        if (!colorDir.exists() || !colorDir.isDirectory()) {
-            sendError("Color cache directory does not exist or is not a directory: " + colorCacheDirPath);
-            throw new IOException();
-        }
-        if (!grayDir.exists() && !grayDir.mkdirs()) {
-            sendError("Failed to create grayscale cache directory: " + grayscaleCacheDirPath);
-            throw new IOException();
-        }
-        for (File file : Objects.requireNonNull(colorDir.listFiles())) {
-            if (file.isDirectory()) {
-                generateGrayscaleCache(file.getAbsolutePath(), new File(grayDir, file.getName()).getAbsolutePath());
-            } else if (file.getName().endsWith(".png") || file.getName().endsWith(".jpg")) {
-                File grayFile = new File(grayDir, file.getName());
-                if (!grayFile.exists()) {
-                    java.awt.image.BufferedImage img = javax.imageio.ImageIO.read(file);
-                    if (img != null) {
-                        java.awt.image.BufferedImage gray = new java.awt.image.BufferedImage(img.getWidth(), img.getHeight(), java.awt.image.BufferedImage.TYPE_BYTE_GRAY);
-                        java.awt.image.ColorConvertOp op = new java.awt.image.ColorConvertOp(java.awt.color.ColorSpace.getInstance(java.awt.color.ColorSpace.CS_GRAY), null);
-                        op.filter(img, gray);
-                        javax.imageio.ImageIO.write(gray, "png", grayFile);
-                    }
-                }
-            }
-        }
     }
 
 

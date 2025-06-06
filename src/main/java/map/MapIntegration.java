@@ -26,6 +26,7 @@ public class MapIntegration {
 
     boolean isOnline;
 
+    GeoPosition initialPosition = new GeoPosition(41.9028, 12.4964); // Rome
 
     public MapIntegration(boolean isOnline) {
         this.isOnline = isOnline;
@@ -34,7 +35,7 @@ public class MapIntegration {
     public StackPane createMapPane() {
         StackPane mapPane = new StackPane();
         SwingNode swingNode = new SwingNode();
-        TileUtil tileUtil = new TileUtil(isOnline, false);
+        TileUtil tileUtil = new TileUtil(isOnline);
         TileFactory tileFactory = tileUtil.getTileFactory();
 
         // Setup local file cache
@@ -55,14 +56,14 @@ public class MapIntegration {
                     map.setAddressLocation(new GeoPosition(lat, lon));
                 } catch (NumberFormatException e) {
                     sendError("Invalid start location format: " + start_location);
-                    map.setAddressLocation(new GeoPosition(41.9028, 12.4964));
+                    map.setAddressLocation(initialPosition);
                 }
             } else {
                 sendError("Invalid start location: " + start_location);
-                map.setAddressLocation(new GeoPosition(41.9028, 12.4964));
+                map.setAddressLocation(initialPosition);
             }
         } else {
-            map.setAddressLocation(new GeoPosition(41.9028, 12.4964)); // Rome
+            map.setAddressLocation(initialPosition);
         }
 
         MouseInputListener panListener = new PanMouseInputListener(map);
@@ -117,54 +118,56 @@ public class MapIntegration {
     }
 
     private void setCache(TileFactory tileFactory, TileUtil tileUtil) {
-        if (isOnline) {
-            File cacheDir = new File(System.getProperty("user.home") + File.separator + ".jxmapviewer2");
-            File zipFile = new File(System.getProperty("user.home") + File.separator + "Archive_color.zip");
-            long thirty = 30L * 24 * 60 * 60 * 1000; // 30 days in milliseconds
-            // Check if the cache directory exists and is up to date
-            if (zipFile.exists()) {
-                long lastModified = zipFile.lastModified();
-                long currentTime = System.currentTimeMillis();
+        if (!isOnline) return;
+        File cacheDir = new File(System.getProperty("user.home") + File.separator + ".jxmapviewer2");
+        File zipFile = new File(System.getProperty("user.home") + File.separator + "Archive_color.zip");
+        long thirty = 30L * 24 * 60 * 60 * 1000; // 30 days in milliseconds
 
-                if ((currentTime - lastModified) > thirty) {
-                    // If the cache is older than 30 days, delete it
-                    sendWarning("Cache is out of date: Reconstructing cache directory: " + cacheDir.getAbsolutePath());
-                    deleteDirectory(cacheDir);
-                    deleteDirectory(zipFile);
-                } else {
-                    long days = 30 - ((currentTime - lastModified) / (24 * 60 * 60 * 1000));
-                    sendInfo("Cache is up to date by " + days + " days:" + cacheDir.getAbsolutePath());
-                    return;
-                }
-            }
-            // Create cache directory if it doesn't exist
-            if (cacheDir.exists()) {
-                sendInfo("Cache directory exists at: " + cacheDir.getAbsolutePath());
-            } else if (!cacheDir.exists()) {
-                sendError("Failed to create cache directory: " + cacheDir.getAbsolutePath());
-                return;
-            }
-            // Set local cache for the tile factory
-            tileFactory.setLocalCache(new FileBasedLocalCache(cacheDir, false));
-            String cacheDirPath = System.getProperty("user.home") + File.separator + ".jxmapviewer2" + File.separator + "tile.openstreetmap.org";
-            String grayscaleCacheDirPath = System.getProperty("user.home") + File.separator + ".jxmapviewer2_grayscale" + File.separator + "tile.openstreetmap.org";
-            String zipFilePath = System.getProperty("user.home") + File.separator + "Archive_color.zip";
-            String grayscaleZipFilePath = System.getProperty("user.home") + File.separator + "Archive_grayscale.zip";
-            File tileCacheDir = new File(cacheDirPath);
-
-            // Check if the tile cache directory exists and has the correct files before creating the zip file
-            if (tileCacheDir.exists() && tileCacheDir.isDirectory()) {
-                try {
-                    tileUtil.generateGrayscaleCache(cacheDirPath, grayscaleCacheDirPath);
-                    tileUtil.createZip(cacheDirPath, zipFilePath);
-                    tileUtil.createZip(grayscaleCacheDirPath, grayscaleZipFilePath);
-                    sendInfo("Cache zip created at: " + zipFilePath);
-                } catch (IOException e) {
-                    sendError("Failed to create map cache zip file: " + e);
+        // Check if the cache zip exists and is up to date
+        if (zipFile.exists()) {
+            long lastModified = zipFile.lastModified();
+            long currentTime = System.currentTimeMillis();
+            if ((currentTime - lastModified) > thirty) {
+                sendWarning("Cache is out of date: Reconstructing cache directory: " + cacheDir.getAbsolutePath());
+                deleteDirectory(cacheDir);
+                if (!zipFile.delete()) {
+                    sendError("Failed to delete cache zip: " + zipFile.getAbsolutePath());
                 }
             } else {
-                sendError("Error: Tile cache directory does not exist or is not populated: " + cacheDirPath);
+                long days = 30 - ((currentTime - lastModified) / (24 * 60 * 60 * 1000));
+                sendInfo("Cache is up to date by " + days + " days: " + cacheDir.getAbsolutePath());
+                return;
             }
+        }
+
+        if (!cacheDir.exists()) {
+            if (!cacheDir.mkdirs()) {
+                sendError("Failed to create cache directory: " + cacheDir.getAbsolutePath());
+                return;
+            } else {
+                sendInfo("Cache directory created at: " + cacheDir.getAbsolutePath());
+                sendInfo("Preloading tiles for initial position: " + initialPosition);
+                tileFactory.setLocalCache(new FileBasedLocalCache(cacheDir, false));
+
+            }
+        } else {
+            sendInfo("Cache directory exists at: " + cacheDir.getAbsolutePath());
+        }
+
+        String cacheDirPath = cacheDir.getAbsolutePath() + File.separator + "tile.openstreetmap.org";
+        String zipFilePath = zipFile.getAbsolutePath();
+        File tileCacheDir = new File(cacheDirPath);
+
+        // Only create the zip if the tile cache directory exists and is populated
+        if (tileCacheDir.exists() && tileCacheDir.isDirectory() && tileCacheDir.listFiles() != null && Objects.requireNonNull(tileCacheDir.listFiles()).length > 0) {
+            try {
+                tileUtil.createZip(cacheDirPath, zipFilePath);
+                sendInfo("Cache zip created at: " + zipFilePath);
+            } catch (IOException e) {
+                sendError("Failed to create map cache zip file: " + e);
+            }
+        } else {
+            sendError("Error: Tile cache directory does not exist or is not populated: " + cacheDirPath);
         }
     }
 
