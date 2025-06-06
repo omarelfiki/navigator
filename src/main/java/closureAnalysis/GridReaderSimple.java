@@ -144,10 +144,8 @@ public final class GridReaderSimple {
     public static List<PopulationTile> buildTilesWithStops() throws IOException {
 
         List<Tile> allTiles   = read();
-        //filter tiles by Rome bounding box
-        List<Tile> romeTiles  = filterByBoundingBox(allTiles);
         //make tiles into population tiles :)
-        List<PopulationTile> ptiles = toPopulationTiles(romeTiles);
+        List<PopulationTile> ptiles = toPopulationTiles(allTiles);
         List<Stop> stops = new TDSImplement().getAllStops();
         System.out.printf("Total stops loaded: %,d%n", stops.size());
 
@@ -170,20 +168,6 @@ public final class GridReaderSimple {
                 .filter(t -> !t.stopsList.isEmpty())
                 .toList();
     }
-    // simple filter
-    private static List<Tile> filterByBoundingBox(List<Tile> tiles) {
-        List<Tile> out = new ArrayList<>();
-        for (Tile t : tiles) {
-            double lat = t.getCentreLat();
-            double lon = t.getCentreLon();
-            if (lat <= ROME_NORTH && lat >= ROME_SOUTH &&
-                    lon >= ROME_WEST  && lon <= ROME_EAST) {
-                out.add(t);
-            }
-        }
-        return out;
-    }
-
     // Scoring / ranking
     public static List<PopulationTile> scoreAndRankTiles(List<PopulationTile> tilesWithStops) {
         int minPop   = Integer.MAX_VALUE, maxPop   = Integer.MIN_VALUE;

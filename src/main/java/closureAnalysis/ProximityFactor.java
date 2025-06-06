@@ -37,12 +37,12 @@ public class ProximityFactor {
 
                 if (distance <= 100) {
                     pf.setPs(1.0);
-                    nearMonument = true;
+//                    nearMonument = true;
                     break;
                 }
             }
 
-            stop.setPs(nearMonument ? 1 : 0);
+            //stop.setPs(nearMonument ? 1 : 0);
         }
         return proximityFactors;
     }

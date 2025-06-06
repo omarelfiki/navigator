@@ -32,19 +32,22 @@ public final class StopEssentialityCalculator {
             throw new IllegalArgumentException("Need at least two stops");
         List<StopEssentialityCalculator> essentialities = new ArrayList<>(stops.size());
         double maxDistance = 0.0;
+        double distance = 0.0;
         for (Stop stop1 : stops) {
             StopEssentialityCalculator essentiality = new StopEssentialityCalculator(stop1.getStopId());
             essentialities.add(essentiality);
             for(Stop stop2 : stops){
                 if (stop1 == stop2) continue; // skip self-comparison
-                double distance = haversineMetres(stop1.getStopLat(), stop1.getStopLon(),
+                distance = haversineMetres(stop1.getStopLat(), stop1.getStopLon(),
                         stop2.getStopLat(), stop2.getStopLon());
                 if (distance < essentiality.getNearestDistance()) {
                     essentiality.setNearest(stop2.getStopId(), distance);
+
                 }
-                if( distance > maxDistance) {
-                    maxDistance = distance;
-                }
+
+            }
+            if( distance > maxDistance) {
+                maxDistance = distance;
             }
         }
         // Calculate essentiality score based on the nearest stop distance
