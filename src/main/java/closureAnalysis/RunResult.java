@@ -53,7 +53,7 @@ public class RunResult {
 
         // Print top 3 stops with the lowest scores
         System.out.println("Top 3 stops to consider for closure:");
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 20; i++) {
             System.out.println("Stop ID: " + allStopsData.get(i).getStopId() +
                                " Score: " + allStopsData.get(i).getScore() +
                                " Frequency Factor (Fs): " + allStopsData.get(i).getFs() +
