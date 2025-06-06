@@ -24,20 +24,17 @@ public class PathCompressor {
             if ("walk".equals(mode)) {
                 if (currentWalk == null) {
                     currentWalk = new HashMap<>(segment);
-                    Map<String, Object> to = (Map<String, Object>) segment.get("to");
-                    startLat = (double) currentWalk.getOrDefault("fromLat", to.get("lat")); // fallback
-                    startLon = (double) currentWalk.getOrDefault("fromLon", to.get("lon")); // fallback
+                    startLat = (double) segment.get("fromLat");
+                    startLon = (double) segment.get("fromLon");
                 }
 
                 Map<String, Object> to = (Map<String, Object>) segment.get("to");
                 endLat = (double) to.get("lat");
                 endLon = (double) to.get("lon");
 
-                // Always update destination
-                currentWalk.put("to", to);
+                currentWalk.put("to", to); // always update end point
             } else {
                 if (currentWalk != null) {
-                    // Compute actual walking duration based on distance
                     double walkingTime = WalkingTime.getWalkingTime(startLat, startLon, endLat, endLon);
                     int duration = Math.max(1, (int) Math.round(walkingTime / 60.0));
                     currentWalk.put("duration", duration);
@@ -57,6 +54,7 @@ public class PathCompressor {
 
         return result;
     }
+
 
 
 
