@@ -1,8 +1,8 @@
 package models;
 
+import closureAnalysis.StopData;
 
-
-public class Stop{
+public class Stop extends StopData {
     private final String stopId;
     private final String stopName;
     private final double stopLat;
