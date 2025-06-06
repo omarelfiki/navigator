@@ -7,7 +7,6 @@ import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.concurrent.Task;
-import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
@@ -27,6 +26,7 @@ import org.jxmapviewer.viewer.WaypointPainter;
 import map.*;
 import router.AStarRouterV;
 import ui.*;
+import util.DebugUtil;
 import util.NetworkUtil;
 import router.Node;
 
@@ -37,7 +37,6 @@ import map.WayPoint;
 import db.*;
 
 import static ui.TripIntel.displayTransportModes;
-import static util.DebugUtil.getDebugMode;
 import static util.NavUtil.parsePoint;
 import static ui.UiHelper.*;
 import static util.GeoUtil.*;
@@ -177,6 +176,9 @@ public class HomeUI extends Application {
                     searchButton.setVisible(true);
                 }
                 waypoints.clear();
+                combinedContainer.setVisible(false);
+                endGroup.setVisible(false);
+                destinationField.setEditable(false);
             } else {
                 title.setText("Navigator");
                 label.setText("Navigate to see public transport \n options");
@@ -186,6 +188,9 @@ public class HomeUI extends Application {
                     searchButton.setVisible(false);
                 }
                 map.setOverlayPainter(waypointPainter);
+                combinedContainer.setVisible(true);
+                endGroup.setVisible(true);
+                destinationField.setEditable(true);
                 waypoints.clear();
             }
         });
@@ -231,27 +236,7 @@ public class HomeUI extends Application {
     }
 
 
-//    private ImageView getModeIcon(String mode) {
-//        try {
-//            String iconPath = switch (mode.toLowerCase()) {
 
-    /// /             add pictures, after case include path
-//                case "bus" ->
-//                case "walk" ->
-//                case "metro" ->
-//                default -> null;
-//            };
-//
-//            if (iconPath != null) {
-//                Image icon = new Image(getClass().getResourceAsStream(iconPath));
-//                ImageView imageView = new ImageView(icon);
-//                return imageView;
-//            }
-//        } catch (Exception e) {
-//
-//        }
-//        return null;
-//    }
     private void setHeatMapListener(Button submit, TextField originField, BooleanProperty isOn, Text label) {
         submit.setOnAction(_ -> {
             if (isOn.get()) {
@@ -306,14 +291,7 @@ public class HomeUI extends Application {
     }
 
     public static void main(String[] args) {
-        String debug = System.getenv("debug");
-        boolean isDebugMode = getDebugMode();
-        if (debug != null) {
-            System.setProperty("debug", debug);
-        } else {
-            if (isDebugMode)
-                System.err.println("Environment variable 'debug' is not set. Debug mode is enabled by default.");
-        }
+        DebugUtil.init();
         launch(args);
     }
 }

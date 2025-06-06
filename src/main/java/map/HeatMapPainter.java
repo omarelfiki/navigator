@@ -16,7 +16,7 @@ public class HeatMapPainter implements Painter<JXMapViewer> {
     private final int blur;
 
     public HeatMapPainter(List<HeatPoint> heatPoints) {
-        this(heatPoints, 40, 30);
+        this(heatPoints, 80, 60);
     }
 
     public HeatMapPainter(List<HeatPoint> heatPoints, int radius, int blur) {
@@ -60,7 +60,7 @@ public class HeatMapPainter implements Painter<JXMapViewer> {
         for (int x = 0; x < w; x++) {
             for (int y = 0; y < h; y++) {
                 float norm = maxIntensity == 0 ? 0 : intensity[x][y] / maxIntensity;
-                if (norm < 0.01f) continue; // skip very low intensity
+//                if (norm < 0.001f) continue; // lower threshold to show more low intensity
                 Color color = getColorFromGradient(norm);
                 int alpha = (int) (norm * 180); // control opacity
                 int rgb = (color.getRGB() & 0x00ffffff) | (alpha << 24);
@@ -71,7 +71,6 @@ public class HeatMapPainter implements Painter<JXMapViewer> {
     }
 
     private Color getColorFromGradient(float value) {
-        // Green -> Yellow -> Orange -> Red -> Purple
         float[] stops = {0f, 0.2f, 0.5f, 0.8f, 1f};
         Color[] colors = {
                 new Color(0, 255, 0),

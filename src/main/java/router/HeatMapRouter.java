@@ -3,20 +3,18 @@ package router;
 import db.TDSImplement;
 import models.HeatPoint;
 import models.Stop;
-import util.DebugUtil;
-
 
 import java.util.*;
 
+import static router.EdgeService.getEdges;
+import static util.DebugUtil.sendError;
+import static util.DebugUtil.sendInfo;
 import static util.TimeUtil.addTime;
 
 
 public class HeatMapRouter {
-    private final EdgeService edgeService = new EdgeService();
     private final Map<String, Double> bestCost = new HashMap<>();
     private final Map<String, Node> settled  = new HashMap<>();
-
-    private final boolean debug;
     final double LIMIT = 2700;   // 45-minute ceiling in seconds
     final double SENTINEL = 2701;   // marks “beyond limit”
     private final int type; // 0 = with walk, 1 = without walk
@@ -24,11 +22,11 @@ public class HeatMapRouter {
 
     public HeatMapRouter(int type) {
         if (type < 0 || type > 1) {
-            throw new IllegalArgumentException("Type must be 0 (with walk) or 1 (without walk)");
+            sendError("Invalid type: " + type);
+            throw new IllegalArgumentException();
         }
         this.type = type;
-        this.debug = DebugUtil.getDebugMode();
-        if (debug) System.err.println("HeatMapRouter initialized with type: " + type);
+        sendInfo("HeatMapRouter initialized with type: " + type);
     }
 
     public List<HeatPoint> build(double latStart, double lonStart, String startTime) {
@@ -58,13 +56,13 @@ public class HeatMapRouter {
             if (settled.containsKey(cur.getStopId())) continue;
             settled.put(cur.getStopId(), cur);
 
-            if (debug && settled.size() % 10_000 == 0)
-                System.err.printf("Settled %,d stops …%n", settled.size());
+            if (settled.size() % 10_000 == 0)
+                sendInfo("Settled stops: " + settled.size() + ", current G: " + cur.getG());
 
             if (settled.size() == totalStops) break;
             if (cur.getG() >= LIMIT) continue;           // do NOT expand over-limit nodes
 
-            ArrayList<Edge> edges = (type == 0) ? edgeService.getEdges(cur, 0) : edgeService.getEdges(cur, 1);
+            ArrayList<Edge> edges = (type == 0) ? getEdges(cur, 0) : getEdges(cur, 1);
             for (Edge e : edges) {
                 double tentative = cur.getG() + e.getWeight();
                 double g = (tentative > LIMIT) ? SENTINEL : tentative;

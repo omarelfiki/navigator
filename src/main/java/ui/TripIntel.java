@@ -10,6 +10,8 @@ import router.Node;
 
 import java.util.*;
 
+import static util.DebugUtil.sendInfo;
+
 public class TripIntel {
     public final String mode;
     public final String time;
@@ -52,7 +54,7 @@ public class TripIntel {
         List<TripIntel> tripIntel = new ArrayList<>();
         Node current = destinationNode;
         while (current != null) {
-            System.out.println(current);
+            sendInfo(String.valueOf(current));
 
             tripIntel.add(new TripIntel(current.getMode(), current.getArrivalTime(), current.getStopId()));
 
