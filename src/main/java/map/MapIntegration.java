@@ -19,19 +19,16 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Objects;
 
-import static util.DebugUtil.getDebugMode;
+import static util.DebugUtil.*;
 
 public class MapIntegration {
     JXMapViewer map;
 
     boolean isOnline;
 
-    boolean isDebugMode;
-
 
     public MapIntegration(boolean isOnline) {
         this.isOnline = isOnline;
-        this.isDebugMode = getDebugMode();
     }
 
     public StackPane createMapPane() {
@@ -57,11 +54,11 @@ public class MapIntegration {
                     double lon = Double.parseDouble(parts[1].trim());
                     map.setAddressLocation(new GeoPosition(lat, lon));
                 } catch (NumberFormatException e) {
-                    if (isDebugMode) System.err.println("Invalid start location format: " + start_location);
+                    sendError("Invalid start location format: " + start_location);
                     map.setAddressLocation(new GeoPosition(41.9028, 12.4964));
                 }
             } else {
-                if (isDebugMode) System.err.println("Invalid start location format: " + start_location);
+                sendError("Invalid start location: " + start_location);
                 map.setAddressLocation(new GeoPosition(41.9028, 12.4964));
             }
         } else {
@@ -131,22 +128,20 @@ public class MapIntegration {
 
                 if ((currentTime - lastModified) > thirty) {
                     // If the cache is older than 30 days, delete it
-                    if (isDebugMode)
-                        System.err.println("Cache is out of date: Reconstructing cache directory: " + cacheDir.getAbsolutePath());
+                    sendWarning("Cache is out of date: Reconstructing cache directory: " + cacheDir.getAbsolutePath());
                     deleteDirectory(cacheDir);
                     deleteDirectory(zipFile);
                 } else {
                     long days = 30 - ((currentTime - lastModified) / (24 * 60 * 60 * 1000));
-                    if (isDebugMode)
-                        System.err.println("Cache is up to date by " + days + " days:" + cacheDir.getAbsolutePath());
+                    sendInfo("Cache is up to date by " + days + " days:" + cacheDir.getAbsolutePath());
                     return;
                 }
             }
             // Create cache directory if it doesn't exist
             if (cacheDir.exists()) {
-                if (isDebugMode) System.err.println("Cache directory exists at: " + cacheDir.getAbsolutePath());
+                sendInfo("Cache directory exists at: " + cacheDir.getAbsolutePath());
             } else if (!cacheDir.exists()) {
-                if (isDebugMode) System.err.println("Failed to create cache directory: " + cacheDir.getAbsolutePath());
+                sendError("Failed to create cache directory: " + cacheDir.getAbsolutePath());
                 return;
             }
             // Set local cache for the tile factory
@@ -163,13 +158,12 @@ public class MapIntegration {
                     tileUtil.generateGrayscaleCache(cacheDirPath, grayscaleCacheDirPath);
                     tileUtil.createZip(cacheDirPath, zipFilePath);
                     tileUtil.createZip(grayscaleCacheDirPath, grayscaleZipFilePath);
-                    if (isDebugMode) System.err.println("Cache zip created at: " + zipFilePath);
+                    sendInfo("Cache zip created at: " + zipFilePath);
                 } catch (IOException e) {
-                    if (isDebugMode) System.err.println("Failed to create map cache zip file: " + e);
+                    sendError("Failed to create map cache zip file: " + e);
                 }
             } else {
-                if (isDebugMode)
-                    System.err.println("Error: Tile cache directory does not exist or is not populated: " + cacheDirPath);
+                sendError("Error: Tile cache directory does not exist or is not populated: " + cacheDirPath);
             }
         }
     }
@@ -181,7 +175,7 @@ public class MapIntegration {
             }
         }
         if (!dir.delete()) {
-            if (isDebugMode) System.err.println("Failed to delete: " + dir.getAbsolutePath());
+            sendError("Failed to delete: " + dir.getAbsolutePath());
         }
     }
 

@@ -26,6 +26,7 @@ import org.jxmapviewer.viewer.WaypointPainter;
 import map.*;
 import router.AStarRouterV;
 import ui.*;
+import util.DebugUtil;
 import util.NetworkUtil;
 import router.Node;
 
@@ -36,7 +37,6 @@ import map.WayPoint;
 import db.*;
 
 import static ui.TripIntel.displayTransportModes;
-import static util.DebugUtil.getDebugMode;
 import static util.NavUtil.parsePoint;
 import static ui.UiHelper.*;
 import static util.GeoUtil.*;
@@ -236,27 +236,7 @@ public class HomeUI extends Application {
     }
 
 
-//    private ImageView getModeIcon(String mode) {
-//        try {
-//            String iconPath = switch (mode.toLowerCase()) {
 
-    /// /             add pictures, after case include path
-//                case "bus" ->
-//                case "walk" ->
-//                case "metro" ->
-//                default -> null;
-//            };
-//
-//            if (iconPath != null) {
-//                Image icon = new Image(getClass().getResourceAsStream(iconPath));
-//                ImageView imageView = new ImageView(icon);
-//                return imageView;
-//            }
-//        } catch (Exception e) {
-//
-//        }
-//        return null;
-//    }
     private void setHeatMapListener(Button submit, TextField originField, BooleanProperty isOn, Text label) {
         submit.setOnAction(_ -> {
             if (isOn.get()) {
@@ -311,14 +291,7 @@ public class HomeUI extends Application {
     }
 
     public static void main(String[] args) {
-        String debug = System.getenv("debug");
-        boolean isDebugMode = getDebugMode();
-        if (debug != null) {
-            System.setProperty("debug", debug);
-        } else {
-            if (isDebugMode)
-                System.err.println("Environment variable 'debug' is not set. Debug mode is enabled by default.");
-        }
+        DebugUtil.init();
         launch(args);
     }
 }

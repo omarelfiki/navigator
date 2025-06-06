@@ -15,19 +15,15 @@ import org.jxmapviewer.viewer.DefaultTileFactory;
 import org.jxmapviewer.viewer.TileFactory;
 import org.jxmapviewer.viewer.TileFactoryInfo;
 
-import static util.DebugUtil.getDebugMode;
+import static util.DebugUtil.*;
 
 public class TileUtil {
     private final boolean isOnline;
-
-    private final boolean isDebugMode;
-
     private final boolean useGrayscaleCache;
 
 
     public TileUtil(boolean isOnline, boolean grayscale) {
         this.isOnline = isOnline;
-        this.isDebugMode = getDebugMode();
         this.useGrayscaleCache = grayscale;
     }
 
@@ -40,9 +36,7 @@ public class TileUtil {
                 String encodedPath = Paths.get(System.getProperty("user.home"), "Archive_color.zip").toUri().toString();
                 info = new OSMTileFactoryInfo("Zip archive", "jar:" + encodedPath + "!");
             } catch (Exception e) {
-                if (isDebugMode) {
-                    System.err.println("WARNING: Error constructing file path for TileFactory. Please ensure the 'Archive_color.zip' file exists in your home directory.");
-                }
+                sendWarning("Error constructing file path for TileFactory. Please ensure the 'Archive_color.zip' file exists in your home directory.");
                 throw new RuntimeException();
             }
         }
@@ -57,15 +51,11 @@ public class TileUtil {
         File colorDir = new File(colorCacheDirPath);
         File grayDir = new File(grayscaleCacheDirPath);
         if (!colorDir.exists() || !colorDir.isDirectory()) {
-            if (isDebugMode) {
-                System.err.println("WARNING: Color cache directory does not exist or is not a directory: " + colorCacheDirPath);
-            }
+            sendError("Color cache directory does not exist or is not a directory: " + colorCacheDirPath);
             throw new IOException();
         }
         if (!grayDir.exists() && !grayDir.mkdirs()) {
-            if (isDebugMode) {
-                System.err.println("WARNING: Failed to create grayscale cache directory: " + grayscaleCacheDirPath);
-            }
+            sendError("Failed to create grayscale cache directory: " + grayscaleCacheDirPath);
             throw new IOException();
         }
         for (File file : Objects.requireNonNull(colorDir.listFiles())) {
@@ -90,9 +80,8 @@ public class TileUtil {
     public void createZip(String sourceDirPath, String zipFilePath) throws IOException {
         File sourceDir = new File(sourceDirPath);
         if (!sourceDir.exists() || !sourceDir.isDirectory()) {
-            if (isDebugMode) {
-                System.err.println("WARNING (ZIP-creation): Source directory does not exist or is not a directory: " + sourceDirPath);
-            }
+            sendError("Source directory does not exist or is not a directory: " + sourceDirPath);
+            throw new IOException();
         }
         try (FileOutputStream fos = new FileOutputStream(zipFilePath);
              ZipOutputStream zos = new ZipOutputStream(fos)) {
@@ -103,9 +92,7 @@ public class TileUtil {
 
     private void zipDirectory(File folder, String parentFolder, ZipOutputStream zos) throws IOException {
         if (folder == null || !folder.exists() || !folder.isDirectory()) {
-            if (isDebugMode) {
-                System.err.println("WARNING (ZIP-creation): Invalid folder: " + (folder != null ? folder.getAbsolutePath() : "null"));
-            }
+            sendError("Invalid folder: " + (folder != null ? folder.getAbsolutePath() : "null"));
             throw new IOException();
         }
 
