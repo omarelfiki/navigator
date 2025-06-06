@@ -7,7 +7,6 @@ import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.concurrent.Task;
-import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
@@ -177,6 +176,9 @@ public class HomeUI extends Application {
                     searchButton.setVisible(true);
                 }
                 waypoints.clear();
+                combinedContainer.setVisible(false);
+                endGroup.setVisible(false);
+                destinationField.setEditable(false);
             } else {
                 title.setText("Navigator");
                 label.setText("Navigate to see public transport \n options");
@@ -186,6 +188,9 @@ public class HomeUI extends Application {
                     searchButton.setVisible(false);
                 }
                 map.setOverlayPainter(waypointPainter);
+                combinedContainer.setVisible(true);
+                endGroup.setVisible(true);
+                destinationField.setEditable(true);
                 waypoints.clear();
             }
         });

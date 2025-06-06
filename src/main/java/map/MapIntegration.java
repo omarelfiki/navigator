@@ -47,6 +47,9 @@ public class MapIntegration {
         map.setTileFactory(tileFactory);
         map.setZoom(6);
 
+        // Listen for zoom changes and repaint the map (to update overlays like heatmap)
+        map.addPropertyChangeListener("zoom", _ -> map.repaint());
+
         String start_location = System.getenv("START_COORDS");
         if (start_location != null && !start_location.isEmpty()) {
             String[] parts = start_location.split(",");
