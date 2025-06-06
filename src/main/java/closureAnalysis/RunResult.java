@@ -25,7 +25,23 @@ public class RunResult {
                 new TouristicLocations("Baths of Caracalla", 41.8796, 12.4930),
                 new TouristicLocations("Palatine Hill", 41.8894, 12.4882),
                 new TouristicLocations("Ostia Antica", 41.7550, 12.2930),
-                new TouristicLocations("Termini Station", 41.9028, 12.5014)
+                new TouristicLocations("Termini Station", 41.9028, 12.5014),
+                new TouristicLocations("Sapienza University of Rome", 41.9063, 12.5137),
+                new TouristicLocations("Policlinico Umberto I (Main Hospital)", 41.9068, 12.5142),
+                new TouristicLocations("Via del Corso (Main Shopping Street)", 41.9002, 12.4805),
+                new TouristicLocations("Euroma2 Shopping Mall", 41.7914, 12.4661),
+                new TouristicLocations("EUR Business District", 41.8325, 12.4714),
+                new TouristicLocations("Vatican Museums & Sistine Chapel", 41.9065, 12.4536),
+                new TouristicLocations("Trastevere District", 41.8880, 12.4663),
+                new TouristicLocations("Campo de' Fiori", 41.8950, 12.4728),
+                new TouristicLocations("Piazza del Popolo", 41.9112, 12.4783),
+                new TouristicLocations("MAXXI – National Museum of 21st Century Arts", 41.9293, 12.4669),
+                new TouristicLocations("Cinecittà Studios", 41.8482, 12.5730),
+                new TouristicLocations("Stadio Olimpico", 41.9339, 12.4547),
+                new TouristicLocations("Auditorium Parco della Musica", 41.9279, 12.4828),
+                new TouristicLocations("Roma Tiburtina Station", 41.9108, 12.5302),
+                new TouristicLocations("Porta di Roma Shopping Centre", 41.9670, 12.5466),
+                new TouristicLocations("Appian Way Regional Park (Parco della Caffarella)", 41.8572, 12.5173)
         );
         List<Stop> allStops = new TDSImplement().getAllStops();
 
@@ -39,11 +55,11 @@ public class RunResult {
         System.out.println("Top 3 stops to consider for closure:");
         for (int i = 0; i < 3; i++) {
             System.out.println("Stop ID: " + allStopsData.get(i).getStopId() +
-                               "Score: " + allStopsData.get(i).getScore() +
-                               "Frequency Factor (Fs): " + allStopsData.get(i).getFs() +
-                               "Proximity Factor (Ps): " + allStopsData.get(i).getPs() +
-                               "Essentiality Score (Es): " + allStopsData.get(i).getEs() +
-                               "Population Density Score (Ds): " + allStopsData.get(i).getDs());
+                               " Score: " + allStopsData.get(i).getScore() +
+                               " Frequency Factor (Fs): " + allStopsData.get(i).getFs() +
+                               " Proximity Factor (Ps): " + allStopsData.get(i).getPs() +
+                               " Essentiality Score (Es): " + allStopsData.get(i).getEs() +
+                               " Population Density Score (Ds): " + allStopsData.get(i).getDs());
         }
     }
 }
