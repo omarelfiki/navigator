@@ -2,69 +2,77 @@ package closureAnalysis;
 
 import db.TDSImplement;
 import models.Stop;
-
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public final class GridReaderSimple {
     private static final Path CSV = Path.of("src/main/resources/GrigliaPop2021_Ind_ITA_CSV.txt");
+
     private static final double R    = 6_371_007.181;
-    private static final double LAT0 = Math.toRadians(52.0);
-    private static final double LON0 = Math.toRadians(10.0);
-    private static final double FE   = 4_321_000.0;
-    private static final double FN   = 3_210_000.0;
-    private static final Pattern ID_PATTERN = Pattern.compile("N(\\d{4,7}).*E(\\d{4,7})|E(\\d{4,7}).*N(\\d{4,7})");
+    private static final double LAT0 = Math.toRadians(52);
+    private static final double LON0 = Math.toRadians(10);
+    private static final double FE   = 4_321_000;
+    private static final double FN   = 3_210_000;
+    private static final Pattern ID_PATTERN = Pattern.compile(".*N(\\d{4,7})E(\\d{4,7})");
+    private static final double ROME_NORTH = 41.998617;
+    private static final double ROME_SOUTH = 41.784336;
+    private static final double ROME_WEST  = 12.350826;
+    private static final double ROME_EAST  = 12.643411;
 
+    //txt -> Tile
     public static List<Tile> read() throws IOException {
-
         List<Tile> tiles = new ArrayList<>(350_000);
-
-        try (BufferedReader br = Files.newBufferedReader(CSV)) {
-
-            /* header — remove BOM if present */
+        try (BufferedReader br = Files.newBufferedReader(CSV, StandardCharsets.UTF_8)) {
             String header = br.readLine();
-            if (header == null) throw new IOException("Empty file: " + CSV);
-            if (header.charAt(0) == '\uFEFF') header = header.substring(1);
 
-            String[] h = header.split(";", -1);
+            if (header == null)
+                throw new IOException("Empty file: " + CSV);
+
+            if (!header.isEmpty() && header.charAt(0) == '\uFEFF')
+                header = header.substring(1);
+
+            final String delimiter = header.indexOf(';') >= 0 ? ";" : ",";
+
+            String[] h = header.split(delimiter, -1);
+
             int idIx  = indexOf(h, "GRD_ID");
             int popIx = indexOf(h, "Pop_Tot");
-            if (idIx < 0) throw new IOException("GRD_ID column missing");
+            if (idIx < 0)
+                throw new IOException("GRD_ID column missing");
 
             String line;
             while ((line = br.readLine()) != null) {
+                if (line.isBlank()) continue;
 
-                String[] f = line.split(";", -1);
+                String[] f = line.split(delimiter, -1);
                 if (f.length <= idIx) continue;
 
                 String id = f[idIx].trim();
                 int pop   = (popIx >= 0 && popIx < f.length) ? parseInt(f[popIx]) : 0;
 
                 Matcher m = ID_PATTERN.matcher(id);
-                if (!m.find()) continue;                      // skip malformed
+                if (!m.matches()) continue;        // skip malformed IDs
 
-                int nMeters = m.group(1) != null ? Integer.parseInt(m.group(1))
-                        : Integer.parseInt(m.group(4));
-                int eMeters = m.group(2) != null ? Integer.parseInt(m.group(2))
-                        : Integer.parseInt(m.group(3));
+                int nMeters = Integer.parseInt(m.group(1));
+                int eMeters = Integer.parseInt(m.group(2));
 
-                /* IDs already include FE/FN — use as-is */
                 double minX = eMeters;
                 double minY = nMeters;
-                double maxX = minX + 1_000.0;
-                double maxY = minY + 1_000.0;
+                double maxX = minX + 1_000;
+                double maxY = minY + 1_000;
 
-                /* WGS-84 centre */
-                double cx = (minX + maxX) / 2.0;
-                double cy = (minY + maxY) / 2.0;
-                double[] ll = inverse(cx, cy);   // [lon°, lat°]
+                double cx = (minX + maxX) * 0.5;
+                double cy = (minY + maxY) * 0.5;
+
+                double[] ll = inverse(cx, cy);
 
                 tiles.add(new Tile(id, pop,
                         minX, minY, maxX, maxY,
@@ -74,85 +82,125 @@ public final class GridReaderSimple {
         return tiles;
     }
 
-    /* spherical LAEA inverse — subtract FE/FN once */
+    //Geometry helpers
     private static double[] inverse(double x, double y) {
-
         double xp = x - FE;
         double yp = y - FN;
+        double rho  = Math.hypot(xp, yp);
+        if (rho == 0) return new double[]{ Math.toDegrees(LON0), Math.toDegrees(LAT0) };
 
-        double rho = Math.hypot(xp, yp);
-        if (rho == 0)
-            return new double[]{ Math.toDegrees(LON0), Math.toDegrees(LAT0) };
+        double c     = 2 * Math.asin(rho / (2 * R));
+        double sinC  = Math.sin(c);
+        double cosC  = Math.cos(c);
 
-        double c = 2 * Math.asin(rho / (2 * R));
-        double sinC = Math.sin(c), cosC = Math.cos(c);
+        double lat = Math.asin(cosC * Math.sin(LAT0) + (yp * sinC * Math.cos(LAT0) / rho));
 
-        double lat = Math.asin(cosC * Math.sin(LAT0) +
-                yp * sinC * Math.cos(LAT0) / rho);
-        double lon = LON0 + Math.atan2(xp * sinC,
-                rho * Math.cos(LAT0) * cosC - yp * Math.sin(LAT0) * sinC);
+        double lon = LON0 + Math.atan2(xp * sinC, rho * Math.cos(LAT0) * cosC - yp * Math.sin(LAT0) * sinC);
 
         return new double[]{ Math.toDegrees(lon), Math.toDegrees(lat) };
     }
 
-    /* helpers */
-    private static int indexOf(String[] hdr, String name){
+    private static int indexOf(String[] hdr, String name) {
         for (int i = 0; i < hdr.length; i++)
             if (hdr[i].equalsIgnoreCase(name)) return i;
         return -1;
     }
-    private static int parseInt(String s){
+
+    private static int parseInt(String s) {
         try { return Integer.parseInt(s.trim()); }
-        catch(NumberFormatException e){ return 0; }
+        catch (NumberFormatException e) { return 0; }
     }
 
-    public static List<Tile> filterByBoundingBox(List<Tile> tiles, double latTopLeft,double lonTopLeft,double latBottomRight,double lonBottomRight) {
-        List<Tile> filteredTiles = new ArrayList<>();
-        for(Tile t : tiles) {
-            if (t.getCentreLat()> latTopLeft && t.getCentreLat() < latBottomRight && t.getCentreLon()> lonTopLeft && t.getCentreLon() < lonBottomRight) {
-                filteredTiles.add(t);
-                System.out.printf("Tile %s is within bounding box%n", t.id());
-            } else {
-                System.out.printf("Tile %s is outside bounding box%n", t.id());
+    //3. Tile -> PopulationTile
+    public static List<PopulationTile> toPopulationTiles(List<Tile> tiles) {
+
+        final double METRES_PER_DEG_LAT = 111_320.0;
+        final double HALF = 500.0; // half-cell (1 km / 2)
+
+        List<PopulationTile> out = new ArrayList<>(tiles.size());
+
+        for (Tile t : tiles) {
+
+            double centreLatDeg = t.getCentreLat();
+            double centreLonDeg = t.getCentreLon();
+            double phiRad       = Math.toRadians(centreLatDeg);
+
+            double dLat = HALF / METRES_PER_DEG_LAT;
+            double dLon = HALF / (METRES_PER_DEG_LAT * Math.cos(phiRad));
+
+            double northLat = centreLatDeg + dLat;
+            double southLat = centreLatDeg - dLat;
+            double westLon  = centreLonDeg - dLon;
+            double eastLon  = centreLonDeg + dLon;
+
+            out.add(new PopulationTile(
+                    northLat, westLon, southLat, eastLon,
+                    t.getPopulation()));
+        }
+        return out;
+    }
+
+    //Populate with stops
+    public static List<PopulationTile> buildTilesWithStops() throws IOException {
+
+        List<Tile> allTiles   = read();
+        //filter tiles by Rome bounding box
+        List<Tile> romeTiles  = filterByBoundingBox(allTiles);
+        //make tiles into population tiles :)
+        List<PopulationTile> ptiles = toPopulationTiles(romeTiles);
+        List<Stop> stops = new TDSImplement().getAllStops();
+        System.out.printf("Total stops loaded: %,d%n", stops.size());
+
+        int unmatched = 0;
+        for (Stop s : stops) {
+            boolean found = false;
+            for (PopulationTile t : ptiles) {
+                if (t.contains(s.getStopLat(), s.getStopLon())) {
+                    t.addStop(s);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) unmatched++;
+        }
+        if (unmatched > 0)
+            System.err.printf("WARNING – %d stop(s) did not fall inside any tile!%n", unmatched);
+        // keep only tiles with at least one stop
+        return ptiles.stream()
+                .filter(t -> !t.stopsList.isEmpty())
+                .toList();
+    }
+    // simple filter
+    private static List<Tile> filterByBoundingBox(List<Tile> tiles) {
+        List<Tile> out = new ArrayList<>();
+        for (Tile t : tiles) {
+            double lat = t.getCentreLat();
+            double lon = t.getCentreLon();
+            if (lat <= ROME_NORTH && lat >= ROME_SOUTH &&
+                    lon >= ROME_WEST  && lon <= ROME_EAST) {
+                out.add(t);
             }
         }
-        return filteredTiles;
-    }
-    public static PopulationTile borders(Tile t) {
-        double centreLatDeg = t.getCentreLat();
-        double centreLonDeg = t.getCentreLon();
-        double R = 6_371_000.0;
-        double HALF = 500.0;
-        double φ = Math.toRadians(centreLatDeg);
-
-        double dLat = HALF / R;                 // radians
-        double dLon = HALF / (R * Math.cos(φ));
-
-        double northLat = centreLatDeg + Math.toDegrees(dLat);
-        double southLat = centreLatDeg - Math.toDegrees(dLat);
-        double eastLon = centreLonDeg + Math.toDegrees(dLon);
-        double westLon = centreLonDeg - Math.toDegrees(dLon);
-        PopulationTile p = new PopulationTile(northLat, westLon, southLat, eastLon, t.getPopulation());
-        return p;
+        return out;
     }
 
+    // Scoring / ranking
+    public static List<PopulationTile> scoreAndRankTiles(List<PopulationTile> tilesWithStops) {
+        int minPop   = Integer.MAX_VALUE, maxPop   = Integer.MIN_VALUE;
+        int minStops = Integer.MAX_VALUE, maxStops = Integer.MIN_VALUE;
 
-
-    /* simple check */
-    public static void main(String[] args) throws IOException {
-        List<Tile> tiles = filterByBoundingBox(read(),35.508021, 12.597250,41.794962, 12.662777);
-        //List<Stop> allStops = new TDSImplement().getAllStops();
-        List<PopulationTile> populationTiles = new ArrayList<>();
-        for(Tile t:tiles){
-            populationTiles.add(borders(t));
+        for (PopulationTile t : tilesWithStops) {
+            int pop   = t.getPopulation();
+            int stops = t.stopsList.size();
+            if (pop   < minPop)   minPop   = pop;
+            if (pop   > maxPop)   maxPop   = pop;
+            if (stops < minStops) minStops = stops;
+            if (stops > maxStops) maxStops = stops;
         }
-//        for (PopulationTile p : populationTiles) {
-//            for (Stop stop : allStops) {
-//                    p.addStop(stop);
-//            }
-//        }
-
-
-        System.out.printf("First tile");
+        maxPop = Math.max(1, maxPop); // just to avoid division by zero(not going to happen, but you never know)
+        for (PopulationTile t : tilesWithStops) {
+            t.popScore=(t.getPopulation())   / (double) (maxPop);
+        }
+        return tilesWithStops;
     }
 }
