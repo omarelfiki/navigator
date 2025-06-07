@@ -52,9 +52,9 @@ public final class StopEssentialityCalculator {
                 maxNearest = e.getNearestDistance();
             }
 
-            if ("ITO114".equals(s1.getStopId())) {
-                System.out.printf("[ITO114] Nearest Stop ID: %s, Distance: %.2f m%n", nearestId, e.getNearestDistance());
-            }
+//            if ("ITO114".equals(s1.getStopId())) {
+//                System.out.printf("[ITO114] Nearest Stop ID: %s, Distance: %.2f m%n", nearestId, e.getNearestDistance());
+//            }
         }
 
         final double denom = (maxNearest == 0) ? 1 : maxNearest;

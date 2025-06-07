@@ -1,39 +1,58 @@
 package closureAnalysis;
 
 import models.Stop;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public class FrequencyFactor {
     private String stopId;
     private double fs;
+
     public FrequencyFactor(String stopId) {
         this.stopId = stopId;
         this.fs = 0.0;
     }
-    public String getStopId() {return stopId;}
-    public double getFs() {return fs;}
-    public void setFs(double fs) {this.fs = fs;}
 
-    public static List<FrequencyFactor> calculateFrequencyFactor(List<Stop> stops, Map<String, Integer> stopRouteCounts) {
-        // Find the maximum route count
-        int maxRouteCount = 0;
-        for (int count : stopRouteCounts.values()) {
-            if (count > maxRouteCount) {
-                maxRouteCount = count;
-            }
+    public String getStopId() {
+        return stopId;
+    }
+
+    public double getFs() {
+        return fs;
+    }
+
+    public void setFs(double fs) {
+        this.fs = fs;
+    }
+
+    public static List<FrequencyFactor> calculateFrequencyFactor(List<Stop> stops, Map<String, StopFrequencyData> stopFreqData) {
+        // maxRoute keeps track of how frequent a stop is included in different routes
+        // maxTrips keeps track of how frequent trips go through a stop
+        int maxRoute = 0;
+        int maxTrips = 0;
+
+        for (StopFrequencyData data : stopFreqData.values()) {
+            if (data.routeCount > maxRoute) maxRoute = data.routeCount;
+            if (data.tripCount > maxTrips) maxTrips = data.tripCount;
         }
-        List<FrequencyFactor> frequencyFactors = new java.util.ArrayList<>();
-        // Set Fs for each stop
+
+        List<FrequencyFactor> frequencyFactors = new ArrayList<>();
+
         for (Stop stop : stops) {
-            FrequencyFactor ff = new FrequencyFactor(stop.getStopId());
             String stopId = stop.getStopId();
-            int routeCount = stopRouteCounts.getOrDefault(stopId, 0);
-            double fs = (maxRouteCount == 0) ? 0.0 : (double) routeCount / maxRouteCount;
+            StopFrequencyData data = stopFreqData.getOrDefault(stopId, new StopFrequencyData(0, 0));
+
+            double relativeRouteCount = (maxRoute == 0) ? 0.0 : (double) data.routeCount / maxRoute;
+            double relativeTripsCount = (maxTrips == 0) ? 0.0 : (double) data.tripCount / maxTrips;
+
+            double fs = 0.5 * relativeRouteCount + 0.5 * relativeTripsCount;
+
+            FrequencyFactor ff = new FrequencyFactor(stopId);
             ff.setFs(fs);
             frequencyFactors.add(ff);
         }
+
         return frequencyFactors;
     }
-
 }

@@ -127,8 +127,8 @@ public final class GridReaderSimple {
 
         if (!unmatched.isEmpty()) {
             System.err.printf("WARNING – %d stop(s) did not fall inside any tile!%n", unmatched.size());
-            unmatched.forEach(s -> System.out.printf("Unmatched Stop: ID=%s, lat=%.6f, lon=%.6f%n",
-                    s.getStopId(), s.getStopLat(), s.getStopLon()));
+//            unmatched.forEach(s -> System.out.printf("Unmatched Stop: ID=%s, lat=%.6f, lon=%.6f%n",
+//                    s.getStopId(), s.getStopLat(), s.getStopLon()));
         }
 
         return ptiles.stream().filter(t -> !t.stopsList.isEmpty()).toList();

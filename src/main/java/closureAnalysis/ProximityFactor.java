@@ -38,6 +38,7 @@ public class ProximityFactor {
                     break;
                 }
             }
+            proximityFactors.add(pf);
         }
         return proximityFactors;
     }

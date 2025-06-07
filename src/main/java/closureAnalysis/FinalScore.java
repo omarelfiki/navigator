@@ -61,10 +61,10 @@ public class FinalScore {
             }
         }
 
-        //frequency of trips Fs for each stop
-        Map<String, Integer> stopRouteCounts =tds.getStopRouteCounts();
-        List<FrequencyFactor> fs = calculateFrequencyFactor(allStops,stopRouteCounts);
-        for( FrequencyFactor frequencyFactor : fs) {
+        // Fs - Frequency Factor (route count + trip count)
+        Map<String, StopFrequencyData> stopFrequencyData = tds.getStopFrequencyData();
+        List<FrequencyFactor> fs = calculateFrequencyFactor(allStops, stopFrequencyData);
+        for (FrequencyFactor frequencyFactor : fs) {
             for (StopData s : allStopsData) {
                 if (s.getStopId().equals(frequencyFactor.getStopId())) {
                     s.setFs(frequencyFactor.getFs());
@@ -72,6 +72,7 @@ public class FinalScore {
                 }
             }
         }
+
         for (StopData stop : allStopsData) {
             double score = weightFs * stop.getFs()+ weightPs * stop.getPs() + weightEs * stop.getEs() + weightDs * stop.getDs();
             stop.setScore(score);

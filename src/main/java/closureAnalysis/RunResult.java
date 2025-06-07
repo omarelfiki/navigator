@@ -51,15 +51,12 @@ public class RunResult {
         // Sort by score (lowest = best candidates for closure)
         allStopsData.sort(Comparator.comparingDouble(StopData::getScore));
 
-        // Print top 3 stops with the lowest scores
+        // Top 10 lowest scoring stops
         System.out.println("Top 3 stops to consider for closure:");
-        for (int i = 0; i < 20; i++) {
-            System.out.println("Stop ID: " + allStopsData.get(i).getStopId() +
-                               " Score: " + allStopsData.get(i).getScore() +
-                               " Frequency Factor (Fs): " + allStopsData.get(i).getFs() +
-                               " Proximity Factor (Ps): " + allStopsData.get(i).getPs() +
-                               " Essentiality Score (Es): " + allStopsData.get(i).getEs() +
-                               " Population Density Score (Ds): " + allStopsData.get(i).getDs());
+        for (int i = 0; i < 10; i++) {
+            StopData s = allStopsData.get(i);
+            System.out.printf("Stop ID: %s | Score: %.4f | Fs: %.4f | Ps: %.4f | Es: %.4f | Ds: %.4f%n",
+                    s.getStopId(), s.getScore(), s.getFs(), s.getPs(), s.getEs(), s.getDs());
         }
     }
 }

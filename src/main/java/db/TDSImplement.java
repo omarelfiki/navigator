@@ -1,5 +1,6 @@
 package db;
 
+import closureAnalysis.StopFrequencyData;
 import models.*;
 
 import java.sql.*;
@@ -271,16 +272,17 @@ public class TDSImplement implements TransitDataService {
     }
 
     @Override
-    @SuppressWarnings("SqlResolve")
-    public Map<String, Integer> getStopRouteCounts() {
-        Map<String, Integer> stopRouteCounts = new HashMap<>();
+    public Map<String, StopFrequencyData> getStopFrequencyData() {
+        Map<String, StopFrequencyData> dataMap = new HashMap<>();
 
         String sql = """
-                    SELECT stop_id, COUNT(DISTINCT t.route_id) AS route_count
-                    FROM stop_times st
-                    JOIN trips t ON st.trip_id = t.trip_id
-                    GROUP BY stop_id
-                """;
+        SELECT stop_id,
+               COUNT(DISTINCT t.route_id) AS route_count,
+               COUNT(t.trip_id) AS trip_count
+        FROM stop_times st
+        JOIN trips t ON st.trip_id = t.trip_id
+        GROUP BY stop_id
+    """;
 
         try (PreparedStatement ps = db.conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -288,15 +290,18 @@ public class TDSImplement implements TransitDataService {
             while (rs.next()) {
                 String stopId = rs.getString("stop_id");
                 int routeCount = rs.getInt("route_count");
-                stopRouteCounts.put(stopId, routeCount);
+                int tripCount = rs.getInt("trip_count");
+
+                dataMap.put(stopId, new StopFrequencyData(routeCount, tripCount));
             }
 
         } catch (SQLException e) {
             sendError("SQL Error: " + e.getMessage());
         }
 
-        return stopRouteCounts;
+        return dataMap;
     }
+
 
     public List<Trip> getAllTrips() {
         List<Trip> trips = new ArrayList<>();
