@@ -102,6 +102,7 @@ public class AStarRouterV {
             sendInfo("Direct walking time: " + walkingTimeOnly);
 
             if (walkingTimeOnly <= totalAStarTime) {
+                sendInfo("Returning direct walk as it is faster");
                 STOP_NODE.parent = STARTING_NODE;
                 STOP_NODE.arrivalTime = addTime(startTime, walkingTimeOnly);
             } else {
@@ -111,8 +112,12 @@ public class AStarRouterV {
             return reconstructPath(STOP_NODE);
         }
 
-        sendSuccess("Best costs for visited nodes: " + bestCosts);
-        return null;
+// Fallback: walk-only route
+        sendInfo("No transit path found — falling back to walk-only route");
+        STOP_NODE.parent = STARTING_NODE;
+        STOP_NODE.arrivalTime = addTime(startTime, walkingTimeOnly);
+        return reconstructPath(STOP_NODE);
+
     }
 
 
