@@ -10,10 +10,10 @@ import static closureAnalysis.ProximityFactor.calculateProximityFactor;
 import static closureAnalysis.StopEssentialityCalculator.compute;
 
 public class FinalScore {
-    private static double weightFs = 0.25; // Weight for stop frequency
-    private static double weightPs = 0.20; // Weight for proximity to monument
-    private static double weightEs = 0.35; // Weight for stop essentiality
-    private static double weightDs = 0.20; // Weight for stop population density
+    private static final double weightFs = 0.25; // Weight for stop frequency
+    private static final double weightPs = 0.20; // Weight for proximity to monument
+    private static final double weightEs = 0.35; // Weight for stop essentiality
+    private static final double weightDs = 0.20; // Weight for stop population density
 
     public static List<StopData> calculateFinalScore(List<Stop> allStops, List<TouristicLocations> monuments) throws IOException {
         //List of all the stops with their weights

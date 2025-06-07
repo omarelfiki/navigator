@@ -1,6 +1,7 @@
 package closureAnalysis;
 
 import models.Stop;
+import util.GeoUtil;
 
 import java.util.*;
 
@@ -24,46 +25,40 @@ public final class StopEssentialityCalculator {
     void setEs(double es){ Es = es;}
 
 
-    private StopEssentialityCalculator() {}
+
     public static List<StopEssentialityCalculator> compute(List<Stop> stops) {
-        if (stops == null)
+        if (stops == null || stops.size() < 2)
             throw new IllegalArgumentException("Need at least two stops");
+
         List<StopEssentialityCalculator> essentialities = new ArrayList<>(stops.size());
-        double maxDistance = 0.0;
-        double distance = 0.0;
+        double maxNearest = 0.0;
 
-        for (Stop stop1 : stops) {
-            StopEssentialityCalculator essentiality = new StopEssentialityCalculator(stop1.getStopId());
-            essentialities.add(essentiality);
-            for(Stop stop2 : stops){
-                if (stop1 == stop2) continue; // skip self-comparison
-                distance = haversineMetres(stop1.getStopLat(), stop1.getStopLon(), stop2.getStopLat(), stop2.getStopLon());
-                if (distance < essentiality.getNearestDistance()) {
-                    essentiality.setNearest(distance);
+        for (Stop s1 : stops) {
+            StopEssentialityCalculator e = new StopEssentialityCalculator(s1.getStopId());
+            essentialities.add(e);
 
+            for (Stop s2 : stops) {
+                if (s1 == s2) continue;// same stop
+                if (s1.getStopLat() == s2.getStopLat() && s1.getStopLon() == s2.getStopLon()) continue;// exact positional duplicate(had a few too many zero, tesing this out)
+
+                double d = GeoUtil.distance(s1.getStopLat(), s1.getStopLon(), s2.getStopLat(), s2.getStopLon());
+
+                if (d < e.getNearestDistance()) {
+                    e.setNearest(d);
                 }
-
             }
-            if( distance > maxDistance) {
-                maxDistance = distance;
+            // update global maximum *after* we know this stop’s nearest neighbor
+            if (e.getNearestDistance() > maxNearest) {
+                maxNearest = e.getNearestDistance();
             }
         }
-        // Calculate essentiality score based on the nearest stop distance
-        for(StopEssentialityCalculator ess : essentialities) {
-            ess.setEs(ess.getNearestDistance()/ maxDistance);
+
+        // normalise
+        final double denom = (maxNearest == 0) ? 1 : maxNearest;   // guard /0
+        for (StopEssentialityCalculator e : essentialities) {
+            e.setEs(e.getNearestDistance() / denom);
         }
         return essentialities;
     }
 
-    private static double haversineMetres(double lat1, double lon1, double lat2, double lon2) {
-        final double R = 6_371_000;
-        double f1 = Math.toRadians(lat1), f2 = Math.toRadians(lat2);
-        double df = f2 - f1;
-        double dl = Math.toRadians(lon2 - lon1);
-
-        double a = Math.sin(df/2)*Math.sin(df/2)
-                + Math.cos(f1)*Math.cos(f2)
-                * Math.sin(dl/2)*Math.sin(dl/2);
-        return 2 * R * Math.asin(Math.sqrt(a));
-    }
 }
