@@ -7,8 +7,11 @@ public class StopData {
     private double ds;  // Population density factor
     private double score; // Final combined score
     private final String stopId; // Unique identifier for the stop
-    public StopData(String stopId) {
+    private final String stopName; // Stop name
+
+    public StopData(String stopId, String stopName) {
         this.stopId = stopId;
+        this.stopName = stopName;
         this.fs = 0.0;
         this.ps = 0.0;
         this.es = 0.0;
@@ -30,5 +33,6 @@ public class StopData {
     public double getScore() {return score;}
     public void setScore(double score) {this.score = score;}
     public String getStopId() {return stopId;}
+    public String getStopName() {return stopName;}
 
 }

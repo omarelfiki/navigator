@@ -55,8 +55,9 @@ public class RunResult {
         System.out.println("Top 3 stops to consider for closure:");
         for (int i = 0; i < 10; i++) {
             StopData s = allStopsData.get(i);
-            System.out.printf("Stop ID: %s | Score: %.4f | Fs: %.4f | Ps: %.4f | Es: %.4f | Ds: %.4f%n",
-                    s.getStopId(), s.getScore(), s.getFs(), s.getPs(), s.getEs(), s.getDs());
+            System.out.printf("Stop ID: %s | Name: %s | Score: %.4f | Fs: %.4f | Ps: %.4f | Es: %.4f | Ds: %.4f%n",
+                    s.getStopId(), s.getStopName(), s.getScore(), s.getFs(), s.getPs(), s.getEs(), s.getDs());
+
         }
     }
 }

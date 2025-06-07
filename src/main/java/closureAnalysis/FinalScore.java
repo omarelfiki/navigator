@@ -22,7 +22,7 @@ public class FinalScore {
 
         //inititialize a list with StopData objects to find the lowest scores
         for (Stop stop : allStops) {
-            StopData s = new StopData(stop.getStopId());
+            StopData s = new StopData(stop.getStopId(), stop.getStopName());
             allStopsData.add(s);
         }
         //population density factor Ds for each stop
