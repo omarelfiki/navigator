@@ -1,7 +1,7 @@
 package closureAnalysis;
 
 import models.Stop;
-
+import db.TDSImplement;
 import java.io.IOException;
 import java.util.*;
 
@@ -17,6 +17,7 @@ public class FinalScore {
 
     public static List<StopData> calculateFinalScore(List<Stop> allStops, List<TouristicLocations> monuments) throws IOException {
         //List of all the stops with their weights
+        TDSImplement tds = new TDSImplement();
         List<StopData> allStopsData = new ArrayList<> ();
 
         //inititialize a list with StopData objects to find the lowest scores
@@ -61,7 +62,7 @@ public class FinalScore {
         }
 
         //frequency of trips Fs for each stop
-        Map<String, Integer> stopRouteCounts = new HashMap<>();
+        Map<String, Integer> stopRouteCounts =tds.getStopRouteCounts();
         List<FrequencyFactor> fs = calculateFrequencyFactor(allStops,stopRouteCounts);
         for( FrequencyFactor frequencyFactor : fs) {
             for (StopData s : allStopsData) {

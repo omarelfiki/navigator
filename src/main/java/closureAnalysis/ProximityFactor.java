@@ -27,8 +27,6 @@ public class ProximityFactor {
             double stopLat = stop.getStopLat();
             double stopLon = stop.getStopLon();
 
-            boolean nearMonument = false;
-
             for (TouristicLocations monument : monuments) {
                 double monumentLat = monument.lat();
                 double monumentLon = monument.lon();
@@ -37,12 +35,9 @@ public class ProximityFactor {
 
                 if (distance <= 500) {
                     pf.setPs(1.0);
-//                    nearMonument = true;
                     break;
                 }
             }
-
-            //stop.setPs(nearMonument ? 1 : 0);
         }
         return proximityFactors;
     }

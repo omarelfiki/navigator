@@ -287,6 +287,8 @@ public class HomeUI extends Application {
             AStarRouterV router = new AStarRouterV();
             router.reset();
             waypoints.clear();
+            waypointPainter.setWaypoints(waypoints);
+            MapProvider.getInstance().getMap().setOverlayPainter(waypointPainter);
         });
     }
 
