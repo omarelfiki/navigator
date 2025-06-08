@@ -20,6 +20,7 @@ import javafx.stage.Stage;
 import java.awt.geom.Point2D;
 
 import org.jxmapviewer.JXMapViewer;
+import org.jxmapviewer.viewer.DefaultWaypoint;
 import org.jxmapviewer.viewer.GeoPosition;
 import org.jxmapviewer.viewer.Waypoint;
 import org.jxmapviewer.viewer.WaypointPainter;
@@ -167,18 +168,40 @@ public class HomeUI extends Application {
 
         bindElements(timeContainer, goButtonContainer, clearButton, originField, destinationField);
 
-        isOn.addListener((_, _, _) -> {
-            if (isOn.get()) {
+
+        isOn.addListener((_, _, newValue) -> {
+            if (newValue) { // HeatMap mode enabled
                 title.setText("Heatmap");
                 label.setText("Heatmap Mode Activated. \n Enter an origin point...");
-                originField.clear();
                 if (!searchButton.isVisible()) {
                     searchButton.setVisible(true);
                 }
-                waypoints.clear();
-                combinedContainer.setVisible(false);
-                destinationField.setEditable(false);
-            } else {
+
+                destinationField.clear();
+                // If there are waypoints, keep only the origin one
+                if (!waypoints.isEmpty()) {
+                    // Store origin coordinates from the text field
+                    double[] originCoords = getCoordinatesFromAddress(originField.getText());
+                    if (originCoords != null) {
+                        waypoints.clear();
+
+                        // Recreate origin waypoint
+                        GeoPosition originPosition = new GeoPosition(originCoords[0], originCoords[1]);
+                        DefaultWaypoint originWaypoint = new DefaultWaypoint(originPosition);
+                        waypoints.add(originWaypoint);
+                        waypointPainter.setWaypoints(waypoints);
+                        map.setOverlayPainter(waypointPainter);
+                    } else {
+                        // If can't parse coordinates, just clear all
+                        waypoints.clear();
+                        waypointPainter.setWaypoints(waypoints);
+                        map.setOverlayPainter(waypointPainter);
+                    }
+                }
+
+                AStarRouterV router = new AStarRouterV();
+                router.reset();
+            } else { // HeatMap mode disabled
                 title.setText("Navigator");
                 label.setText("Navigate to see public transport \n options");
                 originField.clear();
@@ -186,11 +209,16 @@ public class HomeUI extends Application {
                 if (searchButton.isVisible()) {
                     searchButton.setVisible(false);
                 }
+
+                // Always reset to first click when exiting HeatMap mode
+                firstClick = true;
+
+                waypoints.clear();
+                waypointPainter.setWaypoints(waypoints);
                 map.setOverlayPainter(waypointPainter);
                 combinedContainer.setVisible(true);
-                endGroup.setVisible(true);
+                // Don't set endGroup.setVisible(true) here as it's already bound
                 destinationField.setEditable(true);
-                waypoints.clear();
             }
         });
 
@@ -209,7 +237,10 @@ public class HomeUI extends Application {
     private void updateCoordinateFields(double lat, double lon, TextField originField, TextField destinationField) {
         // Format the coordinates
         String coordinateText = String.format("%.6f, %.6f", lat, lon);
-        if (firstClick && originField.getText().isEmpty()) {
+
+        // When HeatMap mode is enabled, always treat clicks as setting the origin
+        if (isOn.get()) {
+            // In HeatMap mode,always treat as origin point
             addMarkerOnClicks(lat, lon, true, waypoints, waypointPainter);
             Platform.runLater(() -> {
                 if (NetworkUtil.isNetworkAvailable()) {
@@ -218,23 +249,42 @@ public class HomeUI extends Application {
                 } else {
                     originField.setText(coordinateText);
                 }
-                firstClick = false;
             });
-        } else if (!firstClick && destinationField.getText().isEmpty()) {
-            addMarkerOnClicks(lat, lon, false, waypoints, waypointPainter);
-            Platform.runLater(() -> {
-                if (NetworkUtil.isNetworkAvailable()) {
-                    String address = getAddress(lat, lon);
-                    destinationField.setText(Objects.requireNonNullElse(address, coordinateText));
-                } else {
-                    destinationField.setText(coordinateText);
+        } else {
+
+            if (firstClick) { // This is the first click (origin)
+                // If we are starting a new cycle (we've already set origin and destination before)
+                // then clear both fields first
+                if (!originField.getText().isEmpty() && !destinationField.getText().isEmpty()) {
+                    Platform.runLater(() -> {
+                        originField.clear();
+                        destinationField.clear();
+                    });
                 }
-                firstClick = true;
-            });
+                addMarkerOnClicks(lat, lon, true, waypoints, waypointPainter);
+                Platform.runLater(() -> {
+                    if (NetworkUtil.isNetworkAvailable()) {
+                        String address = getAddress(lat, lon);
+                        originField.setText(Objects.requireNonNullElse(address, coordinateText));
+                    } else {
+                        originField.setText(coordinateText);
+                    }
+                    firstClick = false;
+                });
+            } else { // This is the second click (destination)
+                addMarkerOnClicks(lat, lon, false, waypoints, waypointPainter);
+                Platform.runLater(() -> {
+                    if (NetworkUtil.isNetworkAvailable()) {
+                        String address = getAddress(lat, lon);
+                        destinationField.setText(Objects.requireNonNullElse(address, coordinateText));
+                    } else {
+                        destinationField.setText(coordinateText);
+                    }
+                    firstClick = true;
+                });
+            }
         }
     }
-
-
 
     private void setHeatMapListener(Button submit, TextField originField, BooleanProperty isOn, Text label) {
         submit.setOnAction(_ -> {
@@ -265,6 +315,7 @@ public class HomeUI extends Application {
                 GeoPosition geoPosition = map.convertPointToGeoPosition(point);
                 double lat = geoPosition.getLatitude();
                 double lon = geoPosition.getLongitude();
+
                 updateCoordinateFields(lat, lon, originField, destinationField);
             }
         });
@@ -274,14 +325,15 @@ public class HomeUI extends Application {
             if (isOn.get()) {
                 label.setText("Heatmap Mode Activated. \n Enter an origin point");
             } else {
-                destinationField.clear();
                 timeField.clear();
                 label.setText("Navigate to see public transport \n options");
                 label.setVisible(true);
                 resultPaneRef.get().setVisible(false);
-
+                // In regular mode, always reset to first click after clearing
+                firstClick = true;
             }
             originField.clear();
+            destinationField.clear();
             WayPoint.clearRoute();
             AStarRouterV router = new AStarRouterV();
             router.reset();
@@ -296,4 +348,3 @@ public class HomeUI extends Application {
         launch(args);
     }
 }
-
