@@ -93,12 +93,12 @@ public class RoutingEngine {
     private boolean initDB(Map<?, ?> request) throws IOException {
         String load = (String) request.get("load");
         if (load == null || load.isEmpty()) {
-            sendError("Invalid load path");
+            sendError("Invalid path: " + load);
             return true;
         }
         File file = new File(load);
         if (!file.exists()) {
-            sendError("File does not exist");
+            sendError("File does not exist: " + load);
             return true;
         }
         DBConfig dbConfig = new DBConfig(load);

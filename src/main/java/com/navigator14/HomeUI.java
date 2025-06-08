@@ -177,7 +177,6 @@ public class HomeUI extends Application {
                 }
                 waypoints.clear();
                 combinedContainer.setVisible(false);
-                endGroup.setVisible(false);
                 destinationField.setEditable(false);
             } else {
                 title.setText("Navigator");
