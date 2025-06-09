@@ -14,46 +14,49 @@ public class PathCompressor {
 
         Node previousNonWalk = path.get(0);
         Node walkStartNode = null;
-        double startLat = 0, startLon = 0;
-        result.add(path.get(0));
-        for (int i = 0; i < path.size(); i++) {
+        Node walkEndNode = null;
+
+        result.add(path.get(0)); // always include the start node
+
+        for (int i = 1; i < path.size(); i++) {
             Node current = path.get(i);
-            String mode = current.getMode();
-            boolean isWalk = "WALK".equals(mode);
-            boolean isLastSegment = (i == path.size() - 1);
+            boolean isWalk = "WALK".equals(current.getMode());
+            boolean isLast = (i == path.size() - 1);
+            boolean nextIsNotWalk = isLast || !"WALK".equals(path.get(i + 1).getMode());
 
             if (isWalk) {
                 if (walkStartNode == null) {
                     walkStartNode = current;
-                    startLat = current.getStop().getStopLat();
-                    startLon = current.getStop().getStopLon();
                 }
+                walkEndNode = current;
 
-                // If it's the last walk in the chain (last node or next is not WALK), emit final walk node
-                boolean nextIsNotWalk = isLastSegment || !"WALK".equals(path.get(i + 1).getMode());
+                // If it's the end of the walk chain, add a compressed walk node
                 if (nextIsNotWalk) {
-                    current.setParent(previousNonWalk);
+                    walkEndNode.setParent(previousNonWalk);
 
-                    Node nodeParent = current.getParent();
-                    if(nodeParent != null) {
-                    Stop parentStop = nodeParent.getStop();
-                    double walkTime = WalkingTime.getWalkingTime(
-                            parentStop.getStopLat(),parentStop.getStopLon(),
-                            current.getStop().getStopLat(), current.getStop().getStopLon()
-                    );
-                    String realArrivalTime = TimeUtil.addTime(nodeParent.getArrivalTime(),walkTime);
-                    current.setArrivalTime(realArrivalTime);
+                    Node parent = walkEndNode.getParent();
+                    if (parent != null) {
+                        Stop parentStop = parent.getStop();
+                        double walkTime = WalkingTime.getWalkingTime(
+                                parentStop.getStopLat(), parentStop.getStopLon(),
+                                walkEndNode.getStop().getStopLat(), walkEndNode.getStop().getStopLon()
+                        );
+                        String arrivalTime = TimeUtil.addTime(parent.getArrivalTime(), walkTime);
+                        walkEndNode.setArrivalTime(arrivalTime);
                     }
-                    result.add(current);
+
+                    result.add(walkEndNode);
                     walkStartNode = null;
+                    walkEndNode = null;
                 }
             } else {
                 result.add(current);
-                previousNonWalk = current; // update parent for next walk chain
+                previousNonWalk = current;
             }
         }
 
         return result;
     }
+
 
 }
