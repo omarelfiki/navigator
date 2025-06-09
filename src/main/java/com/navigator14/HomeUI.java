@@ -115,7 +115,7 @@ public class HomeUI extends Application {
         javafx.scene.Node originalGraphic = goButton.getGraphic();
         ProgressIndicator progressIndicator = new ProgressIndicator();
         progressIndicator.setMaxSize(18, 18);
-        progressIndicator.setStyle("-fx-progress-color: #000000; -fx-background-color: #FFFF;");
+        progressIndicator.setStyle("-fx-progress-color: #000000; -fx-background-color: #000000;");
 
 
         goButton.setOnAction(_ -> {

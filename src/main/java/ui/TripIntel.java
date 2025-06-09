@@ -56,6 +56,9 @@ public class TripIntel extends HomeUI {
                 case "WALK" -> {
                     ImageView modeIcon = new ImageView(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/ui/walk.png"))));
                     String duration = getDuration(result, i);
+                    if (duration.equals("0")) {
+                        continue; // Skip if the duration is 0
+                    }
                     Text text = getWalkText(result, i, duration);
                     text.setWrappingWidth(280);
 
