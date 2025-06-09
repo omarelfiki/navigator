@@ -7,8 +7,8 @@ public class DebugUtil {
         if (debug != null) {
             System.setProperty("debug", debug);
         } else {
-            sendWarning("Debug mode not defined in environment, debug mode is enabled by default");
-            System.setProperty("debug", "true");
+            sendWarning("Debug mode not defined in environment, debug mode is disabled by default");
+            System.setProperty("debug", "false");
         }
     }
 
