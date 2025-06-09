@@ -28,6 +28,10 @@ public class Node {
         this.stop = Objects.requireNonNullElseGet(tds.getStop(stopId), Stop::new);
     }
 
+    public void setArrivalTime(String arrivalTime) {
+        this.arrivalTime = arrivalTime;
+    }
+
     public Stop getStop() {
         return stop;
     }

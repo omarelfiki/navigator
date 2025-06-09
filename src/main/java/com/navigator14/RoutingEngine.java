@@ -13,6 +13,7 @@ import db.DBConfig;
 import models.Request;
 import router.AStarRouterV;
 import router.Node;
+import router.WalkingTime;
 import util.TimeUtil;
 
 import static util.DebugUtil.init;
@@ -136,6 +137,10 @@ public class RoutingEngine {
             Node current = path.get(i);
             Node next = path.get(i + 1);
 
+            if ("END_POINT".equals(next.getStop().getStopName())) {
+                continue; // Skip handling END_POINT as a transit stop
+            }
+
             String startTime = current.getParent() != null ? current.getParent().getArrivalTime() : current.getArrivalTime();
             String endTime = current.getArrivalTime();
 
@@ -181,11 +186,32 @@ public class RoutingEngine {
                 ));
             }
         }
+        // Handle final step to END_POINT, if applicable
+        Node last = path.get(path.size() - 1);
+        Node parent = last.getParent();
+
+        if (parent != null && "WALK".equals(last.getMode())) {
+            double fromLat = parent.getStop().getStopLat();
+            double fromLon = parent.getStop().getStopLon();
+            double toLat = last.getStop().getStopLat();
+            double toLon = last.getStop().getStopLon();
+            double walkTime = WalkingTime.getWalkingTime(fromLat, fromLon, toLat, toLon);
+            int durationMinutes = Math.max(1, (int) Math.round(walkTime / 60.0));
+            String formattedStartTime = TimeUtil.removeSecondsSafe(parent.getArrivalTime());
+
+            result.add(Map.of(
+                    "mode", "walk",
+                    "to", Map.of("lat", toLat, "lon", toLon),
+                    "duration", durationMinutes,
+                    "startTime", formattedStartTime,
+                    "fromLat", fromLat,
+                    "fromLon", fromLon
+            ));
+        }
+
 
         return result;
     }
-
-
 }
 // {"routeFrom":{"lat":41.904,"lon":12.5004},"to":{"lat":41.8791,"lon":12.5221},"startingAt":"09:30:00"} - test case
 //  Roma Termini - Vatican test case below
