@@ -79,7 +79,7 @@ public class RoutingEngine {
                         continue;
                     }
                     List<Map<String, Object>> result = parseResult(path, requestR);
-                    result = PathCompressor.compress(result);
+
                     sendOk(result);
                     continue;
                 }

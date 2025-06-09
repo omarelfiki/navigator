@@ -15,6 +15,7 @@ public class Node {
     Node parent;
     private final String mode;
     private final Trip trip;
+    private int duration = -1; // -1 means "not set" by default
 
     TDSImplement tds = new TDSImplement();
 
@@ -23,8 +24,8 @@ public class Node {
         this.arrivalTime = arrivalTime;
         this.parent = parent;
         this.mode = mode;
-        this.trip = Objects.requireNonNullElseGet(trip, Trip::new); // Fallback if trip is not provided
-        this.stop = Objects.requireNonNullElseGet(tds.getStop(stopId), Stop::new); // Fallback if stop is not found
+        this.trip = Objects.requireNonNullElseGet(trip, Trip::new);
+        this.stop = Objects.requireNonNullElseGet(tds.getStop(stopId), Stop::new);
     }
 
     public Stop getStop() {
@@ -36,7 +37,7 @@ public class Node {
     }
 
     public String getArrivalTime() {
-         return arrivalTime;
+        return arrivalTime;
     }
 
     public double getG() {
@@ -59,6 +60,15 @@ public class Node {
         return trip;
     }
 
+    // New: duration getter and setter
+    public int getDuration() {
+        return duration;
+    }
+
+    public void setDuration(int duration) {
+        this.duration = duration;
+    }
+
     @Override
     public String toString() {
         return "Node{" +
@@ -68,6 +78,11 @@ public class Node {
                 ", h=" + h +
                 ", mode='" + mode + '\'' +
                 ", trip=" + trip +
+                ", duration=" + duration +
                 '}';
+    }
+
+    public void setParent(Node parent) {
+        this.parent = parent;
     }
 }

@@ -1,115 +1,47 @@
 package util;
 
+import router.Node;
 import router.WalkingTime;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class PathCompressor {
 
-    public static List<Map<String, Object>> compress(List<Map<String, Object>> path) {
-        // Apply both walk and ride compression
-        return compressWalks(path);
-    }
+    public static List<Node> compressWalks(List<Node> path) {
+        List<Node> result = new ArrayList<>();
 
-    public static List<Map<String, Object>> compressWalks(List<Map<String, Object>> path) {
-        List<Map<String, Object>> result = new ArrayList<>();
-        Map<String, Object> currentWalk = null;
-
+        Node previousNonWalk = null;
+        Node walkStartNode = null;
         double startLat = 0, startLon = 0;
-        double endLat = 0, endLon = 0;
+        result.add(path.get(0));
+        for (int i = 0; i < path.size(); i++) {
+            Node current = path.get(i);
+            String mode = current.getMode();
+            boolean isWalk = "WALK".equals(mode);
+            boolean isLastSegment = (i == path.size() - 1);
 
-        for (Map<String, Object> segment : path) {
-            String mode = (String) segment.get("mode");
-
-            if ("walk".equals(mode)) {
-                if (currentWalk == null) {
-                    currentWalk = new HashMap<>(segment);
-                    startLat = (double) segment.get("fromLat");
-                    startLon = (double) segment.get("fromLon");
+            if (isWalk) {
+                if (walkStartNode == null) {
+                    walkStartNode = current;
+                    startLat = current.getStop().getStopLat();
+                    startLon = current.getStop().getStopLon();
                 }
 
-                Map<String, Object> to = (Map<String, Object>) segment.get("to");
-                endLat = (double) to.get("lat");
-                endLon = (double) to.get("lon");
-
-                currentWalk.put("to", to); // always update end point
+                // If it's the last walk in the chain (last node or next is not WALK), emit final walk node
+                boolean nextIsNotWalk = isLastSegment || !"WALK".equals(path.get(i + 1).getMode());
+                if (nextIsNotWalk) {
+                    current.setParent(previousNonWalk);  // compress parent
+                    result.add(current);
+                    walkStartNode = null;
+                }
             } else {
-                if (currentWalk != null) {
-                    double walkingTime = WalkingTime.getWalkingTime(startLat, startLon, endLat, endLon);
-                    int duration = Math.max(1, (int) Math.round(walkingTime / 60.0));
-                    currentWalk.put("duration", duration);
-                    result.add(currentWalk);
-                    currentWalk = null;
-                }
-                result.add(segment);
+                result.add(current);
+                previousNonWalk = current; // update parent for next walk chain
             }
-        }
-
-        if (currentWalk != null) {
-            double walkingTime = WalkingTime.getWalkingTime(startLat, startLon, endLat, endLon);
-            int duration = Math.max(1, (int) Math.round(walkingTime / 60.0));
-            currentWalk.put("duration", duration);
-            result.add(currentWalk);
         }
 
         return result;
     }
 
-
-
-
-    public static List<Map<String, Object>> compressRides(List<Map<String, Object>> path) {
-        List<Map<String, Object>> result = new ArrayList<>();
-        Map<String, Object> currentRide = null;
-        int rideDuration = 0;
-
-        for (Map<String, Object> segment : path) {
-            String mode = (String) segment.get("mode");
-
-            if ("ride".equals(mode)) {
-                if (currentRide == null) {
-                    currentRide = new HashMap<>(segment);
-                    rideDuration = (int) segment.get("duration");
-                } else {
-                    Map<String, Object> currentRoute = (Map<String, Object>) currentRide.get("route");
-                    Map<String, Object> nextRoute = (Map<String, Object>) segment.get("route");
-
-                    if (routesMatch(currentRoute, nextRoute)) {
-                        currentRide.put("to", segment.get("to"));
-                        currentRide.put("stop", segment.get("stop"));
-                        currentRide.put("startTime", segment.get("startTime"));
-                        rideDuration += (int) segment.get("duration");
-                    } else {
-                        currentRide.put("duration", rideDuration);
-                        result.add(currentRide);
-                        currentRide = new HashMap<>(segment);
-                        rideDuration = (int) segment.get("duration");
-                    }
-                }
-            } else {
-                if (currentRide != null) {
-                    currentRide.put("duration", rideDuration);
-                    result.add(currentRide);
-                    currentRide = null;
-                    rideDuration = 0;
-                }
-                result.add(segment);
-            }
-        }
-
-        if (currentRide != null) {
-            currentRide.put("duration", rideDuration);
-            result.add(currentRide);
-        }
-
-        return result;
-    }
-
-
-    private static boolean routesMatch(Map<String, Object> route1, Map<String, Object> route2) {
-        return Objects.equals(route1.get("operator"), route2.get("operator")) &&
-                Objects.equals(route1.get("shortName"), route2.get("shortName")) &&
-                Objects.equals(route1.get("longName"), route2.get("longName")) &&
-                Objects.equals(route1.get("headSign"), route2.get("headSign"));
-    }
 }

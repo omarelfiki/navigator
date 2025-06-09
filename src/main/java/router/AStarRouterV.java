@@ -109,15 +109,17 @@ public class AStarRouterV {
                 STOP_NODE.parent = bestGoalNode;
                 STOP_NODE.arrivalTime = addTime(bestGoalNode.getArrivalTime(), walking_time_to_end);
             }
-            return reconstructPath(STOP_NODE);
+            List<Node> rawPath = reconstructPath(STOP_NODE);
+            return PathCompressor.compressWalks(rawPath);
+
         }
 
 // Fallback: walk-only route
         sendInfo("No transit path found — falling back to walk-only route");
         STOP_NODE.parent = STARTING_NODE;
         STOP_NODE.arrivalTime = addTime(startTime, walkingTimeOnly);
-        return reconstructPath(STOP_NODE);
-
+        List<Node> rawPath = reconstructPath(STOP_NODE);
+        return PathCompressor.compressWalks(rawPath);
     }
 
 
