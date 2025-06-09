@@ -9,6 +9,7 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.concurrent.Task;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -111,8 +112,16 @@ public class HomeUI extends Application {
         resultPaneRef = new AtomicReference<>(new StackPane());
         leftPane.getChildren().add(resultPaneRef.get());
 
+        javafx.scene.Node originalGraphic = goButton.getGraphic();
+        ProgressIndicator progressIndicator = new ProgressIndicator();
+        progressIndicator.setMaxSize(18, 18);
+        progressIndicator.setStyle("-fx-progress-color: #000000; -fx-background-color: #FFFF;");
+
+
         goButton.setOnAction(_ -> {
             if (filled.get()) {
+                goButton.setGraphic(progressIndicator);
+                goButton.setDisable(true);
                 Task<Void> task = new Task<>() {
                     @Override
                     protected Void call() {
@@ -125,6 +134,9 @@ public class HomeUI extends Application {
                         List<Node> result = parsePoint(origin, destination, time, avoidedStops);
 
                         Platform.runLater(() -> {
+                            goButton.setGraphic(originalGraphic);
+                            goButton.setDisable(false);
+
                             if (result == null) {
                                 label.setText("No route found.");
                             } else {
@@ -142,7 +154,7 @@ public class HomeUI extends Application {
                 };
                 new Thread(task).start();
             } else {
-                Platform.runLater(() -> label.setText("Navigate to see public transport \n options"));
+                Platform.runLater(() -> label.setText("Check that all fields are filled."));
             }
         });
 
