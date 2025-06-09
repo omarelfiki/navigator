@@ -3,10 +3,8 @@ package map;
 import javafx.embed.swing.SwingNode;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
-import javafx.scene.layout.Background;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 import org.jxmapviewer.JXMapViewer;
 import org.jxmapviewer.cache.FileBasedLocalCache;
 import org.jxmapviewer.input.CenterMapListener;
@@ -17,7 +15,6 @@ import org.jxmapviewer.viewer.GeoPosition;
 import org.jxmapviewer.viewer.TileFactory;
 
 import javax.swing.event.MouseInputListener;
-import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Objects;
@@ -103,8 +100,8 @@ public class MapIntegration {
 
         mapPane.getChildren().add(zoomControls);
         StackPane.setAlignment(zoomControls, Pos.BOTTOM_RIGHT);
-        zoomControls.setTranslateX(380); // Adjust X position to move it more to the left
-        zoomControls.setTranslateY(300); // Adjust Y position to move it more to the top
+        zoomControls.setTranslateX(430); // Adjust X position to move it more to the left
+        zoomControls.setTranslateY(350); // Adjust Y position to move it more to the top
 
         map.addComponentListener(new java.awt.event.ComponentAdapter() {
             @Override
@@ -112,8 +109,8 @@ public class MapIntegration {
                 int width = map.getWidth();
                 int height = map.getHeight();
 
-                double xRatio = 380.0 / 929.0; // Adjusted X position ratio
-                double yRatio = 300.0 / 816.0; // Adjusted Y position ratio
+                double xRatio = 430.0 / 929.0; // Adjusted X position ratio
+                double yRatio = 350.0 / 816.0; // Adjusted Y position ratio
 
                 zoomControls.setTranslateX(width * xRatio);
                 zoomControls.setTranslateY(height * yRatio);

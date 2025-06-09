@@ -12,6 +12,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import static util.DebugUtil.sendError;
+import static util.DebugUtil.sendInfo;
 
 public class GeoUtil {
     private static final String API_KEY = "AIzaSyDWUFIdOzWZeq2BsFfTMMif-VdY2YSqmKg";
@@ -33,6 +34,7 @@ public class GeoUtil {
 
             double lat = location.getDouble("lat");
             double lng = location.getDouble("lng");
+            sendInfo("Coordinates for address '" + address + "': " + lat + ", " + lng);
 
             return new double[]{lat, lng};
 

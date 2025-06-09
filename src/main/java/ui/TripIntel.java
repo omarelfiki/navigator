@@ -1,205 +1,182 @@
 package ui;
 
+import com.navigator14.HomeUI;
 import javafx.geometry.Pos;
+import javafx.scene.control.Button;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.Line;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
+import models.Route;
+import models.Trip;
 import router.Node;
+import util.TimeUtil;
 
 import java.util.*;
+import java.util.List;
+import static ui.ErrorPopup.showSEConfirmDialog;
+import static util.TimeUtil.removeSecondsSafe;
 
-import static util.DebugUtil.sendInfo;
-
-public class TripIntel {
-    public final String mode;
-    public final String time;
-    public final String stop;
-
-    public TripIntel(String mode, String time, String stop) {
-        this.mode = mode;
-        this.time = time;
-        this.stop = stop;
-    }
-
-
-    private static int turnTimeToInt(String sTime) {
-        String[] splitTimes = sTime.split(":");
-        int hours = Integer.parseInt(splitTimes[0]);
-        int minutes = Integer.parseInt(splitTimes[1]);
-        int seconds = Integer.parseInt(splitTimes[2]);
-
-        return hours * 3600 + minutes * 60 + seconds;
-    }
-
-    private static int[] splitTimes(int totalSeconds) {
-        int[] timeArray = new int[2];
-        int currentMinutes = totalSeconds / 60;
-        int currentSeconds = totalSeconds % 60;
-        timeArray[0] = currentMinutes;
-        timeArray[1] = currentSeconds;
-        return timeArray;
-    }
-
-    public static StackPane displayTransportModes(Node destinationNode, BorderPane root) {
-        // StackPane creation and styling - do not change
+public class TripIntel extends HomeUI {
+    public StackPane displayTransportModes(List<Node> result, BorderPane root) {
         StackPane resultPane = new StackPane();
-        resultPane.setStyle("-fx-background-color: rgba(0, 0, 0, 0.5); -fx-padding: 10;");
+        resultPane.setStyle("-fx-padding: 10;");
         resultPane.setAlignment(Pos.CENTER);
-        resultPane.setPrefSize(300, 200);
-        resultPane.setTranslateX(root.getWidth() * 0.02); // 10/1280
-        resultPane.setTranslateY(root.getHeight() * 0.4); // 80/832
+        resultPane.setPrefSize(300, 400);
+        resultPane.setTranslateX(10);
+        resultPane.setTranslateY(root.getHeight() * 0.38); // 80/832
+        
+        VBox mainVbox = new VBox();
+        mainVbox.setAlignment(Pos.TOP_LEFT);
+        mainVbox.setSpacing(10);
+        mainVbox.setStyle("-fx-padding: 12;");
+        
+        ScrollPane scrollPane = new ScrollPane(mainVbox);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setPannable(false);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setPrefViewportHeight(350);
+        scrollPane.setStyle("-fx-background: transparent; -fx-background-color: transparent;");
 
-        List<TripIntel> tripIntel = new ArrayList<>();
-        Node current = destinationNode;
-        while (current != null) {
-            sendInfo(String.valueOf(current));
+        mainVbox.getChildren().add(getTitle(result));
 
-            tripIntel.add(new TripIntel(current.getMode(), current.getArrivalTime(), current.getStopId()));
+        for (int i = 0; i < result.size() - 1; i++) {
+            HBox hBox = new HBox(10);
+            hBox.setAlignment(Pos.CENTER_LEFT);
 
-            current = current.getParent();
-            // last Node (first current) is the start point of the trip.
-            // this means that the 'arrivalTime' of the first stop
-            // is just the start of the trip.
-            // everything needs to be in seconds, so first 2 characters need
-            // to be turned into integer, multiplied by 3600.
-            // split after the colon, then multiply the second pair of numbers by 60.
-            // count this up with the hour-number and the second-number after the last colon.
-            // then subtract the arrivaltime of the next stop that turns into a transfer or end
-            // by the arrivalTime of the last different type of transportation.
-            // Turn it into minutes. If it's less than a minute, just make it into "<1min". If it
-            // exceeds 60 minutes, turn it into x hours + minutes (just modulus the number by 60).
-        }
+            String mode = result.get(i + 1).getMode();
+            switch (mode) {
+                case "WALK" -> {
+                    ImageView modeIcon = new ImageView(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/ui/walk.png"))));
+                    String duration = getDuration(result, i);
+                    Text text = getWalkText(result, i, duration);
+                    text.setWrappingWidth(280);
 
-        Collections.reverse(tripIntel);
+                    modeIcon.setFitWidth(24);
+                    modeIcon.setFitHeight(24);
+                    hBox.getChildren().addAll(modeIcon, text);
+                }
+                case "SAME_TRIP", "TRANSFER" -> {
+                    Trip trip = result.get(i + 1).getTrip();
+                    Route route = trip.route();
+                    String headSign = trip.headSign() != null ? trip.headSign() : "N/A";
+                    String routeName = route.routeLongName() != null && !route.routeLongName().equals("Unknown") ? route.routeLongName() : route.routeShortName();
+                    ImageView modeIcon;
+                    if (routeName.contains("Metro")) {
+                        modeIcon = new ImageView(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/ui/metro.png"))));
+                    } else {
+                        modeIcon = new ImageView(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/ui/bus.png"))));
+                    }
 
+                    // Check for consecutive SAME_TRIP nodes with the same Trip
+                    int j = i + 1;
+                    while (j + 1 < result.size() && "SAME_TRIP".equals(result.get(j + 1).getMode())
+                            && Objects.equals(trip, result.get(j + 1).getTrip())) {
+                        j++;
+                    }
 
-        Text transportTitle = new Text("Modes of Transport:");
-        transportTitle.setStyle("-fx-font: 16 Ubuntu; -fx-fill: white;");
+                    VBox segmentBox = new VBox();
+                    segmentBox.setSpacing(4);
 
-        VBox contentBox = new VBox(10);
-        contentBox.setAlignment(Pos.CENTER);
-        contentBox.getChildren().add(transportTitle);
+                    Text routeText = new Text("Take " + routeName + " towards " + headSign);
+                    routeText.setStyle("-fx-font-weight: bold; -fx-fill: white;");
+                    routeText.setWrappingWidth(280);
 
+                    segmentBox.getChildren().add(routeText);
 
-        int lastArrivalTime = turnTimeToInt(tripIntel.getFirst().time);
-        int currentTripTime = 0;
-        String tripType = "";
-        String currentMode = "";
-        boolean newTrip = false;
-        int[] currentSplit = new int[2];
+                    for (int k = i + 1; k <= j; k++) {
+                        String stopName = result.get(k).getStop().getStopName();
+                        String stopId = result.get(k).getStop().getStopId();
+                        Button stopButton = new Button(stopName);
+                        stopButton.setPrefWidth(250);
+                        stopButton.setStyle("-fx-background-color: rgba(255,71,71,0.63); -fx-text-fill: white; -fx-font-size: 12px; -fx-alignment: CENTER_LEFT;");
+                        setStopButton(stopButton, stopId);
+                        segmentBox.getChildren().add(stopButton);
+                    }
 
-        for (int i = 0; i < tripIntel.size(); i++) {
-
-            HBox row = new HBox(10);
-            row.setAlignment(Pos.CENTER_LEFT);
-            TripIntel tripIntelX = tripIntel.get(i);
-            if (tripIntelX.mode.equals("WALK")) {
-                currentMode = "Walk";
-            } else if (tripIntelX.mode.equals("SAME_TRIP")) {
-                currentMode = "Bus";
-            } else {
-                currentMode = "Bus";
-            }
-
-            if (i + 1 < tripIntel.size()) {
-                if (tripIntel.get(i + 1).mode.equals("TRANSFER")) {
-                    currentTripTime = turnTimeToInt(tripIntelX.time) - lastArrivalTime;
-                    lastArrivalTime = turnTimeToInt(tripIntelX.time);
-                    newTrip = true;
-                    currentSplit = splitTimes(currentTripTime);
-
+                    modeIcon.setFitWidth(24);
+                    modeIcon.setFitHeight(24);
+                    hBox.getChildren().addAll(modeIcon, segmentBox);
+                    i = j - 1;
                 }
             }
-
-            if (i == tripIntel.size() - 1) {
-                currentTripTime = turnTimeToInt(tripIntelX.time) - lastArrivalTime;
-                newTrip = true;
-                currentSplit = splitTimes(currentTripTime);
-            }
-
-            if (newTrip) {
-                Text modeText = new Text(currentMode + " Time: " + currentSplit[0] + " minutes " +
-                        currentSplit[1] + " seconds " + tripIntelX.stop);
-                modeText.setStyle("-fx-font: 14 Ubuntu; -fx-fill: white;");
-                row.getChildren().add(modeText);
-                newTrip = false;
-            }
-
-
-            // ImageView icon = getModeIcon(mode);
-            // if (icon != null) row.getChildren().add(icon);
-
-            contentBox.getChildren().add(row);
+            mainVbox.getChildren().add(hBox);
         }
 
-        resultPane.getChildren().add(contentBox);
+        resultPane.getChildren().add(scrollPane);
         return resultPane;
     }
 
-//    private StackPane displayTransportModes(Node destinationNode, BorderPane root) {
-//        // StackPane creation and styling - do not change
-//        StackPane resultPane = new StackPane();
-//        resultPane.setStyle("-fx-background-color: rgba(0, 0, 0, 0.5); -fx-padding: 10;");
-//        resultPane.setAlignment(Pos.CENTER);
-//        resultPane.setPrefSize(300, 200);
-//        resultPane.setTranslateX(root.getWidth() * 0.02); // 10/1280
-//        resultPane.setTranslateY(root.getHeight() * 0.4); // 80/832
-//
-//        Set<String> modes = new LinkedHashSet<>(); // To avoid duplicates
-//        Node current = destinationNode;
-//        while (current != null) {
-//            if (current.getMode() != null && !current.getMode().isBlank()) {
-//                modes.add(current.getMode());
-//            }
-//            current = current.getParent();
-//        }
-//
-//        Text transportTitle = new Text("Modes of Transport:");
-//        transportTitle.setStyle("-fx-font: 16 Ubuntu; -fx-fill: white;");
-//
-//        VBox contentBox = new VBox(10);
-//        contentBox.setAlignment(Pos.CENTER);
-//        contentBox.getChildren().add(transportTitle);
-//
-//        for (String mode : modes) {
-//            HBox row = new HBox(10);
-//            row.setAlignment(Pos.CENTER);
-//
-//            Text modeText = new Text(mode);
-//            modeText.setStyle("-fx-font: 14 Ubuntu; -fx-fill: white;");
-//            row.getChildren().add(modeText);
-//
-//            // ImageView icon = getModeIcon(mode);
-//            // if (icon != null) row.getChildren().add(icon);
-//
-//            contentBox.getChildren().add(row);
-//        }
-//
-//        resultPane.getChildren().add(contentBox);
-//        return resultPane;
-//    }
+    private static VBox getTitle(List<Node> result) {
+        String startTime = result.getFirst().getArrivalTime() != null ? result.getFirst().getArrivalTime() : "N/A";
+        String endTime = result.getLast().getArrivalTime() != null ? result.getLast().getArrivalTime() : "N/A";
+        int seconds = (int) TimeUtil.calculateDifference(TimeUtil.parseTime(startTime), TimeUtil.parseTime(endTime));
+        int durationMinutes = (seconds > 0) ? Math.max(1, seconds / 60) : 0;
+
+        VBox title_vbox = new VBox();
+        title_vbox.setAlignment(Pos.TOP_LEFT);
+        title_vbox.setSpacing(5);
+
+        Text title = new Text("Your Trip");
+        title.setStyle("-fx-font-size: 20px; -fx-fill: white;");
+        title.setTextAlignment(TextAlignment.LEFT);
+
+        Text subtitle = new Text(removeSecondsSafe(startTime) + " - " + removeSecondsSafe(endTime) + " (" + durationMinutes + " min)");
+        subtitle.setStyle("-fx-font-size: 12px; -fx-fill: white;");
+
+        Line firstline = getLine();
+        title_vbox.getChildren().addAll(title, subtitle, firstline);
+        return title_vbox;
+    }
+
+    private static Text getWalkText(List<Node> result, int i, String duration) {
+        Text text;
+        if (i == 0) {
+            text = new Text("Walk for " + duration + " min to " + result.get(i + 1).getStop().getStopName());
+        } else if (i + 2 == result.size()) {
+            text = new Text("Walk for " + duration + " min to your destination");
+        } else {
+            text = new Text("Walk for " + duration + " min from " + result.get(i).getStop().getStopName() + " to " + result.get(i + 1).getStop().getStopName());
+
+        }
+        text.setStyle("-fx-fill: white;");
+        return text;
+    }
+
+    private static String getDuration(List<Node> result, int i) {
+        String departureTime = result.get(i).getArrivalTime() != null ? result.get(i).getArrivalTime() : "N/A";
+        String arrivalTime = result.get(i + 1).getArrivalTime() != null ? result.get(i + 1).getArrivalTime() : "N/A";
+        return String.valueOf((int) TimeUtil.calculateDifference(
+                TimeUtil.parseTime(departureTime),
+                TimeUtil.parseTime(arrivalTime)
+        ) / 60);
+    }
+
+    private static void setStopButton(Button stopButton, String stopId) {
+        stopButton.setOnAction(_ -> {
+            boolean exclude = showSEConfirmDialog(stopButton);
+            if (exclude) {
+                stopButton.setStyle("-fx-background-color: rgba(121,110,110,0.63); -fx-text-fill: white; -fx-font-size: 12px; -fx-alignment: CENTER_LEFT;");
+                stopButton.setText(stopButton.getText() + " (excluded)");
+                avoidedStops.add(stopId);
+            }
+        });
+    }
+
+    private static Line getLine() {
+        Line line = new Line();
+        line.setStartX(0);
+        line.setStartY(600);
+        line.setEndX(300);
+        line.setEndY(600);
+        line.setStyle("-fx-stroke: white; -fx-stroke-width: 1;");
+        return line;
+    }
 }
-
-//    private ImageView getModeIcon(String mode) {
-//        try {
-//            String iconPath = switch (mode.toLowerCase()) {
-
-//             add pictures, after case include path
-//                case "bus" ->
-//                case "walk" ->
-//                case "metro" ->
-//                default -> null;
-//            };
-//
-//            if (iconPath != null) {
-//                Image icon = new Image(getClass().getResourceAsStream(iconPath));
-//                ImageView imageView = new ImageView(icon);
-//                return imageView;
-//            }
-//        } catch (Exception e) {
-//
-//        }
-//        return null;
-//    }

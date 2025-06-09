@@ -37,7 +37,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import map.WayPoint;
 import db.*;
 
-import static ui.TripIntel.displayTransportModes;
 import static util.NavUtil.parsePoint;
 import static ui.UiHelper.*;
 import static util.GeoUtil.*;
@@ -48,6 +47,7 @@ public class HomeUI extends Application {
     private final Set<Waypoint> waypoints = new HashSet<>();
     private final WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<>();
     private AtomicReference<StackPane> resultPaneRef;
+    protected static List<String> avoidedStops = new ArrayList<>();
 
     @Override
     public void start(Stage primaryStage) {
@@ -122,21 +122,21 @@ public class HomeUI extends Application {
 
                         Platform.runLater(() -> label.setText("Finding routes..."));
 
-                        List<Node> result = parsePoint(origin, destination, time);
+                        List<Node> result = parsePoint(origin, destination, time, avoidedStops);
 
                         Platform.runLater(() -> {
                             if (result == null) {
                                 label.setText("No route found.");
                             } else {
                                 label.setVisible(false);
-                                StackPane newResult = displayTransportModes(result.getLast(), root);
+                                TripIntel tripIntel = new TripIntel();
+                                StackPane newResult = tripIntel.displayTransportModes(result, root);
                                 resultPaneRef.get().getChildren().setAll(newResult.getChildren());
                                 resultPaneRef.get().setTranslateX(newResult.getTranslateX());
                                 resultPaneRef.get().setTranslateY(newResult.getTranslateY());
                                 resultPaneRef.get().setVisible(true);
                             }
                         });
-
                         return null;
                     }
                 };
@@ -182,21 +182,15 @@ public class HomeUI extends Application {
                 if (!waypoints.isEmpty()) {
                     // Store origin coordinates from the text field
                     double[] originCoords = getCoordinatesFromAddress(originField.getText());
+                    waypoints.clear();
                     if (originCoords != null) {
-                        waypoints.clear();
-
                         // Recreate origin waypoint
                         GeoPosition originPosition = new GeoPosition(originCoords[0], originCoords[1]);
                         DefaultWaypoint originWaypoint = new DefaultWaypoint(originPosition);
                         waypoints.add(originWaypoint);
-                        waypointPainter.setWaypoints(waypoints);
-                        map.setOverlayPainter(waypointPainter);
-                    } else {
-                        // If can't parse coordinates, just clear all
-                        waypoints.clear();
-                        waypointPainter.setWaypoints(waypoints);
-                        map.setOverlayPainter(waypointPainter);
                     }
+                    waypointPainter.setWaypoints(waypoints);
+                    map.setOverlayPainter(waypointPainter);
                 }
 
                 AStarRouterV router = new AStarRouterV();
@@ -334,6 +328,7 @@ public class HomeUI extends Application {
             }
             originField.clear();
             destinationField.clear();
+            avoidedStops.clear();
             WayPoint.clearRoute();
             AStarRouterV router = new AStarRouterV();
             router.reset();
