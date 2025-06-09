@@ -5,23 +5,15 @@ import models.Stop;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-
-/**
- * GeoBox – an axis-aligned rectangle on the WGS-84 sphere
- * defined by its north-west and south-east corners, and the
- * total population currently assigned to that area.
- */
 public final class PopulationTile implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
     private final double latNorth;
     private final double lonWest;
     private final double latSouth;
     private final double lonEast;
     List<Stop> stopsList;
     private int population;
-
+    public double popScore;
+    public double stopScore;
 
     public PopulationTile(double latNorth, double lonWest, double latSouth, double lonEast,int population) {
 
@@ -34,15 +26,12 @@ public final class PopulationTile implements Serializable {
         this.lonWest  = lonWest;
         this.latSouth = latSouth;
         this.lonEast  = lonEast;
-        this.population = Math.max(population, 0);
+        this.population = population;
         this.stopsList = new ArrayList<>();
+        this.popScore = 0.0;
+        this.stopScore = 0.0;
 
     }
-
-    public double getLatNorth()     { return latNorth; }
-    public double getLonWest()      { return lonWest;  }
-    public double getLatSouth()     { return latSouth; }
-    public double getLonEast()      { return lonEast;  }
     public int    getPopulation()   { return population; }
 
     public boolean contains(double lat, double lon) {
@@ -55,6 +44,9 @@ public final class PopulationTile implements Serializable {
         } else {
             throw new IllegalArgumentException("Stop is outside the tile boundaries");
         }
+    }
+    public List<Stop> getStopsList() {
+        return stopsList;
     }
 
 }

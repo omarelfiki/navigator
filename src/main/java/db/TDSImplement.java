@@ -1,22 +1,21 @@
 package db;
 
+import closureAnalysis.StopFrequencyData;
 import models.*;
 
 import java.sql.*;
 import java.util.*;
 import java.util.List;
 
-import static util.DebugUtil.getDebugMode;
+import static util.DebugUtil.sendError;
 
 public class TDSImplement implements TransitDataService {
-    private final boolean isDebugMode;
     private final DBAccess db;
 
     public TDSImplement() {
-        this.isDebugMode = getDebugMode();
         this.db = DBAccessProvider.getInstance();
         if (db == null) {
-            if (isDebugMode) System.err.println("Error: Database access instance is null.");
+            sendError("Database access instance is null.");
         }
     }
 
@@ -24,7 +23,7 @@ public class TDSImplement implements TransitDataService {
     @SuppressWarnings("SqlResolve")
     public Stop getStop(String stopId) {
         if (db == null) {
-            if (isDebugMode) System.err.println("Error: Database access instance is null.");
+            sendError("Database access instance is null.");
             return null;
         }
         String sql = "SELECT stop_id, stop_name, stop_lat, stop_lon FROM stops WHERE stop_id = ?";
@@ -39,9 +38,9 @@ public class TDSImplement implements TransitDataService {
                 return new Stop(stopId, stopName, stopLat, stopLon);
             }
         } catch (SQLException e) {
-            if (isDebugMode) System.err.println("SQL Error in getStop: " + e.getMessage());
+            sendError("SQL Error: " + e.getMessage());
         }
-        if (isDebugMode) System.err.println("Stop not found: " + stopId);
+        sendError("Stop not found: " + stopId);
         return null;
     }
 
@@ -62,7 +61,7 @@ public class TDSImplement implements TransitDataService {
                 stops.add(stop);
             }
         } catch (SQLException e) {
-            if (isDebugMode) System.err.println("SQL Error in getAllStops: " + e.getMessage());
+            sendError("SQL Error: " + e.getMessage());
         }
         return stops;
     }
@@ -70,11 +69,11 @@ public class TDSImplement implements TransitDataService {
     @SuppressWarnings("SqlResolve")
     public StopTime getNextStopTime(StopTime currentStopTime) {
         if (currentStopTime == null) {
-            if (isDebugMode) System.err.println("Error: Provided StopTime is null.");
+            sendError("Provided StopTime is null.");
             return null;
         }
         if (db == null) {
-            if (isDebugMode) System.err.println("Error: Database access instance is null.");
+            sendError("Database access instance is null.");
             return null;
         }
         String sql = "SELECT trip_id, stop_id, arrival_time, departure_time, stop_sequence " +
@@ -93,7 +92,7 @@ public class TDSImplement implements TransitDataService {
                 return new StopTime(stop, trip, departureTime, arrivalTime, stopSequence);
             }
         } catch (SQLException e) {
-            if (isDebugMode) System.err.println("SQL Error in getNextStopTime: " + e.getMessage());
+            sendError("SQL Error: " + e.getMessage());
         }
         return null;
     }
@@ -101,7 +100,7 @@ public class TDSImplement implements TransitDataService {
     @SuppressWarnings("SqlResolve")
     public StopTime getCurrentStopTime(Trip trip, Stop stop, String departureTime) {
         if (db == null) {
-            if (isDebugMode) System.err.println("Error: Database access instance is null.");
+            sendError("Database access instance is null.");
             return null;
         }
         String sql = """
@@ -124,7 +123,7 @@ public class TDSImplement implements TransitDataService {
                 return new StopTime(stop, trip, departureTime1, arrivalTime, stopSequence);
             }
         } catch (SQLException e) {
-            if (isDebugMode) System.err.println("SQL Error in getStopTime: " + e.getMessage());
+            sendError("SQL Error: " + e.getMessage());
         }
         return null;
     }
@@ -132,7 +131,7 @@ public class TDSImplement implements TransitDataService {
     @SuppressWarnings("SqlResolve")
     public List<Trip> getUpcomingDistinctRouteTrips(String stopId, String arrivalTime) {
         if (db == null) {
-            if (isDebugMode) System.err.println("Error: Database access instance is null.");
+            sendError("Database access instance is null.");
             return null;
         }
 
@@ -162,7 +161,7 @@ public class TDSImplement implements TransitDataService {
                 }
             }
         } catch (SQLException e) {
-            if (isDebugMode) System.err.println("SQL Error in getUpcomingDistinctRouteTrips: " + e.getMessage());
+            sendError("SQL Error: " + e.getMessage());
         }
 
         return trips;
@@ -172,7 +171,7 @@ public class TDSImplement implements TransitDataService {
     @Override
     public Trip getTrip(String tripId) {
         if (db == null) {
-            if (isDebugMode) System.err.println("Error: Database access instance is null.");
+            sendError("Database access instance is null.");
             return null;
         }
         String sql = "SELECT trip_id, route_id, trip_headsign FROM trips WHERE trip_id = ?";
@@ -186,7 +185,7 @@ public class TDSImplement implements TransitDataService {
                 return new Trip(tripId, route, headSign);
             }
         } catch (SQLException e) {
-            if (isDebugMode) System.err.println("SQL Error in getTrip: " + e.getMessage());
+            sendError("SQL Error: " + e.getMessage());
         }
         return null;
     }
@@ -195,7 +194,7 @@ public class TDSImplement implements TransitDataService {
     @Override
     public Route getRoute(String routeId) {
         if (db == null) {
-            if (isDebugMode) System.err.println("Error: Database access instance is null.");
+            sendError("Database access instance is null.");
             return null;
         }
         String sql = "SELECT route_id, agency_id ,route_short_name, route_long_name FROM routes WHERE route_id = ?";
@@ -211,7 +210,7 @@ public class TDSImplement implements TransitDataService {
                 return new Route(routeId, agency, routeShortName, routeLongName);
             }
         } catch (SQLException e) {
-            if (isDebugMode) System.err.println("SQL Error in getRoute: " + e.getMessage());
+            sendError("SQL Error: " + e.getMessage());
         }
         return null;
     }
@@ -221,15 +220,14 @@ public class TDSImplement implements TransitDataService {
     public ArrayList<Stop> getNearbyStops(double lat, double lon, double radiusMeters) {
         ArrayList<Stop> stopsWithinRadius = new ArrayList<>();
         DBAccess db = DBAccessProvider.getInstance();
-        boolean isDebugMode = getDebugMode();
         if (db == null) {
-            if (isDebugMode) System.err.println("Error: Database access instance is null.");
+            sendError("Database access instance is null.");
             return stopsWithinRadius;
         }
         try (Statement stmt = db.conn.createStatement()) {
             stmt.execute("USE `" + db.dbName.replace("`", "``") + "`");
         } catch (SQLException e) {
-            if (isDebugMode) System.err.println("SQL Error in getNearbyStops: " + e.getMessage());
+            sendError("SQL Error: " + e.getMessage());
         }
 
         String procedureCall = "{CALL get_closest_stops(?, ?, ?)}";
@@ -249,14 +247,14 @@ public class TDSImplement implements TransitDataService {
             }
         } catch (
                 SQLException e) {
-            if (isDebugMode) System.err.println("SQL Error in getNearbyStops: " + e.getMessage());
+            sendError("SQL Error: " + e.getMessage());
         }
         return stopsWithinRadius;
     }
 
     public Agency getAgency(String agencyId) {
         if (db == null) {
-            if (isDebugMode) System.err.println("Error: Database access instance is null.");
+            sendError("Database access instance is null.");
             return null;
         }
         String sql = "SELECT agency_id, agency_name FROM agency WHERE agency_id = ?";
@@ -268,22 +266,23 @@ public class TDSImplement implements TransitDataService {
                 return new Agency(agencyId, rs.getString("agency_name"));
             }
         } catch (SQLException e) {
-            if (isDebugMode) System.err.println("SQL Error in getAgency: " + e.getMessage());
+            sendError("SQL Error: " + e.getMessage());
         }
         return null;
     }
 
     @Override
-    @SuppressWarnings("SqlResolve")
-    public Map<String, Integer> getStopRouteCounts() {
-        Map<String, Integer> stopRouteCounts = new HashMap<>();
+    public Map<String, StopFrequencyData> getStopFrequencyData() {
+        Map<String, StopFrequencyData> dataMap = new HashMap<>();
 
         String sql = """
-                    SELECT stop_id, COUNT(DISTINCT t.route_id) AS route_count
-                    FROM stop_times st
-                    JOIN trips t ON st.trip_id = t.trip_id
-                    GROUP BY stop_id
-                """;
+        SELECT stop_id,
+               COUNT(DISTINCT t.route_id) AS route_count,
+               COUNT(t.trip_id) AS trip_count
+        FROM stop_times st
+        JOIN trips t ON st.trip_id = t.trip_id
+        GROUP BY stop_id
+    """;
 
         try (PreparedStatement ps = db.conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -291,15 +290,18 @@ public class TDSImplement implements TransitDataService {
             while (rs.next()) {
                 String stopId = rs.getString("stop_id");
                 int routeCount = rs.getInt("route_count");
-                stopRouteCounts.put(stopId, routeCount);
+                int tripCount = rs.getInt("trip_count");
+
+                dataMap.put(stopId, new StopFrequencyData(routeCount, tripCount));
             }
 
         } catch (SQLException e) {
-            if (isDebugMode) System.err.println("SQL Error in getStopRouteCounts: " + e.getMessage());
+            sendError("SQL Error: " + e.getMessage());
         }
 
-        return stopRouteCounts;
+        return dataMap;
     }
+
 
     public List<Trip> getAllTrips() {
         List<Trip> trips = new ArrayList<>();
@@ -314,7 +316,7 @@ public class TDSImplement implements TransitDataService {
                 trips.add(new Trip(tripId, route, headSign));
             }
         } catch (SQLException e) {
-            if (isDebugMode) System.err.println("SQL Error in getAllTrips: " + e.getMessage());
+            sendError("SQL Error: " + e.getMessage());
         }
         return trips;
     }
@@ -334,7 +336,7 @@ public class TDSImplement implements TransitDataService {
                 stopTimes.add(new StopTime(stop, trip, departureTime, arrivalTime, stopSequence));
             }
         } catch (SQLException e) {
-            if (isDebugMode) System.err.println("SQL Error in getStopTimesForTrip: " + e.getMessage());
+            sendError("SQL Error: " + e.getMessage());
         }
         return stopTimes;
     }

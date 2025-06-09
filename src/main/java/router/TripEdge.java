@@ -8,6 +8,7 @@ import models.Trip;
 import java.util.List;
 import java.util.Objects;
 
+import static util.DebugUtil.sendInfo;
 import static util.TimeUtil.calculateDifference;
 
 class TripEdge implements Edge {
@@ -21,7 +22,7 @@ class TripEdge implements Edge {
     public TripEdge(String fromStopId, String departureTime, Trip trip) {
         this.fromStopId = fromStopId;
         if (departureTime == null || departureTime.isEmpty()) {
-           this.departureTime = "00:00:00";
+            this.departureTime = "00:00:00";
         } else {
             this.departureTime = departureTime;
         }
@@ -47,13 +48,15 @@ class TripEdge implements Edge {
         StopTime currentStopTime = tds.getCurrentStopTime(trip, startStop, departureTime);
 
         if (currentStopTime == null) {
-            throw new IllegalArgumentException("No stop time at stop " + fromStopId + " for trip " + trip.tripId());
+            sendInfo("No stop time at stop " + fromStopId + " for trip " + trip.tripId() + " at time " + departureTime);
+            throw new IllegalArgumentException();
         }
 
         StopTime nextStopTime = tds.getNextStopTime(currentStopTime);
 
         if (nextStopTime == null) {
-            throw new IllegalArgumentException("No next stop after stop " + fromStopId + " on trip " + trip.tripId() + " (possibly the last stop).");
+            sendInfo("No next stop time after stop " + fromStopId + " on trip " + trip.tripId());
+            throw new IllegalArgumentException();
         }
         return List.of(currentStopTime, nextStopTime);
     }
@@ -62,24 +65,56 @@ class TripEdge implements Edge {
     public String getToStopId() {
         return toStopId;
     }
+
     @Override
     public String getMode() {
         // Mode of transport for this edge
         return "SAME_TRIP";
     }
+
     @Override
     public Trip getTrip() {
         return trip;
     }
+
     @Override
     public double getWeight() {
         return weight;
     }
+
     @Override
-    public String getArrivalTime() {return arrivalTime;}
+    public String getArrivalTime() {
+        return arrivalTime;
+    }
+
     @Override
-    public String getDepartureTime() {return departureTime;}
+    public String getDepartureTime() {
+        return departureTime;
+    }
+
     @Override
-    public String getFromStopId() {return fromStopId;}
+    public String getFromStopId() {
+        return fromStopId;
+    }
+
+    //    private ImageView getModeIcon(String mode) {
+    //      try {
+    //          String iconPath = switch (mode.toLowerCase()) {
+    //            case "bus" ->
+//                case "walk" ->
+//                case "metro" ->
+//                default -> null;
+//            };
+//
+//            if (iconPath != null) {
+//                Image icon = new Image(getClass().getResourceAsStream(iconPath));
+//                ImageView imageView = new ImageView(icon);
+//                return imageView;
+//            }
+//        } catch (Exception e) {
+//
+//        }
+//        return null;
+//    }
 
 }

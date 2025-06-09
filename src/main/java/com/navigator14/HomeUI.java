@@ -7,9 +7,9 @@ import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.concurrent.Task;
-import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -21,12 +21,14 @@ import javafx.stage.Stage;
 import java.awt.geom.Point2D;
 
 import org.jxmapviewer.JXMapViewer;
+import org.jxmapviewer.viewer.DefaultWaypoint;
 import org.jxmapviewer.viewer.GeoPosition;
 import org.jxmapviewer.viewer.Waypoint;
 import org.jxmapviewer.viewer.WaypointPainter;
 import map.*;
 import router.AStarRouterV;
 import ui.*;
+import util.DebugUtil;
 import util.NetworkUtil;
 import router.Node;
 
@@ -36,7 +38,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import map.WayPoint;
 import db.*;
 
-import static util.DebugUtil.getDebugMode;
 import static util.NavUtil.parsePoint;
 import static ui.UiHelper.*;
 import static util.GeoUtil.*;
@@ -47,6 +48,7 @@ public class HomeUI extends Application {
     private final Set<Waypoint> waypoints = new HashSet<>();
     private final WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<>();
     private AtomicReference<StackPane> resultPaneRef;
+    protected static List<String> avoidedStops = new ArrayList<>();
 
     @Override
     public void start(Stage primaryStage) {
@@ -110,8 +112,16 @@ public class HomeUI extends Application {
         resultPaneRef = new AtomicReference<>(new StackPane());
         leftPane.getChildren().add(resultPaneRef.get());
 
+        javafx.scene.Node originalGraphic = goButton.getGraphic();
+        ProgressIndicator progressIndicator = new ProgressIndicator();
+        progressIndicator.setMaxSize(18, 18);
+        progressIndicator.setStyle("-fx-progress-color: #000000; -fx-background-color: #000000;");
+
+
         goButton.setOnAction(_ -> {
             if (filled.get()) {
+                goButton.setGraphic(progressIndicator);
+                goButton.setDisable(true);
                 Task<Void> task = new Task<>() {
                     @Override
                     protected Void call() {
@@ -121,27 +131,30 @@ public class HomeUI extends Application {
 
                         Platform.runLater(() -> label.setText("Finding routes..."));
 
-                        List<Node> result = parsePoint(origin, destination, time);
+                        List<Node> result = parsePoint(origin, destination, time, avoidedStops);
 
                         Platform.runLater(() -> {
+                            goButton.setGraphic(originalGraphic);
+                            goButton.setDisable(false);
+
                             if (result == null) {
                                 label.setText("No route found.");
                             } else {
                                 label.setVisible(false);
-                                StackPane newResult = displayTransportModes(result.getLast(), root);
+                                TripIntel tripIntel = new TripIntel();
+                                StackPane newResult = tripIntel.displayTransportModes(result, root);
                                 resultPaneRef.get().getChildren().setAll(newResult.getChildren());
                                 resultPaneRef.get().setTranslateX(newResult.getTranslateX());
                                 resultPaneRef.get().setTranslateY(newResult.getTranslateY());
                                 resultPaneRef.get().setVisible(true);
                             }
                         });
-
                         return null;
                     }
                 };
                 new Thread(task).start();
             } else {
-                Platform.runLater(() -> label.setText("Navigate to see public transport \n options"));
+                Platform.runLater(() -> label.setText("Check that all fields are filled."));
             }
         });
 
@@ -167,16 +180,34 @@ public class HomeUI extends Application {
 
         bindElements(timeContainer, goButtonContainer, clearButton, originField, destinationField);
 
-        isOn.addListener((_, _, _) -> {
-            if (isOn.get()) {
+
+        isOn.addListener((_, _, newValue) -> {
+            if (newValue) { // HeatMap mode enabled
                 title.setText("Heatmap");
                 label.setText("Heatmap Mode Activated. \n Enter an origin point...");
-                originField.clear();
                 if (!searchButton.isVisible()) {
                     searchButton.setVisible(true);
                 }
-                waypoints.clear();
-            } else {
+
+                destinationField.clear();
+                // If there are waypoints, keep only the origin one
+                if (!waypoints.isEmpty()) {
+                    // Store origin coordinates from the text field
+                    double[] originCoords = getCoordinatesFromAddress(originField.getText());
+                    waypoints.clear();
+                    if (originCoords != null) {
+                        // Recreate origin waypoint
+                        GeoPosition originPosition = new GeoPosition(originCoords[0], originCoords[1]);
+                        DefaultWaypoint originWaypoint = new DefaultWaypoint(originPosition);
+                        waypoints.add(originWaypoint);
+                    }
+                    waypointPainter.setWaypoints(waypoints);
+                    map.setOverlayPainter(waypointPainter);
+                }
+
+                AStarRouterV router = new AStarRouterV();
+                router.reset();
+            } else { // HeatMap mode disabled
                 title.setText("Navigator");
                 label.setText("Navigate to see public transport \n options");
                 originField.clear();
@@ -184,8 +215,16 @@ public class HomeUI extends Application {
                 if (searchButton.isVisible()) {
                     searchButton.setVisible(false);
                 }
-                map.setOverlayPainter(waypointPainter);
+
+                // Always reset to first click when exiting HeatMap mode
+                firstClick = true;
+
                 waypoints.clear();
+                waypointPainter.setWaypoints(waypoints);
+                map.setOverlayPainter(waypointPainter);
+                combinedContainer.setVisible(true);
+                // Don't set endGroup.setVisible(true) here as it's already bound
+                destinationField.setEditable(true);
             }
         });
 
@@ -204,7 +243,10 @@ public class HomeUI extends Application {
     private void updateCoordinateFields(double lat, double lon, TextField originField, TextField destinationField) {
         // Format the coordinates
         String coordinateText = String.format("%.6f, %.6f", lat, lon);
-        if (firstClick && originField.getText().isEmpty()) {
+
+        // When HeatMap mode is enabled, always treat clicks as setting the origin
+        if (isOn.get()) {
+            // In HeatMap mode,always treat as origin point
             addMarkerOnClicks(lat, lon, true, waypoints, waypointPainter);
             Platform.runLater(() -> {
                 if (NetworkUtil.isNetworkAvailable()) {
@@ -213,86 +255,43 @@ public class HomeUI extends Application {
                 } else {
                     originField.setText(coordinateText);
                 }
-                firstClick = false;
             });
-        } else if (!firstClick && destinationField.getText().isEmpty()) {
-            addMarkerOnClicks(lat, lon, false, waypoints, waypointPainter);
-            Platform.runLater(() -> {
-                if (NetworkUtil.isNetworkAvailable()) {
-                    String address = getAddress(lat, lon);
-                    destinationField.setText(Objects.requireNonNullElse(address, coordinateText));
-                } else {
-                    destinationField.setText(coordinateText);
+        } else {
+
+            if (firstClick) { // This is the first click (origin)
+                // If we are starting a new cycle (we've already set origin and destination before)
+                // then clear both fields first
+                if (!originField.getText().isEmpty() && !destinationField.getText().isEmpty()) {
+                    Platform.runLater(() -> {
+                        originField.clear();
+                        destinationField.clear();
+                    });
                 }
-                firstClick = true;
-            });
-        }
-    }
-
-    private StackPane displayTransportModes(Node destinationNode, BorderPane root) {
-        // StackPane creation and styling - do not change
-        StackPane resultPane = new StackPane();
-        resultPane.setStyle("-fx-background-color: rgba(0, 0, 0, 0.5); -fx-padding: 10;");
-        resultPane.setAlignment(Pos.CENTER);
-        resultPane.setPrefSize(300, 200);
-        resultPane.setTranslateX(root.getWidth() * 0.02); // 10/1280
-        resultPane.setTranslateY(root.getHeight() * 0.4); // 80/832
-
-        Set<String> modes = new LinkedHashSet<>(); // To avoid duplicates
-        Node current = destinationNode;
-        while (current != null) {
-            if (current.getMode() != null && !current.getMode().isBlank()) {
-                modes.add(current.getMode());
+                addMarkerOnClicks(lat, lon, true, waypoints, waypointPainter);
+                Platform.runLater(() -> {
+                    if (NetworkUtil.isNetworkAvailable()) {
+                        String address = getAddress(lat, lon);
+                        originField.setText(Objects.requireNonNullElse(address, coordinateText));
+                    } else {
+                        originField.setText(coordinateText);
+                    }
+                    firstClick = false;
+                });
+            } else { // This is the second click (destination)
+                addMarkerOnClicks(lat, lon, false, waypoints, waypointPainter);
+                Platform.runLater(() -> {
+                    if (NetworkUtil.isNetworkAvailable()) {
+                        String address = getAddress(lat, lon);
+                        destinationField.setText(Objects.requireNonNullElse(address, coordinateText));
+                    } else {
+                        destinationField.setText(coordinateText);
+                    }
+                    firstClick = true;
+                });
             }
-            current = current.getParent();
         }
-
-        Text transportTitle = new Text("Modes of Transport:");
-        transportTitle.setStyle("-fx-font: 16 Ubuntu; -fx-fill: white;");
-
-        VBox contentBox = new VBox(10);
-        contentBox.setAlignment(Pos.CENTER);
-        contentBox.getChildren().add(transportTitle);
-
-        for (String mode : modes) {
-            HBox row = new HBox(10);
-            row.setAlignment(Pos.CENTER);
-
-            Text modeText = new Text(mode);
-            modeText.setStyle("-fx-font: 14 Ubuntu; -fx-fill: white;");
-            row.getChildren().add(modeText);
-
-            // ImageView icon = getModeIcon(mode);
-            // if (icon != null) row.getChildren().add(icon);
-
-            contentBox.getChildren().add(row);
-        }
-
-        resultPane.getChildren().add(contentBox);
-        return resultPane;
     }
 
-//    private ImageView getModeIcon(String mode) {
-//        try {
-//            String iconPath = switch (mode.toLowerCase()) {
-
-    /// /             add pictures, after case include path
-//                case "bus" ->
-//                case "walk" ->
-//                case "metro" ->
-//                default -> null;
-//            };
-//
-//            if (iconPath != null) {
-//                Image icon = new Image(getClass().getResourceAsStream(iconPath));
-//                ImageView imageView = new ImageView(icon);
-//                return imageView;
-//            }
-//        } catch (Exception e) {
-//
-//        }
-//        return null;
-//    }
     private void setHeatMapListener(Button submit, TextField originField, BooleanProperty isOn, Text label) {
         submit.setOnAction(_ -> {
             if (isOn.get()) {
@@ -322,6 +321,7 @@ public class HomeUI extends Application {
                 GeoPosition geoPosition = map.convertPointToGeoPosition(point);
                 double lat = geoPosition.getLatitude();
                 double lon = geoPosition.getLongitude();
+
                 updateCoordinateFields(lat, lon, originField, destinationField);
             }
         });
@@ -331,31 +331,27 @@ public class HomeUI extends Application {
             if (isOn.get()) {
                 label.setText("Heatmap Mode Activated. \n Enter an origin point");
             } else {
-                destinationField.clear();
                 timeField.clear();
                 label.setText("Navigate to see public transport \n options");
                 label.setVisible(true);
                 resultPaneRef.get().setVisible(false);
-
+                // In regular mode, always reset to first click after clearing
+                firstClick = true;
             }
             originField.clear();
+            destinationField.clear();
+            avoidedStops.clear();
             WayPoint.clearRoute();
             AStarRouterV router = new AStarRouterV();
             router.reset();
             waypoints.clear();
+            waypointPainter.setWaypoints(waypoints);
+            MapProvider.getInstance().getMap().setOverlayPainter(waypointPainter);
         });
     }
 
     public static void main(String[] args) {
-        String debug = System.getenv("debug");
-        boolean isDebugMode = getDebugMode();
-        if (debug != null) {
-            System.setProperty("debug", debug);
-        } else {
-            if (isDebugMode)
-                System.err.println("Environment variable 'debug' is not set. Debug mode is enabled by default.");
-        }
+        DebugUtil.init();
         launch(args);
     }
 }
-

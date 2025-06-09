@@ -14,17 +14,14 @@ import org.jxmapviewer.viewer.DefaultTileFactory;
 import org.jxmapviewer.viewer.TileFactory;
 import org.jxmapviewer.viewer.TileFactoryInfo;
 
-import static util.DebugUtil.getDebugMode;
+import static util.DebugUtil.*;
 
 public class TileUtil {
-    boolean isOnline;
-
-    boolean isDebugMode;
-
+    private final boolean isOnline;
 
     public TileUtil(boolean isOnline) {
         this.isOnline = isOnline;
-        this.isDebugMode = getDebugMode();
+
     }
 
     public TileFactory getTileFactory() {
@@ -33,10 +30,11 @@ public class TileUtil {
             info = new OSMTileFactoryInfo();
         } else {
             try {
-                String encodedPath = Paths.get(System.getProperty("user.home"), "Archive.zip").toUri().toString();
+                String encodedPath = Paths.get(System.getProperty("user.home"), "Archive_color.zip").toUri().toString();
                 info = new OSMTileFactoryInfo("Zip archive", "jar:" + encodedPath + "!");
             } catch (Exception e) {
-                throw new RuntimeException("Failed to construct file path for TileFactory", e);
+                sendWarning("Error constructing file path for TileFactory. Please ensure the 'Archive_color.zip' file exists in your home directory.");
+                throw new RuntimeException();
             }
         }
         return new DefaultTileFactory(info);
@@ -46,7 +44,8 @@ public class TileUtil {
     public void createZip(String sourceDirPath, String zipFilePath) throws IOException {
         File sourceDir = new File(sourceDirPath);
         if (!sourceDir.exists() || !sourceDir.isDirectory()) {
-            throw new IOException("Source directory does not exist or is not a directory: " + sourceDirPath);
+            sendError("Source directory does not exist or is not a directory: " + sourceDirPath);
+            throw new IOException();
         }
         try (FileOutputStream fos = new FileOutputStream(zipFilePath);
              ZipOutputStream zos = new ZipOutputStream(fos)) {
@@ -57,7 +56,8 @@ public class TileUtil {
 
     private void zipDirectory(File folder, String parentFolder, ZipOutputStream zos) throws IOException {
         if (folder == null || !folder.exists() || !folder.isDirectory()) {
-            throw new IOException("Invalid folder: " + (folder != null ? folder.getAbsolutePath() : "null"));
+            sendError("Invalid folder: " + (folder != null ? folder.getAbsolutePath() : "null"));
+            throw new IOException();
         }
 
         File[] files = folder.listFiles();
@@ -82,4 +82,5 @@ public class TileUtil {
             }
         }
     }
+
 }

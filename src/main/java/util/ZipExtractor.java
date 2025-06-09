@@ -5,13 +5,15 @@ import java.nio.file.*;
 import java.util.Comparator;
 import java.util.zip.*;
 
+import static util.DebugUtil.sendError;
+
 public class ZipExtractor {
     @SuppressWarnings("resource")
     public static void extractZipToDirectory(String zipFilePath, String destinationDir) throws IOException {
-        boolean isDebugMode = DebugUtil.getDebugMode();
         File zipFile = new File(zipFilePath);
         if (!zipFile.exists()) {
-            throw new FileNotFoundException("Zip file not found: " + zipFilePath);
+            sendError("Zip file not found: " + zipFilePath);
+            throw new FileNotFoundException();
         }
 
         Path destDirPath = Paths.get(destinationDir);
@@ -24,7 +26,7 @@ public class ZipExtractor {
                         try {
                             Files.delete(path);
                         } catch (IOException e) {
-                            if (isDebugMode) System.err.println("Error deleting file: " + path + " - " + e.getMessage());
+                            sendError("Error deleting file: " + path, e);
                         }
                     });
         } else {

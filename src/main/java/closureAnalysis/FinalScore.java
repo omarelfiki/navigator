@@ -1,34 +1,83 @@
 package closureAnalysis;
 
-import db.TDSImplement;
 import models.Stop;
+import db.TDSImplement;
+import java.io.IOException;
+import java.util.*;
 
-import java.util.List;
-import java.util.Map;
+import static closureAnalysis.FrequencyFactor.calculateFrequencyFactor;
+import static closureAnalysis.ProximityFactor.calculateProximityFactor;
+import static closureAnalysis.StopEssentialityCalculator.compute;
 
 public class FinalScore {
+    private static final double weightFs = 0.25; // Weight for stop frequency
+    private static final double weightPs = 0.20; // Weight for proximity to monument
+    private static final double weightEs = 0.35; // Weight for stop essentiality
+    private static final double weightDs = 0.20; // Weight for stop population density
 
-    private static double weightFs = 0.25; // Weight for stop frequency
-    private static double weightPs = 0.20; // Weight for proximity to monument
-    private static double weightEs = 0.35; // Weight for stop essentiality
-    private static double weightDs = 0.20; // Weight for stop population density
+    public static List<StopData> calculateFinalScore(List<Stop> allStops, List<TouristicLocations> monuments) throws IOException {
+        //List of all the stops with their weights
+        TDSImplement tds = new TDSImplement();
+        List<StopData> allStopsData = new ArrayList<> ();
 
-    public static void calculateFinalScore(List<Stop> allStops, List<TouristicLocations> monuments, Map<String, Integer> stopRouteCounts) {
-
-        // Calculate frequency factor Fs for each stop
-        FrequencyFactor.calculateFrequencyFactor(allStops, stopRouteCounts);
-
-        // Calculate proximity factor Ps for each stop
-        ProximityFactor.calculateProximityFactor(allStops, monuments);
-
+        //inititialize a list with StopData objects to find the lowest scores
         for (Stop stop : allStops) {
-            double fs = stop.getFs();
-            int ps = stop.getPs();
-            double es = stop.getEs();
-            double ds = stop.getDs();
+            StopData s = new StopData(stop.getStopId(), stop.getStopName());
+            allStopsData.add(s);
+        }
+        //population density factor Ds for each stop
+        List<PopulationTile> withStops = GridReaderSimple.buildTilesWithStops();
+        List<PopulationTile> ranked = GridReaderSimple.scoreAndRankTiles(withStops);
+        for(StopData s:allStopsData){
+            for (PopulationTile t : ranked){
+                List<Stop> stopList=t.getStopsList();
+                for(Stop stop:stopList){
+                    if(stop.getStopId().equals(s.getStopId())){
+                        s.setDs(t.popScore);
+                        break;
+                    }
+                }
 
-            double score = weightFs * fs + weightPs * ps + weightEs * es + weightDs * ds;
+            }
+        }
+        //Adding essentiality factor Es for each stop
+        List<StopEssentialityCalculator> essentialities = compute(allStops);
+        for (StopEssentialityCalculator ess : essentialities) {
+            for (StopData s : allStopsData) {
+                if (s.getStopId().equals(ess.getStopId())) {
+                    s.setEs(ess.getEs());
+                    break;
+                }
+            }
+        }
+        //proximity factor to monuments Ps for each stop
+        List<ProximityFactor> pf = calculateProximityFactor(allStops, monuments);
+        for( ProximityFactor proximityFactor : pf) {
+            for (StopData s : allStopsData) {
+                if (s.getStopId().equals(proximityFactor.getStopId())) {
+                    s.setPs(proximityFactor.getPs());
+                    break;
+                }
+            }
+        }
+
+        // Fs - Frequency Factor (route count + trip count)
+        Map<String, StopFrequencyData> stopFrequencyData = tds.getStopFrequencyData();
+        List<FrequencyFactor> fs = calculateFrequencyFactor(allStops, stopFrequencyData);
+        for (FrequencyFactor frequencyFactor : fs) {
+            for (StopData s : allStopsData) {
+                if (s.getStopId().equals(frequencyFactor.getStopId())) {
+                    s.setFs(frequencyFactor.getFs());
+                    break;
+                }
+            }
+        }
+
+        for (StopData stop : allStopsData) {
+            double score = weightFs * stop.getFs()+ weightPs * stop.getPs() + weightEs * stop.getEs() + weightDs * stop.getDs();
             stop.setScore(score);
         }
+        return allStopsData;
     }
+
 }

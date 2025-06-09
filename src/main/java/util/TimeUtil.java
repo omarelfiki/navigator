@@ -2,7 +2,7 @@ package util;
 
 import java.time.LocalTime;
 
-import static util.DebugUtil.getDebugMode;
+import static util.DebugUtil.sendError;
 
 public class TimeUtil {
     public static double calculateDifference(String s1,String s2){
@@ -13,10 +13,9 @@ public class TimeUtil {
     }
 
     public static String parseTime(String time) {
-        boolean isDebugMode = getDebugMode();
         String[] parts = time.split(":");
         if (parts.length > 3) {
-            if (isDebugMode) System.out.println("Invalid time format");
+            sendError("Invalid time format");
             return null;
         }
         int hours = Integer.parseInt(parts[0]);

@@ -19,19 +19,17 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Objects;
 
-import static util.DebugUtil.getDebugMode;
+import static util.DebugUtil.*;
 
 public class MapIntegration {
     JXMapViewer map;
 
     boolean isOnline;
 
-    boolean isDebugMode;
-
+    GeoPosition initialPosition = new GeoPosition(41.9028, 12.4964); // Rome
 
     public MapIntegration(boolean isOnline) {
         this.isOnline = isOnline;
-        this.isDebugMode = getDebugMode();
     }
 
     public StackPane createMapPane() {
@@ -46,6 +44,7 @@ public class MapIntegration {
         map = new JXMapViewer();
         map.setTileFactory(tileFactory);
         map.setZoom(6);
+        map.addPropertyChangeListener("zoom", _ -> map.repaint());
 
         String start_location = System.getenv("START_COORDS");
         if (start_location != null && !start_location.isEmpty()) {
@@ -56,15 +55,15 @@ public class MapIntegration {
                     double lon = Double.parseDouble(parts[1].trim());
                     map.setAddressLocation(new GeoPosition(lat, lon));
                 } catch (NumberFormatException e) {
-                    if (isDebugMode) System.err.println("Invalid start location format: " + start_location);
-                    map.setAddressLocation(new GeoPosition(41.9028, 12.4964));
+                    sendError("Invalid start location format: " + start_location);
+                    map.setAddressLocation(initialPosition);
                 }
             } else {
-                if (isDebugMode) System.err.println("Invalid start location format: " + start_location);
-                map.setAddressLocation(new GeoPosition(41.9028, 12.4964));
+                sendError("Invalid start location: " + start_location);
+                map.setAddressLocation(initialPosition);
             }
         } else {
-            map.setAddressLocation(new GeoPosition(41.9028, 12.4964)); // Rome
+            map.setAddressLocation(initialPosition);
         }
 
         MouseInputListener panListener = new PanMouseInputListener(map);
@@ -82,13 +81,15 @@ public class MapIntegration {
         zoomControls.setSpacing(10);
         zoomControls.setStyle("-fx-padding: 10;");
         zoomControls.setAlignment(Pos.CENTER);
-
+        // Make sure only the buttons capture mouse events, not the entire VBox
+        zoomControls.setPickOnBounds(false);
 
         Button zoomInButton = new Button("+");
         zoomInButton.setStyle("-fx-font-size: 18; -fx-background-color: grey; -fx-text-fill: white;");
         zoomInButton.setOnAction(_ -> {
             map.setZoom(map.getZoom() - 1); // Zoom in
         });
+        
         Button zoomOutButton = new Button("-");
         zoomOutButton.setStyle("-fx-font-size: 18; -fx-background-color: grey; -fx-text-fill: white;");
         zoomOutButton.setOnAction(_ -> {
@@ -99,8 +100,8 @@ public class MapIntegration {
 
         mapPane.getChildren().add(zoomControls);
         StackPane.setAlignment(zoomControls, Pos.BOTTOM_RIGHT);
-        zoomControls.setTranslateX(430); // Initial X position
-        zoomControls.setTranslateY(350); // Initial Y position
+        zoomControls.setTranslateX(430); // Adjust X position to move it more to the left
+        zoomControls.setTranslateY(350); // Adjust Y position to move it more to the top
 
         map.addComponentListener(new java.awt.event.ComponentAdapter() {
             @Override
@@ -108,8 +109,8 @@ public class MapIntegration {
                 int width = map.getWidth();
                 int height = map.getHeight();
 
-                double xRatio = 430.0 / 929.0; // Initial X position ratio
-                double yRatio = 350.0 / 816.0; // Initial Y position ratio
+                double xRatio = 430.0 / 929.0; // Adjusted X position ratio
+                double yRatio = 350.0 / 816.0; // Adjusted Y position ratio
 
                 zoomControls.setTranslateX(width * xRatio);
                 zoomControls.setTranslateY(height * yRatio);
@@ -120,51 +121,56 @@ public class MapIntegration {
     }
 
     private void setCache(TileFactory tileFactory, TileUtil tileUtil) {
-        if (isOnline) {
-            File cacheDir = new File(System.getProperty("user.home") + File.separator + ".jxmapviewer2");
-            long thirty = 30L * 24 * 60 * 60 * 1000; // 30 days in milliseconds
-            // Check if the cache directory exists and is up to date
-            if (cacheDir.exists()) {
-                long lastModified = cacheDir.lastModified();
-                long currentTime = System.currentTimeMillis();
+        if (!isOnline) return;
+        File cacheDir = new File(System.getProperty("user.home") + File.separator + ".jxmapviewer2");
+        File zipFile = new File(System.getProperty("user.home") + File.separator + "Archive_color.zip");
+        long thirty = 30L * 24 * 60 * 60 * 1000; // 30 days in milliseconds
 
-                if ((currentTime - lastModified) > thirty) {
-                    // If the cache is older than 30 days, delete it
-                    if (isDebugMode)
-                        System.err.println("Cache is out of date: Reconstructing cache directory: " + cacheDir.getAbsolutePath());
-                    deleteDirectory(cacheDir);
-                } else {
-                    long days = 30 - ((currentTime - lastModified) / (24 * 60 * 60 * 1000));
-                    if (isDebugMode)
-                        System.err.println("Cache is up to date by " + days + " days:" + cacheDir.getAbsolutePath());
-                    return;
-                }
-            }
-            // Create cache directory if it doesn't exist
-            if (!cacheDir.exists() && cacheDir.mkdirs()) {
-                if (isDebugMode) System.err.println("Cache directory created at: " + cacheDir.getAbsolutePath());
-            } else if (!cacheDir.exists()) {
-                if (isDebugMode) System.err.println("Failed to create cache directory: " + cacheDir.getAbsolutePath());
-                return;
-            }
-            // Set local cache for the tile factory
-            tileFactory.setLocalCache(new FileBasedLocalCache(cacheDir, false));
-            String cacheDirPath = System.getProperty("user.home") + File.separator + ".jxmapviewer2" + File.separator + "tile.openstreetmap.org";
-            String zipFilePath = System.getProperty("user.home") + File.separator + "Archive.zip";
-            File tileCacheDir = new File(cacheDirPath);
-
-            // Check if the tile cache directory exists and has the correct files before creating the zip file
-            if (tileCacheDir.exists() && tileCacheDir.isDirectory()) {
-                try {
-                    tileUtil.createZip(cacheDirPath, zipFilePath);
-                    if (isDebugMode) System.err.println("Cache created at: " + zipFilePath);
-                } catch (IOException e) {
-                    if (isDebugMode) System.err.println("Failed to create map cache zip file: " + e);
+        // Check if the cache zip exists and is up to date
+        if (zipFile.exists()) {
+            long lastModified = zipFile.lastModified();
+            long currentTime = System.currentTimeMillis();
+            if ((currentTime - lastModified) > thirty) {
+                sendWarning("Cache is out of date: Reconstructing cache directory: " + cacheDir.getAbsolutePath());
+                deleteDirectory(cacheDir);
+                if (!zipFile.delete()) {
+                    sendError("Failed to delete cache zip: " + zipFile.getAbsolutePath());
                 }
             } else {
-                if (isDebugMode)
-                    System.err.println("Tile cache directory does not exist or is not populated: " + cacheDirPath);
+                long days = 30 - ((currentTime - lastModified) / (24 * 60 * 60 * 1000));
+                sendInfo("Cache is up to date by " + days + " days: " + cacheDir.getAbsolutePath());
+                return;
             }
+        }
+
+        if (!cacheDir.exists()) {
+            if (!cacheDir.mkdirs()) {
+                sendError("Failed to create cache directory: " + cacheDir.getAbsolutePath());
+                return;
+            } else {
+                sendInfo("Cache directory created at: " + cacheDir.getAbsolutePath());
+                sendInfo("Preloading tiles for initial position: " + initialPosition);
+                tileFactory.setLocalCache(new FileBasedLocalCache(cacheDir, false));
+
+            }
+        } else {
+            sendInfo("Cache directory exists at: " + cacheDir.getAbsolutePath());
+        }
+
+        String cacheDirPath = cacheDir.getAbsolutePath() + File.separator + "tile.openstreetmap.org";
+        String zipFilePath = zipFile.getAbsolutePath();
+        File tileCacheDir = new File(cacheDirPath);
+
+        // Only create the zip if the tile cache directory exists and is populated
+        if (tileCacheDir.exists() && tileCacheDir.isDirectory() && tileCacheDir.listFiles() != null && Objects.requireNonNull(tileCacheDir.listFiles()).length > 0) {
+            try {
+                tileUtil.createZip(cacheDirPath, zipFilePath);
+                sendInfo("Cache zip created at: " + zipFilePath);
+            } catch (IOException e) {
+                sendError("Failed to create map cache zip file: " + e);
+            }
+        } else {
+            sendError("Error: Tile cache directory does not exist or is not populated: " + cacheDirPath);
         }
     }
 
@@ -175,7 +181,7 @@ public class MapIntegration {
             }
         }
         if (!dir.delete()) {
-            if (isDebugMode) System.err.println("Failed to delete: " + dir.getAbsolutePath());
+            sendError("Failed to delete: " + dir.getAbsolutePath());
         }
     }
 

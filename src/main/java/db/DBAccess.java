@@ -2,24 +2,20 @@ package db;
 
 import java.sql.*;
 
-import static util.DebugUtil.getDebugMode;
+import static util.DebugUtil.*;
 
 public class DBAccess {
     public String dbName;
     public String connectionString;
     public Connection conn;
-    private boolean isDebugMode;
-
 
     @SuppressWarnings("unused")
     public DBAccess(String host, String port, String user, String password, String dbName) {
         this("jdbc:mysql://" + user + ":" + password + "@" + host + ":" + port + "/" + dbName);
-        this.isDebugMode = getDebugMode();
     }
 
     public DBAccess(String connectionString) {
         this.connectionString = connectionString;
-        this.isDebugMode = getDebugMode();
     }
 
     public void connect() {
@@ -35,11 +31,11 @@ public class DBAccess {
             try (Statement stmt = conn.createStatement()) {
                 stmt.execute(infileQuery);
             } catch (SQLException e) {
-                if (isDebugMode) System.err.println("SQL Error (Server-Side Initialization): " + e.getMessage());
+                sendError("Failed to set local_infile as true in server-side", e);
             }
-            if (isDebugMode) System.err.println("Connected to MySQL Server");
+            sendSuccess("Connected to MySQL Server");
         } catch (SQLException e) {
-            if (isDebugMode) System.err.println("SQL Error (Connection): " + e.getMessage());
+            sendError("Failed to connect to MySQL Server", e);
         }
     }
 }
