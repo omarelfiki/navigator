@@ -13,7 +13,6 @@ import db.DBConfig;
 import models.Request;
 import router.AStarRouterV;
 import router.Node;
-import util.PathCompressor;
 import util.TimeUtil;
 
 import static util.DebugUtil.init;
@@ -188,3 +187,6 @@ public class RoutingEngine {
 
 
 }
+// {"routeFrom":{"lat":41.904,"lon":12.5004},"to":{"lat":41.8791,"lon":12.5221},"startingAt":"09:30:00"} - test case
+//  Roma Termini - Vatican test case below
+// {"routeFrom":{"lat":41.900496398,"lon":12.501164662},"to":{"lat":41.906487,"lon":12.453641},"startingAt":"09:30:00"}
