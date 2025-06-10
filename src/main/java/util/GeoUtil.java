@@ -15,7 +15,7 @@ import static util.DebugUtil.sendError;
 import static util.DebugUtil.sendInfo;
 
 public class GeoUtil {
-    private static final String API_KEY = "AIzaSyDWUFIdOzWZeq2BsFfTMMif-VdY2YSqmKg";
+    private static final String API_KEY = ""; //add Google Cloud API Key Here with Geocoding API Enabled
 
     public static double[] getCoordinatesFromAddress(String address) {
         try {
