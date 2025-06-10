@@ -1,0 +1,57 @@
+.input-container {
+    -fx-background-color: white;
+    -fx-background-radius: 35;
+    -fx-border-color: #000000;
+    -fx-border-radius: 35;
+    -fx-border-width: 1;
+    -fx-alignment: center-left;
+    -fx-padding: 5 5;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 5, 0, 0, 2);
+}
+
+.input-container-small{
+    -fx-background-color: white;
+    -fx-background-radius: 25;
+    -fx-alignment: center-left;
+    -fx-padding: 5 5;
+    -fx-border-color: #000000;
+    -fx-border-radius: 25;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 5, 0, 0, 2);
+}
+
+.circle-icon {
+    -fx-min-width: 36px;
+    -fx-min-height: 36px;
+    -fx-max-width: 36px;
+    -fx-max-height: 36px;
+    -fx-background-color: #f0f0f0;
+    -fx-background-radius: 18px;
+    -fx-alignment: center;
+}
+
+.circle-icon-small {
+    -fx-min-width: 30px;
+    -fx-min-height: 30px;
+    -fx-max-width: 30px;
+    -fx-max-height: 30px;
+    -fx-background-color: #f0f0f0;
+    -fx-background-radius: 16px;
+    -fx-alignment: center;
+}
+
+.icon-label {
+    -fx-font-size: 20px;
+    -fx-text-fill: black;
+}
+
+.rounded-textfield {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-font-size: 14px;
+    -fx-text-fill: #555555;
+    -fx-prompt-text-fill: #999999;
+    -fx-background-insets: 0;
+    -fx-padding: 6 6 2 4;
+    -fx-background-radius: 15;
+}
